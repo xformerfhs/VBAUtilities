@@ -16,7 +16,7 @@ Option Explicit
 Private Const MODULNAME As String = "AccessLockFileReader"
 Private Const ERR_NUMBER_START As Long = vbObjectError + 45122
 
-Private Const ERR_NO_LOCK_FILE As Long = ERR_NUMBER_START + 0
+Private Const ERR_NO_LOCK_FILE As Long = ERR_NUMBER_START
 Private Const STR_ERR_NO_LOCK_FILE As String = "There is no lock file (neither ending with '.ldb', nor with '.laccdb')"
 
 '
