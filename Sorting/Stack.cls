@@ -17,8 +17,8 @@ Private Const MODULNAME As String = "Stack"
 
 Private Const N_START_ERROR_MESSAGE As Long = vbObjectError + 2600
 
-Private Const ERR_STACK_IS_EMPTY     As Long = N_START_ERROR_MESSAGE + 0
-Private Const STR_ERR_STACK_IS_EMPTY As String = "Der Stack ist leer"
+Private Const ERR_STACK_IS_EMPTY     As Long = N_START_ERROR_MESSAGE
+Private Const STR_ERR_STACK_IS_EMPTY As String = "Stack is empty"
 
 '
 ' Private Konstanten
