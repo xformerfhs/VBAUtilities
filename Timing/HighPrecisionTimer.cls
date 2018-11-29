@@ -54,6 +54,14 @@ Attribute VB_Exposed = False
 '|---------------------+---------------------------------------------------
 '| Changes             | 2018-11-29  Created. fhs
 '|---------------------+---------------------------------------------------
+'| Remarks             | The "QueryPerformanceCounter" and "QueryPerformanceFrequency"
+'|                     | API calls return 8 byte integers. VBA has no 8 byte
+'|                     | integer data type. So we use the VBA data type "Currency"
+'|                     | which implements 8 byte integers scaled by the
+'|                     | factor 10,000. This data type is used in such a way
+'|                     | that in the calculation of the elpased time this
+'|                     | scale factor cancels out.
+'|---------------------+---------------------------------------------------
 '| Typical usage       | Dim hpt As New HighPrecisionTimer
 '|                     | Dim elapsedTime As Double
 '|                     | hpt.start
@@ -73,22 +81,64 @@ Private Declare Function QueryPerformanceCounter Lib "kernel32" ( _
 Private Declare Function QueryPerformanceFrequency Lib "kernel32" ( _
                          ByRef lpFrequency As Currency) As Long
 
-Private m_AdjustedTickTime As Double
-Private m_StartCounter As Currency
+Private m_ScaledTickTime As Double
+Private m_StartCounter   As Currency
 
 '
 ' Public methods
+'
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | start
+'|------------------+-------------------------------------------------------
+'| Purpose          | Starts the high precision timer
+'|------------------+-------------------------------------------------------
+'| Parameter        | ./.
+'|------------------+-------------------------------------------------------
+'| Return value     | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2018-11-29  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'|------------------+-------------------------------------------------------
+'| Typical call     | See class comment.
+'+--------------------------------------------------------------------------
 '
 Public Sub start()
    QueryPerformanceCounter m_StartCounter
 End Sub
 
+'
+'+--------------------------------------------------------------------------
+'| Method           | getElapsedTime
+'|------------------+-------------------------------------------------------
+'| Purpose          | Get the time that has passed in seconds since
+'|                  | calling the "start" method
+'|------------------+-------------------------------------------------------
+'| Parameter        | ./.
+'|------------------+-------------------------------------------------------
+'| Return value     | Time in seconds since calling "start"
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2018-11-29  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'|------------------+-------------------------------------------------------
+'| Typical call     | See class comment.
+'+--------------------------------------------------------------------------
+' 
 Public Function getElapsedTime() As Double
    Dim currentCounter As Currency
    
    QueryPerformanceCounter currentCounter
-   
-   getElapsedTime = (currentCounter - m_StartCounter) * m_AdjustedTickTime
+
+   ' Here the scale factor 10,000 of the counters and the scaled tick
+   ' time just compensate each other.
+   getElapsedTime = (currentCounter - m_StartCounter) * m_ScaledTickTime
 End Function
 
 '
@@ -97,7 +147,9 @@ End Function
 Private Sub Class_Initialize()
    Dim theFrequency As Currency
 
-   QueryPerformanceFrequency theFrequency
+  QueryPerformanceFrequency theFrequency
    
-   m_AdjustedTickTime = 1# / theFrequency
+   ' Here we create the length of a tick scaled by the factor 10,000
+   ' of the "Currency" data type.
+   m_ScaledTickTime = 1# / theFrequency
 End Sub
