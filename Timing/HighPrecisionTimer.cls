@@ -147,7 +147,7 @@ End Function
 Private Sub Class_Initialize()
    Dim theFrequency As Currency
 
-  QueryPerformanceFrequency theFrequency
+   QueryPerformanceFrequency theFrequency
    
    ' Here we create the length of a tick scaled by the factor 10,000
    ' of the "Currency" data type.
