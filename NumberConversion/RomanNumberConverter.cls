@@ -23,10 +23,10 @@ Private Const VALID_ARABIC_NUMERALS As String = "-0123456789"
 '
 ' Constants for exceptions
 '
-Private Const MODULE_NAME As String = "RomanNumberManager"
+Private Const MODULE_NAME As String = "RomanNumberConverter"
 Private Const ERR_NUMBER_START As Long = vbObjectError + 32300
 
-Private Const ERR_INVALID_ROMAN_NUMERAL As Long = ERR_NUMBER_START + 0
+Private Const ERR_INVALID_ROMAN_NUMERAL As Long = ERR_NUMBER_START
 Private Const STR_ERR_INVALID_ROMAN_NUMERAL As String = "Invalid roman numeral: "
 
 Private Const ERR_INVALID_ARABIC_NUMERAL As Long = ERR_NUMBER_START + 1
