@@ -16,27 +16,27 @@ Private Const MODULNAME As String = "StringBuilder"
 
 Private Const N_START_ERROR_MESSAGE As Long = vbObjectError + 27220
 
-Private Const ERR_BLOCK_SIZE_TOO_SMALL As Long = N_START_ERROR_MESSAGE + 1
+Private Const ERR_BLOCK_SIZE_TOO_SMALL As Long = N_START_ERROR_MESSAGE
 Private Const STR_ERR_BLOCK_SIZE_TOO_SMALL As String = "Block size too small: "
 
-Private Const ERR_BLOCK_SIZE_TOO_LARGE As Long = N_START_ERROR_MESSAGE + 2
+Private Const ERR_BLOCK_SIZE_TOO_LARGE As Long = N_START_ERROR_MESSAGE + 1
 Private Const STR_ERR_BLOCK_SIZE_TOO_LARGE As String = "Block size too large: "
 
-Private Const ERR_TOO_LONG As Long = N_START_ERROR_MESSAGE + 3
+Private Const ERR_TOO_LONG As Long = N_START_ERROR_MESSAGE + 2
 Private Const STR_ERR_TOO_LONG As String = "Length exceeds maximum length for strings"
 
-Private Const ERR_LENGTH_INCREASED As Long = N_START_ERROR_MESSAGE + 4
+Private Const ERR_LENGTH_INCREASED As Long = N_START_ERROR_MESSAGE + 3
 Private Const STR_ERR_LENGTH_INCREASED As String = "The length must not be increased without content"
 
-Private Const ERR_LENGTH_LESS_THAN_ZERO As Long = N_START_ERROR_MESSAGE + 5
+Private Const ERR_LENGTH_LESS_THAN_ZERO As Long = N_START_ERROR_MESSAGE + 4
 Private Const STR_ERR_LENGTH_LESS_THAN_ZERO As String = "Length must not be less than zero"
 
 '
 ' Private constants
 '
 Private Const DEFAULT_BLOCK_SIZE As Long = 64& * 1024&
-Private Const MINIMUM_BLOCK_SIZE        As Long = 1024&
-Private Const MAXIMUM_BLOCK_SIZE       As Long = 64& * 1024& * 1024&
+Private Const MINIMUM_BLOCK_SIZE As Long = 1024&
+Private Const MAXIMUM_BLOCK_SIZE As Long = 64& * 1024& * 1024&
 
 Private Const MAXIMUM_LENGTH As Long = &H7FFFFFFF
 
@@ -44,8 +44,8 @@ Private Const MAXIMUM_LENGTH As Long = &H7FFFFFFF
 ' Public constants
 '
 Public Enum TSBBlockSize
-   zkbbgMinimum = MINIMUM_BLOCK_SIZE
-   zkbbgMaximum = MAXIMUM_BLOCK_SIZE
+  sbbsMinimum  = MINIMUM_BLOCK_SIZE
+  sbbsgMaximum = MAXIMUM_BLOCK_SIZE
 End Enum
 
 '
@@ -57,7 +57,7 @@ Private m_BlockSize As Long
 Private m_Size As Long
 
 '
-' Public methoden
+' Public methods
 '
 Public Property Get blockSize() As Long
    blockSize = m_BlockSize
@@ -144,7 +144,7 @@ Public Function reset() As StringBuilder
 End Function
 
 '
-' Klassenmethoden
+' Class methods
 '
 Private Sub Class_Initialize()
    m_Length = 0
