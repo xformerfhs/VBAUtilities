@@ -137,7 +137,7 @@ Public Function getElapsedTime() As Double
    QueryPerformanceCounter currentCounter
 
    ' Here the scale factor 10,000 of the counters and the scaled tick
-   ' time just compensate each other.
+    ' time just cancel out each other.
    getElapsedTime = (currentCounter - m_StartCounter) * m_ScaledTickTime
 End Function
 
@@ -149,7 +149,7 @@ Private Sub Class_Initialize()
 
    QueryPerformanceFrequency theFrequency
    
-   ' Here we create the length of a tick scaled by the factor 10,000
+   ' Here we calculate the length of a tick scaled by the factor 10,000
    ' of the "Currency" data type.
    m_ScaledTickTime = 1# / theFrequency
 End Sub
