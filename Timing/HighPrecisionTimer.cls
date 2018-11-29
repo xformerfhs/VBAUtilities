@@ -73,7 +73,7 @@ Attribute VB_Exposed = False
 Option Explicit
 
 '
-' External methods
+' Windows API declarations
 '
 Private Declare Function QueryPerformanceCounter Lib "kernel32" ( _
                          ByRef lpPerformanceCount As Currency) As Long
