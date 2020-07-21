@@ -7,7 +7,44 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
-Option Compare Database
+'
+'+-------------------------------------------------------------------------
+'|
+'| SPDX-License-Identifier: MIT
+'|
+'| Copyright 2020, Frank Schwab
+'|
+'| Permission is hereby granted, free of charge, to any person obtaining a
+'| copy of this software and associated documentation files (the "Software"),
+'| to deal in the Software without restriction, including without limitation
+'| the rights to use, copy, modify, merge, publish, distribute, sublicense,
+'| and/or sell copies of the Software, and to permit persons to whom the
+'| Software is furnished to do so, subject to the following conditions:
+'|
+'| The above copyright notice and this permission notice shall be included
+'| in all copies or substantial portions of the Software.
+'|
+'| THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+'| OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+'| FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+'| THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+'| LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+'| OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+'| IN THE SOFTWARE.
+'|
+'|-------------------------------------------------------------------------
+'| Class               | Sorter
+'|---------------------+---------------------------------------------------
+'| Description         | Several optimized sorting algorithms
+'|---------------------+---------------------------------------------------
+'| Author              | Frank Schwab
+'|---------------------+---------------------------------------------------
+'| Version             | 1.0.0
+'|---------------------+---------------------------------------------------
+'| Changes             | 2020-07-20  Created. fhs
+'|---------------------+---------------------------------------------------
+'
+
 Option Explicit
 
 '
@@ -22,7 +59,7 @@ Private Const CUTOFF_SIZE_MINUS_1 As Long = 9   ' Cut off if 10 elements or less
 '
 ' Private methods
 '
-Private Sub initializeIndexArray(ByRef arrayToSort As Variant, ByRef indexArray() As Long)
+Private Sub InitializeIndexArray(ByRef arrayToSort As Variant, ByRef indexArray() As Long)
    Dim i As Long
    Dim j As Long
    Dim low As Long
@@ -40,7 +77,7 @@ Private Sub initializeIndexArray(ByRef arrayToSort As Variant, ByRef indexArray(
    Next i
 End Sub
 
-Private Sub insertionSortWithBoundaries(ByRef arrayToSort As Variant, ByVal idxFrom As Long, ByVal idxTo As Long)
+Private Sub InsertionSortWithBoundaries(ByRef arrayToSort As Variant, ByVal idxFrom As Long, ByVal idxTo As Long)
    Dim idxLeft As Long
    Dim idxLeftForTest As Long
    Dim idxRight As Long
@@ -71,7 +108,7 @@ Private Sub insertionSortWithBoundaries(ByRef arrayToSort As Variant, ByVal idxF
    Next idxRight
 End Sub
 
-Private Sub pureQuicksortPrivate(ByRef arrayToSort As Variant)
+Private Sub PureQuicksortPrivate(ByRef arrayToSort As Variant)
    Dim pivot As Variant
    Dim aStack As New Stack
    Dim idxFrom As Long
@@ -104,7 +141,7 @@ Private Sub pureQuicksortPrivate(ByRef arrayToSort As Variant)
 ' Choose the median of the first, middle and last array element as the pivot.
 ' As a side effect these three elements are already sorted.
 '
-' The pivot is placed at the next-to-last position so that the quicksort loop
+' The pivot is placed at the next-to-last position so that the Quicksort loop
 ' only has to partition from idxFrom + 1 to idxTo - 1
 '
 ' Normally this would be implemented as a function but has been inlined for better performance.
@@ -156,7 +193,7 @@ Private Sub pureQuicksortPrivate(ByRef arrayToSort As Variant)
          idxRight = idxPartitionTo
 
 '
-' Only start quicksort if we have more than three elements, so the difference between idxLeft
+' Only start Quicksort if we have more than three elements, so the difference between idxLeft
 ' and idxRight has to be *greater* than 1. A difference of 1 indicates a partition size of 3.
 '
          If (idxRight - idxLeft) > 1 Then
@@ -219,7 +256,7 @@ Private Sub pureQuicksortPrivate(ByRef arrayToSort As Variant)
    Loop Until aStack.isEmpty
 End Sub
 
-Private Sub quicksortPrivate(ByRef arrayToSort As Variant)
+Private Sub QuicksortPrivate(ByRef arrayToSort As Variant)
    Dim pivot As Variant
    Dim aStack As New Stack
    Dim idxFrom As Long
@@ -252,7 +289,7 @@ Private Sub quicksortPrivate(ByRef arrayToSort As Variant)
 ' Choose the median of the first, middle and last array element as the pivot.
 ' As a side effect these three elements are already sorted.
 '
-' The pivot is placed at the next-to-last position so that the quicksort loop
+' The pivot is placed at the next-to-last position so that the Quicksort loop
 ' only has to partition from idxFrom + 1 to idxTo - 1
 '
 ' Normally this would be implemented as a function but has been inlined for better performance.
@@ -357,7 +394,7 @@ Private Sub quicksortPrivate(ByRef arrayToSort As Variant)
          End If
       Else
          If idxTo > idxFrom Then
-            insertionSortWithBoundaries arrayToSort, idxFrom, idxTo
+            InsertionSortWithBoundaries arrayToSort, idxFrom, idxTo
          End If
 
          idxTo = aStack.pop
@@ -366,7 +403,7 @@ Private Sub quicksortPrivate(ByRef arrayToSort As Variant)
    Loop Until aStack.isEmpty
 End Sub
 
-Private Sub insertionsortWithIndexArrayAndBoundaries(ByRef arrayToSort As Variant, _
+Private Sub InsertionsortWithIndexArrayAndBoundaries(ByRef arrayToSort As Variant, _
                                                      ByRef indexArray() As Long, _
                                                      ByVal idxFrom As Long, _
                                                      ByVal idxTo As Long)
@@ -403,7 +440,7 @@ Private Sub insertionsortWithIndexArrayAndBoundaries(ByRef arrayToSort As Varian
    Next idxRight
 End Sub
 
-Private Sub pureQuicksortWithIndexArrayPrivate(ByRef arrayToSort As Variant, ByRef indexArray() As Long)
+Private Sub PureQuicksortWithIndexArrayPrivate(ByRef arrayToSort As Variant, ByRef indexArray() As Long)
    Dim pivot As Variant
    Dim aStack As New Stack
    Dim idxFrom As Long
@@ -436,7 +473,7 @@ Private Sub pureQuicksortWithIndexArrayPrivate(ByRef arrayToSort As Variant, ByR
 ' Choose the median of the first, middle and last array element as the pivot.
 ' As a side effect these three elements are already sorted.
 '
-' The pivot is placed at the next-to-last position so that the quicksort loop
+' The pivot is placed at the next-to-last position so that the Quicksort loop
 ' only has to partition from idxFrom + 1 to idxTo - 1
 '
 ' Normally this would be implemented as a function but has been inlined for better performance.
@@ -490,7 +527,7 @@ Private Sub pureQuicksortWithIndexArrayPrivate(ByRef arrayToSort As Variant, ByR
          idxRight = idxPartitionTo
 
 '
-' Only start quicksort if we have more than three elements, so the difference between idxLeft
+' Only start Quicksort if we have more than three elements, so the difference between idxLeft
 ' and idxRight has to be *greater* than 1. A difference of 1 indicates a partition size of 3.
 '
          If (idxRight - idxLeft) > 1 Then
@@ -553,7 +590,7 @@ Private Sub pureQuicksortWithIndexArrayPrivate(ByRef arrayToSort As Variant, ByR
    Loop Until aStack.isEmpty
 End Sub
 
-Private Sub quicksortWithIndexArrayPrivate(ByRef arrayToSort As Variant, ByRef indexArray() As Long)
+Private Sub QuicksortWithIndexArrayPrivate(ByRef arrayToSort As Variant, ByRef indexArray() As Long)
    Dim pivot As Variant
    Dim aStack As New Stack
    Dim idxFrom As Long
@@ -586,7 +623,7 @@ Private Sub quicksortWithIndexArrayPrivate(ByRef arrayToSort As Variant, ByRef i
 ' Choose the median of the first, middle and last array element as the pivot.
 ' As a side effect these three elements are already sorted.
 '
-' The pivot is placed at the next-to-last position so that the quicksort loop
+' The pivot is placed at the next-to-last position so that the Quicksort loop
 ' only has to partition from idxFrom + 1 to idxTo - 1
 '
 ' Normally this would be implemented as a function but has been inlined for better performance.
@@ -695,7 +732,7 @@ Private Sub quicksortWithIndexArrayPrivate(ByRef arrayToSort As Variant, ByRef i
          End If
       Else
          If idxTo > idxFrom Then
-            insertionsortWithIndexArrayAndBoundaries arrayToSort, indexArray, idxFrom, idxTo
+            InsertionsortWithIndexArrayAndBoundaries arrayToSort, indexArray, idxFrom, idxTo
          End If
 
          idxTo = aStack.pop
@@ -707,40 +744,40 @@ End Sub
 '
 ' Public methods
 '
-Public Sub insertionSort(ByRef arrayToSort As Variant)
+Public Sub InsertionSort(ByRef arrayToSort As Variant)
    If IsArray(arrayToSort) Then
-      insertionSortWithBoundaries arrayToSort, LBound(arrayToSort), UBound(arrayToSort)
+      InsertionSortWithBoundaries arrayToSort, LBound(arrayToSort), UBound(arrayToSort)
    End If
 End Sub
 
-Public Sub pureQuicksort(ByRef arrayToSort As Variant)
+Public Sub PureQuicksort(ByRef arrayToSort As Variant)
    If IsArray(arrayToSort) Then
-      pureQuicksortPrivate arrayToSort
+      PureQuicksortPrivate arrayToSort
    End If
 End Sub
 
-Public Sub quicksort(ByRef arrayToSort As Variant)
+Public Sub Quicksort(ByRef arrayToSort As Variant)
    If IsArray(arrayToSort) Then
-      quicksortPrivate arrayToSort
+      QuicksortPrivate arrayToSort
    End If
 End Sub
 
-Public Sub insertionSortWithIndexArray(ByRef arrayToSort As Variant, ByRef indexArray() As Long)
+Public Sub InsertionSortWithIndexArray(ByRef arrayToSort As Variant, ByRef indexArray() As Long)
    If IsArray(arrayToSort) Then
-      insertionsortWithIndexArrayAndBoundaries arrayToSort, indexArray, LBound(arrayToSort), UBound(arrayToSort)
+      InsertionsortWithIndexArrayAndBoundaries arrayToSort, indexArray, LBound(arrayToSort), UBound(arrayToSort)
    End If
 End Sub
 
-Public Sub pureQuicksortWithIndexArray(ByRef arrayToSort As Variant, ByRef indexArray() As Long)
+Public Sub PureQuicksortWithIndexArray(ByRef arrayToSort As Variant, ByRef indexArray() As Long)
    If IsArray(arrayToSort) Then
-      initializeIndexArray arrayToSort, indexArray
-      pureQuicksortWithIndexArrayPrivate arrayToSort, indexArray
+      InitializeIndexArray arrayToSort, indexArray
+      PureQuicksortWithIndexArrayPrivate arrayToSort, indexArray
    End If
 End Sub
 
-Public Sub quicksortWithIndexArray(ByRef arrayToSort As Variant, ByRef indexArray() As Long)
+Public Sub QuicksortWithIndexArray(ByRef arrayToSort As Variant, ByRef indexArray() As Long)
    If IsArray(arrayToSort) Then
-      initializeIndexArray arrayToSort, indexArray
-      quicksortWithIndexArrayPrivate arrayToSort, indexArray
+      InitializeIndexArray arrayToSort, indexArray
+      QuicksortWithIndexArrayPrivate arrayToSort, indexArray
    End If
 End Sub
