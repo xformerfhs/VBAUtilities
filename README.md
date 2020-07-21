@@ -42,7 +42,7 @@ A universal hashing class. It calculates [SHA-1](https://en.wikipedia.org/wiki/S
 
 ### MessageManager
 
-When calling Windows API functions one gets a return code. In order to find out what it means and present that return code as a text to the user this Class translates the return code to a string. It just asks Windows what the meaning of the return code ist. BTW, it also has a method to handle message templates with positional parameter substitution.
+When calling Windows API functions one gets a return code. In order to find out what it means and present that return code as a text to the user this class translates the return code to a string. It just asks Windows what the meaning of the return code ist. BTW, it also has a method to handle message templates with positional parameter substitution.
 
 ## ExcelUtilities
 
@@ -134,11 +134,23 @@ Get some system informations.
 
 ### Sorter
 
+An optimized sorter class. It can sort with three different methods:
+
+* Insertionsort
+* Pure Quicksort
+* Optimized Quicksort (a combination of Quicksort and Insertionsort)
+
+For string arrays there exist special sorting methods that make use of an index array. Instead of sorting the arrays of strings these methods sort an array of indices into the string array. This way strings do not need to be moved around which is a very expensive operation. 
+
 ### Stack
+
+An implementation of a stack. Used by the Sorter class.
 
 ## StringHandling
 
 ### StringBuilder
+
+An implementation of one of the most important classes that is missing in VBA: A string builder.
 
 ### UTF8Converter
 
