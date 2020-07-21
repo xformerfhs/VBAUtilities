@@ -50,10 +50,10 @@ Option Explicit
 
 Private Const ERR_PROPERTY_NOT_FOUND As Long = 3270
 
-Public Property Let SetProperty(ByRef obj As Object, _
-                                ByRef propertyName As String, _
-                                ByRef propertyType As Long, _
-                                ByRef propertyValue As Variant)
+Public Sub SetProperty(ByRef obj As Object, _
+                       ByRef propertyName As String, _
+                       ByRef propertyType As Long, _
+                       ByRef propertyValue As Variant)
    Dim properyList As DAO.Properties
    Dim aProperty As DAO.Property
 
@@ -82,10 +82,10 @@ Public Property Let SetProperty(ByRef obj As Object, _
    End If
 
    Set properyList = Nothing
-End Property
+End Sub
 
-Public Property Get GetProperty(ByRef obj As Object, _
-                                ByRef propertyName As String) As Variant
+Public Function GetProperty(ByRef obj As Object, _
+                            ByRef propertyName As String) As Variant
    Dim properyList As DAO.Properties
    Dim aProperty As DAO.Property
 
@@ -98,10 +98,10 @@ Public Property Get GetProperty(ByRef obj As Object, _
       GetProperty = Null
 
    On Error GoTo 0
-End Property
+End Function
 
-Public Property Get getPropertyWithDefault(ByRef obj As Object, _
-                                           ByRef propertyName As String, _
-                                           ByRef defaultValue As Variant) As Variant
-   getPropertyWithDefault = Nz(Me.GetProperty(obj, propertyName), defaultValue)
-End Property
+Public Function GetPropertyWithDefault(ByRef obj As Object, _
+                                       ByRef propertyName As String, _
+                                       ByRef defaultValue As Variant) As Variant
+   GetPropertyWithDefault = Nz(Me.GetProperty(obj, propertyName), defaultValue)
+End Function
