@@ -7,28 +7,67 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
+'
+'+-------------------------------------------------------------------------
+'|
+'| SPDX-License-Identifier: MIT
+'|
+'| Copyright 2020, Frank Schwab
+'|
+'| Permission is hereby granted, free of charge, to any person obtaining a
+'| copy of this software and associated documentation files (the "Software"),
+'| to deal in the Software without restriction, including without limitation
+'| the rights to use, copy, modify, merge, publish, distribute, sublicense,
+'| and/or sell copies of the Software, and to permit persons to whom the
+'| Software is furnished to do so, subject to the following conditions:
+'|
+'| The above copyright notice and this permission notice shall be included
+'| in all copies or substantial portions of the Software.
+'|
+'| THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+'| OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+'| FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+'| THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+'| LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+'| OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+'| IN THE SOFTWARE.
+'|
+'|
+'|-------------------------------------------------------------------------
+'| Class               | DBTableLinkHelper
+'|---------------------+---------------------------------------------------
+'| Description         | Get and change the path to a linked table
+'|---------------------+---------------------------------------------------
+'| Author              | Frank Schwab
+'|---------------------+---------------------------------------------------
+'| Version             | 1.0.0
+'|---------------------+---------------------------------------------------
+'| Changes             | 2020-07-20  Created. fhs
+'|---------------------+---------------------------------------------------
+'
+
 Option Compare Database
 Option Explicit
 
 '
 ' Private methods
 '
-Private Function getDBPathFromTablePath(ByRef dbPath As String) As String
+Private Function GetDBPathFromTablePath(ByRef dbPath As String) As String
    Dim pos As Long
 
    pos = InStr(1, dbPath, "=")
    
    If pos <> 0 Then
-      getDBPathFromTablePath = Right$(dbPath, Len(dbPath) - pos)
+      GetDBPathFromTablePath = Right$(dbPath, Len(dbPath) - pos)
    Else
-      getDBPathFromTablePath = CurrentProject.Path
+      GetDBPathFromTablePath = CurrentProject.Path
    End If
 End Function
 
 '
 ' Public methods
 '
-Public Function getDBPath(ByRef tableName As String) As String
+Public Function GetDBPath(ByRef tableName As String) As String
    Dim db As DAO.Database
 
    Set db = DBEngine.Workspaces(0).Databases(0)
@@ -37,14 +76,14 @@ Public Function getDBPath(ByRef tableName As String) As String
    
    Set tdf = db.TableDefs(tableName)
 
-   getDBPath = getDBPathFromTablePath(tdf.Connect)
+   GetDBPath = GetDBPathFromTablePath(tdf.Connect)
    
    Set tdf = Nothing
    
    Set db = Nothing
 End Function
 
-Public Function changeDBPath(ByRef fromDBPath As String, ByRef toDBPath As String) As Integer
+Public Function ChangeDBPath(ByRef fromDBPath As String, ByRef toDBPath As String) As Integer
    Dim count As Integer
    
    Dim db As DAO.Database
@@ -55,14 +94,14 @@ Public Function changeDBPath(ByRef fromDBPath As String, ByRef toDBPath As Strin
    
    For Each tdf In db.TableDefs
       If Len(tdf.Connect) <> 0 Then
-         If getDBPathFromTablePath(tdf.Connect) = fromDBPath Then
+         If GetDBPathFromTablePath(tdf.Connect) = fromDBPath Then
             tdf.Connect = ";DATABASE=" & toDBPath
             count = count + 1
          End If
       End If
    Next
 
-   changeDBPath = count
+   ChangeDBPath = count
 
    db.TableDefs.Refresh
 
