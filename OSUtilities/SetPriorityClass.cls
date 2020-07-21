@@ -7,7 +7,44 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
-Option Compare Database
+'
+'+-------------------------------------------------------------------------
+'|
+'| SPDX-License-Identifier: MIT
+'|
+'| Copyright 2020, Frank Schwab
+'|
+'| Permission is hereby granted, free of charge, to any person obtaining a
+'| copy of this software and associated documentation files (the "Software"),
+'| to deal in the Software without restriction, including without limitation
+'| the rights to use, copy, modify, merge, publish, distribute, sublicense,
+'| and/or sell copies of the Software, and to permit persons to whom the
+'| Software is furnished to do so, subject to the following conditions:
+'|
+'| The above copyright notice and this permission notice shall be included
+'| in all copies or substantial portions of the Software.
+'|
+'| THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+'| OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+'| FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+'| THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+'| LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+'| OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+'| IN THE SOFTWARE.
+'|
+'|-------------------------------------------------------------------------
+'| Class               | Set priority class
+'|---------------------+---------------------------------------------------
+'| Description         | Set the priority class of the currently running program
+'|---------------------+---------------------------------------------------
+'| Author              | Frank Schwab
+'|---------------------+---------------------------------------------------
+'| Version             | 1.0.0
+'|---------------------+---------------------------------------------------
+'| Changes             | 2020-07-20  Created. fhs
+'|---------------------+---------------------------------------------------
+'
+
 Option Explicit
 
 '
@@ -107,7 +144,7 @@ Private Declare Function SetPriorityClass Lib "kernel32" ( _
 '
 ' Private methods
 '
-Private Sub handleAPIError(ByVal classErrorNumber As Long, ByRef errorFormatText As String, ByRef actionName As String, ByVal apiErrorNumber As Long)
+Private Sub HandleAPIError(ByVal classErrorNumber As Long, ByRef errorFormatText As String, ByRef actionName As String, ByVal apiErrorNumber As Long)
    Dim mm As New MessageManager
 
    Err.Raise classErrorNumber, _
@@ -115,7 +152,7 @@ Private Sub handleAPIError(ByVal classErrorNumber As Long, ByRef errorFormatText
              mm.FormatMessageWithParameters(errorFormatText, actionName, apiErrorNumber, mm.GetMessageForWindowsErrorCode(apiErrorNumber))
 End Sub
 
-Private Sub checkPriorityClass(ByVal aPriorityClassValue As TPriorityClassValue)
+Private Sub CheckPriorityClass(ByVal aPriorityClassValue As TPriorityClassValue)
    Select Case aPriorityClassValue
       Case pcvIdle, pcvBackgroundBegin, pcvBackgroundEnd, pcvBelowNormal, pcvNormal, pcvAboveNormal, pcvHigh, pcvRealtime
          ' Value is valid. So just continue
@@ -130,12 +167,12 @@ End Sub
 '
 ' Public methods
 '
-Public Sub changeThisProcessPriority(ByVal newPriorityClassValue As TPriorityClassValue)
+Public Sub ChangeThisProcessPriority(ByVal newPriorityClassValue As TPriorityClassValue)
    Dim hProcess As Long
    Dim rc As Long
    Dim callError As Long
 
-   checkPriorityClass newPriorityClassValue
+   CheckPriorityClass newPriorityClassValue
 
    hProcess = GetCurrentProcess
 
@@ -152,7 +189,7 @@ Public Sub changeThisProcessPriority(ByVal newPriorityClassValue As TPriorityCla
          If rc = ERROR_FAILURE Then
             callError = Err.LastDllError
  
-            handleAPIError ERROR_NUMBER_CAN_NOT_SET_PRIORITY_CLASS, _
+            HandleAPIError ERROR_NUMBER_CAN_NOT_SET_PRIORITY_CLASS, _
                            ERROR_MESSAGE_FOR_API, _
                            "set", _
                            callError
@@ -161,7 +198,7 @@ Public Sub changeThisProcessPriority(ByVal newPriorityClassValue As TPriorityCla
    Else
       callError = Err.LastDllError
   
-      handleAPIError ERROR_NUMBER_CAN_NOT_SET_PRIORITY_CLASS, _
+      HandleAPIError ERROR_NUMBER_CAN_NOT_SET_PRIORITY_CLASS, _
                      ERROR_MESSAGE_FOR_API, _
                      "get", _
                      callError
