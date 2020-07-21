@@ -7,7 +7,45 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
-Option Compare Database
+'
+'+-------------------------------------------------------------------------
+'|
+'| SPDX-License-Identifier: MIT
+'|
+'| Copyright 2020, Frank Schwab
+'|
+'| Permission is hereby granted, free of charge, to any person obtaining a
+'| copy of this software and associated documentation files (the "Software"),
+'| to deal in the Software without restriction, including without limitation
+'| the rights to use, copy, modify, merge, publish, distribute, sublicense,
+'| and/or sell copies of the Software, and to permit persons to whom the
+'| Software is furnished to do so, subject to the following conditions:
+'|
+'| The above copyright notice and this permission notice shall be included
+'| in all copies or substantial portions of the Software.
+'|
+'| THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+'| OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+'| FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+'| THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+'| LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+'| OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+'| IN THE SOFTWARE.
+'|
+'|
+'|-------------------------------------------------------------------------
+'| Class               | RandomFileName
+'|---------------------+---------------------------------------------------
+'| Description         | Generates random file names
+'|---------------------+---------------------------------------------------
+'| Author              | Frank Schwab
+'|---------------------+---------------------------------------------------
+'| Version             | 1.0.0
+'|---------------------+---------------------------------------------------
+'| Changes             | 2020-07-20  Created. fhs
+'|---------------------+---------------------------------------------------
+'
+
 Option Explicit
 
 '
@@ -49,61 +87,61 @@ Public fileSuffix As String
 '
 ' Private methods
 '
-Private Function getFileExtensionWithSeparator() As String
+Private Function GetFileExtensionWithSeparator() As String
    If Len(m_Extension) > 0 Then
-      getFileExtensionWithSeparator = SEPARATOR_EXTENSION & m_Extension
+      GetFileExtensionWithSeparator = SEPARATOR_EXTENSION & m_Extension
    Else
-      getFileExtensionWithSeparator = m_Extension
+      GetFileExtensionWithSeparator = m_Extension
    End If
 End Function
 
-Private Function getFileDirectoryWithSeparator() As String
-   getFileDirectoryWithSeparator = m_Directory & SEPARATOR_PATH
+Private Function GetFileDirectoryWithSeparator() As String
+   GetFileDirectoryWithSeparator = m_Directory & SEPARATOR_PATH
 End Function
 
-Private Function randomLongInRange(ByVal fromValue As Long, ByVal toValue As Long) As Long
-   randomLongInRange = Int((toValue - fromValue + 1) * Rnd) + fromValue
+Private Function RandomLongInRange(ByVal fromValue As Long, ByVal toValue As Long) As Long
+   RandomLongInRange = Int((toValue - fromValue + 1) * Rnd) + fromValue
 End Function
 
-Private Function getRandomFileNameCharacter() As String
-   getRandomFileNameCharacter = Mid$(VALID_FILE_NAME_CHARACTERS, randomLongInRange(1, Len(VALID_FILE_NAME_CHARACTERS)), 1)
+Private Function GetRandomFileNameCharacter() As String
+   GetRandomFileNameCharacter = Mid$(VALID_FILE_NAME_CHARACTERS, RandomLongInRange(1, Len(VALID_FILE_NAME_CHARACTERS)), 1)
 End Function
 
-Private Function createRandomFileName() As String
+Private Function CreateRandomFileName() As String
    Dim result As String
    Dim i As Integer
    
    result = Space$(8)
 
    For i = 1 To Len(result)
-      Mid$(result, i, 1) = getRandomFileNameCharacter
+      Mid$(result, i, 1) = GetRandomFileNameCharacter
    Next i
    
-   createRandomFileName = result
+   CreateRandomFileName = result
 End Function
 
-Private Function constructFileName() As String
+Private Function ConstructFileName() As String
    Dim result As String
 
    If Len(filePrefix) > 0 Then _
       result = filePrefix & FILENAME_UNDERSCORE
 
-   result = result & createRandomFileName
+   result = result & CreateRandomFileName
 
    If Len(fileSuffix) > 0 Then _
       result = result & FILENAME_UNDERSCORE & fileSuffix
 
-   constructFileName = result & getFileExtensionWithSeparator
+   ConstructFileName = result & GetFileExtensionWithSeparator
 End Function
 
-Private Function createUniqueRandomFilePath()
+Private Function CreateUniqueRandomFilePath()
    Dim filePathProbe As String
 
    Do
-      filePathProbe = getFileDirectoryWithSeparator & constructFileName
+      filePathProbe = GetFileDirectoryWithSeparator & ConstructFileName
 
       If Len(Dir$(filePathProbe)) = 0 Then
-         createUniqueRandomFilePath = filePathProbe
+         CreateUniqueRandomFilePath = filePathProbe
          Exit Do
       End If
    Loop
@@ -112,11 +150,11 @@ End Function
 '
 ' Public attributes
 '
-Public Property Get fileDirectory() As String
-   fileDirectory = m_Directory
+Public Property Get FileDirectory() As String
+   FileDirectory = m_Directory
 End Property
 
-Public Property Let fileDirectory(ByRef newDirectory As String)
+Public Property Let FileDirectory(ByRef newDirectory As String)
    Dim normalizedDirectory As String
    Dim lastCharacter As String * 1
    
@@ -142,11 +180,11 @@ Public Property Let fileDirectory(ByRef newDirectory As String)
    End If
 End Property
 
-Public Property Get fileExtension() As String
-   fileExtension = m_Extension
+Public Property Get FileExtension() As String
+   FileExtension = m_Extension
 End Property
 
-Public Property Let fileExtension(ByRef newExtension As String)
+Public Property Let FileExtension(ByRef newExtension As String)
    Dim normalizedExtension As String
    Dim length As Long
    Dim pos As Long
@@ -171,8 +209,8 @@ End Property
 '
 ' Public methods
 '
-Public Function getUniqueRandomFilePath() As String
-   getUniqueRandomFilePath = createUniqueRandomFilePath
+Public Function GetUniqueRandomFilePath() As String
+   GetUniqueRandomFilePath = CreateUniqueRandomFilePath
 End Function
 
 '
