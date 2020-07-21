@@ -42,45 +42,93 @@ A universal hashing class. It calculates [SHA-1](https://en.wikipedia.org/wiki/S
 
 ### MessageManager
 
+When calling Windows API functions one gets a return code. In order to find out what it means and present that return code as a text to the user this Class translates the return code to a string. It just asks Windows what the meaning of the return code ist. BTW, it also has a method to handle message templates with positional parameter substitution.
+
 ## ExcelUtilities
 
 ### WorkbookCustomPropertyHandler
 
+This class handles custom properties for an Excel workbook.
+
 ### WorksheetCustomPropertyHandler
+
+This class handles custom properties for an Excel worksheet.
 
 ## FileHandling
 
 ### DriveHelper
 
+Get information about a drive, i.e. what type it is and whether it is a network drive.
+
 ### FileCompressionManager
 
+Managing file compression is horribly complicated under Windows as this is not an attribute but something that is achieved by issueing IO control command.
+This class puts a simple wrapper around the complexity of handling compressed files. One can create a compressed file and read, set and clear the compression state of a file.
+
 ### RandomFileName
+
+Helper class to generate a unique random file name.
 
 ## Internet
 
 ### FTPClient
 
+A simple FTP client for VBA programs. It has the following public methods
+
+* Connect
+* Disconnect
+* GetFile
+* PutFile
+* CreateDirectory
+* RemoveDirectory
+* DeleteFile
+* GetCurrentDirectory
+* SetCurrentDirectory
+* DirFiles
+
 ## Math
 
 ### BearingHelper
 
+A little helper class to calculate interpolations between different navigational [bearings](https://en.wikipedia.org/wiki/Bearing_(navigation)).
+
 ### SphereDistanceCalculator
 
+Helper class to calculate distances and bearings on a sphere when the positions (latitude, longitude) are known.
+
 ### Trigonometrics
+
+Adds missing trigonometric functions to VBA:
+
+* ArcCos
+* ArcSin
+* ArcTan2
+* RadiantToDegree
+* DegreeToRadiant
 
 ## NumberConversion
 
 ### Base64Converter
 
+Converts byte arrays to and from Base64 representation.
+
 ### HexConverter
 
+Converts byte arrays to and from hexadecimal string representation.
+
 ### RomanNumberConverter
+
+Converts integer to roman number representations.
 
 ## OSUtilities
 
 ### SetPriorityClass
 
+Class to set the currently running processes priority class to give it a higher or lower scheduling priority.
+
 ### SystemInformation
+
+Get some system informations.
 
 ## Sorting
 
