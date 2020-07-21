@@ -180,16 +180,16 @@ Private Declare Function GetLocaleInfo Lib "kernel32" _
 '
 ' Private methods
 '
-Private Function GetLocaleText(ByVal lokalisierungstyp As Long) As String
+Private Function GetLocaleText(ByVal localeType As Long) As String
    Dim result As String
    Dim length As Long
    Dim rc As Long
 
-   length = GetLocaleInfo(LOCALE_USER_DEFAULT, lokalisierungstyp, ByVal 0, 0)
+   length = GetLocaleInfo(LOCALE_USER_DEFAULT, localeType, ByVal 0, 0)
 
    result = String$(length, " ")
 
-   rc = GetLocaleInfo(LOCALE_USER_DEFAULT, lokalisierungstyp, StrPtr(result), length)
+   rc = GetLocaleInfo(LOCALE_USER_DEFAULT, localeType, StrPtr(result), length)
 
    If rc = RETURN_ERROR Then
       GetLocaleText = UNKOWN
