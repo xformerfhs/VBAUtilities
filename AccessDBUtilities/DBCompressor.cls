@@ -7,6 +7,45 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
+'
+'+-------------------------------------------------------------------------
+'|
+'| SPDX-License-Identifier: MIT
+'|
+'| Copyright 2020, Frank Schwab
+'|
+'| Permission is hereby granted, free of charge, to any person obtaining a
+'| copy of this software and associated documentation files (the "Software"),
+'| to deal in the Software without restriction, including without limitation
+'| the rights to use, copy, modify, merge, publish, distribute, sublicense,
+'| and/or sell copies of the Software, and to permit persons to whom the
+'| Software is furnished to do so, subject to the following conditions:
+'|
+'| The above copyright notice and this permission notice shall be included
+'| in all copies or substantial portions of the Software.
+'|
+'| THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+'| OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+'| FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+'| THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+'| LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+'| OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+'| IN THE SOFTWARE.
+'|
+'|
+'|-------------------------------------------------------------------------
+'| Class               | DBCompressor
+'|---------------------+---------------------------------------------------
+'| Description         | Compress an Access database
+'|---------------------+---------------------------------------------------
+'| Author              | Frank Schwab
+'|---------------------+---------------------------------------------------
+'| Version             | 1.0.0
+'|---------------------+---------------------------------------------------
+'| Changes             | 2020-07-20  Created. fhs
+'|---------------------+---------------------------------------------------
+'
+
 Option Compare Database
 Option Explicit
 
@@ -24,7 +63,7 @@ Private Const ERR_TEXT_FILE_DOES_NOT_EXIST As String = "File does not exist: '"
 '
 ' Private methods
 '
-Private Sub doDBCompression(ByRef oldPath As String, ByRef newPath As String)
+Private Sub DoDBCompression(ByRef oldPath As String, ByRef newPath As String)
    '
    ' Compress source db to temp db
    '
@@ -37,7 +76,7 @@ Private Sub doDBCompression(ByRef oldPath As String, ByRef newPath As String)
    Name newPath As oldPath
 End Sub
 
-Private Sub getFilePathParts(ByRef anFSO As Scripting.FileSystemObject, _
+Private Sub GetFilePathParts(ByRef anFSO As Scripting.FileSystemObject, _
                              ByRef aFilePath As String, _
                              ByRef aDirectoryName As String, _
                              ByRef aFileBaseName As String, _
@@ -49,31 +88,31 @@ Private Sub getFilePathParts(ByRef anFSO As Scripting.FileSystemObject, _
    End With
 End Sub
 
-Private Function getNewDBPath(ByRef anFSO As Scripting.FileSystemObject, ByRef dbPath As String) As String
+Private Function GetNewDBPath(ByRef anFSO As Scripting.FileSystemObject, ByRef dbPath As String) As String
    Dim dbDirectory As String
    Dim dbBaseFileName As String
    Dim dbExtension As String
 
    Dim anRFN As New RandomFileName
 
-   getFilePathParts anFSO, dbPath, dbDirectory, dbBaseFileName, dbExtension
+   GetFilePathParts anFSO, dbPath, dbDirectory, dbBaseFileName, dbExtension
 
    With anRFN
       .fileDirectory = dbDirectory
       .fileExtension = dbExtension
       .filePrefix = dbBaseFileName & "_"
-      getNewDBPath = .getUniqueRandomFilePath
+      GetNewDBPath = .getUniqueRandomFilePath
    End With
 End Function
 
 '
 ' Public methods
 '
-Public Sub compressDB(ByRef dbPath As String)
+Public Sub CompressDB(ByRef dbPath As String)
    Dim anFSO As New Scripting.FileSystemObject
 
    If anFSO.FileExists(dbPath) Then
-      doDBCompression dbPath, getNewDBPath(anFSO, dbPath)
+      DoDBCompression dbPath, GetNewDBPath(anFSO, dbPath)
    Else
       Err.Raise ERR_NUM_FILE_DOES_NOT_EXIST, _
                 CLASS_NAME, _
