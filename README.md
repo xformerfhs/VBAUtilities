@@ -94,6 +94,10 @@ A universal hashing class. It calculates [SHA-1](https://en.wikipedia.org/wiki/S
 
 ### UTF8Converter
 
+Converts VBA strings from and to [UTF-8](https://en.wikipedia.org/wiki/UTF-8) encoding. Note that the UTF-8 values are byte arrays, not strings. Everybody who returns UTF-8 encodings in strings is doing something seriously wrong.
+
 ## Timing
 
 ### HighPrecisionTimer
+
+A high precision timer that uses the Windows Performance Counter which has a resolution better than 0.000001 seconds (1µs). 
