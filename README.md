@@ -150,7 +150,7 @@ An implementation of a stack. Used by the Sorter class.
 
 ### StringBuilder
 
-An implementation of one of the most important classes that is missing in VBA: A string builder.
+An implementation of one of the most important classes that is missing in VBA: A string builder. It allows method chaining like in e.g. `sb.SetTo("Content").Append(aVar).Append(anotherVar)`.
 
 ### UTF8Converter
 
