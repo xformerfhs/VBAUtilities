@@ -7,6 +7,56 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
+'
+'+-------------------------------------------------------------------------
+'|
+'| SPDX-License-Identifier: MIT
+'|
+'| Copyright 2020, Frank Schwab
+'|
+'| Permission is hereby granted, free of charge, to any person obtaining a
+'| copy of this software and associated documentation files (the "Software"),
+'| to deal in the Software without restriction, including without limitation
+'| the rights to use, copy, modify, merge, publish, distribute, sublicense,
+'| and/or sell copies of the Software, and to permit persons to whom the
+'| Software is furnished to do so, subject to the following conditions:
+'|
+'| The above copyright notice and this permission notice shall be included
+'| in all copies or substantial portions of the Software.
+'|
+'| THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+'| OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+'| FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+'| THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+'| LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+'| OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+'| IN THE SOFTWARE.
+'|
+'|
+'|-------------------------------------------------------------------------
+'| Class               | Access lock file reader
+'|---------------------+---------------------------------------------------
+'| Description         | Read access lock files
+'|---------------------+---------------------------------------------------
+'| Author              | Frank Schwab
+'|---------------------+---------------------------------------------------
+'| Version             | 1.0.0
+'|---------------------+---------------------------------------------------
+'| Changes             | 2020-07-21  Created. fhs
+'|---------------------+---------------------------------------------------
+'| Typical usage       | Dim hc256 As New HashCng
+'|                     | hc256.InitializeSHA256
+'|                     | hc256.DigestBytes aByteArray
+'|                     | hc256.DigestStringAsUTF8 "Some string"
+'|                     | Dim hashValue() as Byte
+'|                     | hashValue = hc256.GetHash()
+'|                     | ' Digest... and GetHash may be called
+'|                     | ' again as often, as necessary
+'|                     |
+'|                     | ' If you want to change the hash type call
+'|                     | ' any of the Initialize... methods
+'|---------------------+---------------------------------------------------
+'
 Option Compare Database
 Option Explicit
 
@@ -16,7 +66,7 @@ Option Explicit
 Private Const MODULNAME As String = "AccessLockFileReader"
 Private Const ERR_NUMBER_START As Long = vbObjectError + 45122
 
-Private Const ERR_NO_LOCK_FILE As Long = ERR_NUMBER_START
+Private Const ERR_NO_LOCK_FILE As Long = ERR_NUMBER_START + 0
 Private Const STR_ERR_NO_LOCK_FILE As String = "There is no lock file (neither ending with '.ldb', nor with '.laccdb')"
 
 '
@@ -28,11 +78,11 @@ Private Const LOCK_FILE_EXTENSION_2007 As String = ".laccdb"
 '
 ' Private methods
 '
-Private Function fileExists(ByRef dbPath As String) As Boolean
-   fileExists = (Len(Dir$(dbPath)) > 0)
+Private Function FileExists(ByRef dbPath As String) As Boolean
+   FileExists = (Len(Dir$(dbPath)) > 0)
 End Function
 
-Private Function getLockFileName(ByRef dbPath As String) As String
+Private Function GetLockFileName(ByRef dbPath As String) As String
    Dim pos As Long
    Dim withoutExtension As String
    Dim result As String
@@ -46,35 +96,35 @@ Private Function getLockFileName(ByRef dbPath As String) As String
 
    result = withoutExtension & LOCK_FILE_EXTENSION_2003
 
-   If Not fileExists(result) Then
+   If Not FileExists(result) Then
       result = withoutExtension & LOCK_FILE_EXTENSION_2007
       
-      If Not fileExists(result) Then _
+      If Not FileExists(result) Then _
          Err.Raise ERR_NO_LOCK_FILE, MODULNAME, STR_ERR_NO_LOCK_FILE
    End If
 
-   getLockFileName = result
+   GetLockFileName = result
 End Function
 
-Private Function myDBPath() As String
+Private Function MyDBPath() As String
    With CurrentProject
-      myDBPath = .Path & "\" & .name
+      MyDBPath = .Path & "\" & .name
    End With
 End Function
 
-Private Function stripTrailingZeroes(ByRef aString As String) As String
+Private Function StripTrailingZeroes(ByRef aString As String) As String
    Dim pos As Long
 
    pos = InStr(1, aString, vbNullChar)
 
    If pos > 0 Then
-      stripTrailingZeroes = Left$(aString, pos - 1)
+      StripTrailingZeroes = Left$(aString, pos - 1)
    Else
-      stripTrailingZeroes = aString
+      StripTrailingZeroes = aString
    End If
 End Function
 
-Private Function readLockFileEntries(ByRef dbPath As String) As Dictionary
+Private Function ReadLockFileEntries(ByRef dbPath As String) As Dictionary
    Dim fn As Integer
    Dim aRecord As String * 32
    Dim isComputername As Boolean
@@ -93,7 +143,7 @@ Private Function readLockFileEntries(ByRef dbPath As String) As Dictionary
    Do While Not EOF(fn)
       Get #fn, , aRecord
 
-      normalizedRecord = Trim$(stripTrailingZeroes(aRecord))
+      normalizedRecord = Trim$(StripTrailingZeroes(aRecord))
 
       If Len(normalizedRecord) > 0 Then
          If isComputername Then
@@ -111,21 +161,21 @@ Private Function readLockFileEntries(ByRef dbPath As String) As Dictionary
    
    Close #fn
 
-   Set readLockFileEntries = result
+   Set ReadLockFileEntries = result
 End Function
 
 '
 ' Public methods
 '
-Public Function getLockFileEntriesFrom(ByRef dbPath As String) As Dictionary
-   Set getLockFileEntriesFrom = readLockFileEntries(getLockFileName(dbPath))
+Public Function GetLockFileEntriesFrom(ByRef dbPath As String) As Dictionary
+   Set GetLockFileEntriesFrom = ReadLockFileEntries(GetLockFileName(dbPath))
 End Function
 
-Public Function getMyLockFileEntries() As Dictionary
-   Set getMyLockFileEntries = getLockFileEntriesFrom(myDBPath)
+Public Function GetMyLockFileEntries() As Dictionary
+   Set GetMyLockFileEntries = GetLockFileEntriesFrom(MyDBPath)
 End Function
 
-Public Function listOfOtherComputersFrom(ByRef dbPath As String) As String
+Public Function ListOfOtherComputersFrom(ByRef dbPath As String) As String
    Dim computerList As Dictionary
    Dim aComputerName As Variant
    Dim myComputerName As String
@@ -134,7 +184,7 @@ Public Function listOfOtherComputersFrom(ByRef dbPath As String) As String
 
    myComputerName = aSI.getNameOfComputer
 
-   Set computerList = Me.getLockFileEntriesFrom(dbPath)
+   Set computerList = Me.GetLockFileEntriesFrom(dbPath)
 
    result = ""
    
@@ -144,12 +194,12 @@ Public Function listOfOtherComputersFrom(ByRef dbPath As String) As String
    Next aComputerName
 
    If Len(result) = 0 Then
-      listOfOtherComputersFrom = result
+      ListOfOtherComputersFrom = result
    Else
-      listOfOtherComputersFrom = Right$(result, Len(result) - 2)
+      ListOfOtherComputersFrom = Right$(result, Len(result) - 2)
    End If
 End Function
 
-Public Function listMyOtherComputers() As String
-   listMyOtherComputers = listOfOtherComputersFrom(myDBPath)
+Public Function ListMyOtherComputers() As String
+   ListMyOtherComputers = ListOfOtherComputersFrom(MyDBPath)
 End Function
