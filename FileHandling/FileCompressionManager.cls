@@ -7,6 +7,45 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
+'
+'+-------------------------------------------------------------------------
+'|
+'| SPDX-License-Identifier: MIT
+'|
+'| Copyright 2020, Frank Schwab
+'|
+'| Permission is hereby granted, free of charge, to any person obtaining a
+'| copy of this software and associated documentation files (the "Software"),
+'| to deal in the Software without restriction, including without limitation
+'| the rights to use, copy, modify, merge, publish, distribute, sublicense,
+'| and/or sell copies of the Software, and to permit persons to whom the
+'| Software is furnished to do so, subject to the following conditions:
+'|
+'| The above copyright notice and this permission notice shall be included
+'| in all copies or substantial portions of the Software.
+'|
+'| THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+'| OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+'| FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+'| THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+'| LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+'| OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+'| IN THE SOFTWARE.
+'|
+'|
+'|-------------------------------------------------------------------------
+'| Class               | FileCompressionManager
+'|---------------------+---------------------------------------------------
+'| Description         | Manage compression state of a file
+'|---------------------+---------------------------------------------------
+'| Author              | Frank Schwab
+'|---------------------+---------------------------------------------------
+'| Version             | 1.0.0
+'|---------------------+---------------------------------------------------
+'| Changes             | 2020-07-20  Created. fhs
+'|---------------------+---------------------------------------------------
+'
+
 Option Explicit
 
 
@@ -24,82 +63,43 @@ Private Const ERROR_TEXT_API_ERROR As String = "Error "
 '
 
 '''
-''' Constants for GetVolumeInformation
+''' Relevant constant for GetVolumeInformation
 '''
-Private Const FILE_CASE_PRESERVED_NAMES         As Long = &H2&
-Private Const FILE_CASE_SENSITIVE_SEARCH        As Long = &H1&
-Private Const FILE_FILE_COMPRESSION             As Long = &H10&
-Private Const FILE_NAMED_STREAMS                As Long = &H40000
-Private Const FILE_PERSISTENT_ACLS              As Long = &H8&
-Private Const FILE_READ_ONLY_VOLUME             As Long = &H80000
-Private Const FILE_SEQUENTIAL_WRITE_ONCE        As Long = &H100000
-Private Const FILE_SUPPORTS_ENCRYPTION          As Long = &H20000
-Private Const FILE_SUPPORTS_EXTENDED_ATTRIBUTES As Long = &H800000
-Private Const FILE_SUPPORTS_OBJECT_IDS          As Long = &H10000
-Private Const FILE_SUPPORTS_OPEN_BY_FILE_ID     As Long = &H1000000
-Private Const FILE_SUPPORTS_REPARSE_POINTS      As Long = &H80&
-Private Const FILE_SUPPORTS_SPARSE_FILES        As Long = &H40&
-Private Const FILE_SUPPORTS_TRANSACTIONS        As Long = &H200000
-Private Const FILE_SUPPORTS_USN_JOURNAL         As Long = &H2000000
-Private Const FILE_UNICODE_ON_DISK              As Long = &H4&
-Private Const FILE_VOLUME_IS_COMPRESSED         As Long = &H8000
-Private Const FILE_VOLUME_QUOTAS                As Long = &H20&
+Private Const FILE_FILE_COMPRESSION As Long = &H10&
 
 '''
 ''' Constants for dwDesiredAccess
 '''
-Private Const GENERIC_ALL     As Long = &H10000000
 Private Const GENERIC_READ    As Long = &H80000000
 Private Const GENERIC_WRITE   As Long = &H40000000
-Private Const GENERIC_EXECUTE As Long = &H20000000
 
 '''
 ''' Constants for dwShareMode
 '''
-Private Const FILE_SHARE_DELETE  As Long = &H4
-Private Const FILE_SHARE_NOTHING As Long = &H0
 Private Const FILE_SHARE_READ    As Long = &H1
-Private Const FILE_SHARE_WRITE   As Long = &H2
 
 '''
 ''' Constants for dwCreationDisposition
 '''
-Private Const CREATE_ALWAYS     As Long = 2
-Private Const CREATE_NEW        As Long = 1
-Private Const OPEN_ALWAYS       As Long = 4
-Private Const OPEN_EXISTING     As Long = 3
-Private Const TRUNCATE_EXISTING As Long = 5
- 
-'''
-''' Constants for dwFlagsAndAttributes
-'''
-Private Const FILE_ATTRIBUTE_ARCHIVE       As Long = &H20
-Private Const FILE_ATTRIBUTE_ENCRYPTED     As Long = &H4000&
-Private Const FILE_ATTRIBUTE_HIDDEN        As Long = &H2
-Private Const FILE_ATTRIBUTE_NORMAL        As Long = &H80
-Private Const FILE_ATTRIBUTE_OFFLINE       As Long = &H1000&
-Private Const FILE_ATTRIBUTE_READONLY      As Long = &H1
-Private Const FILE_ATTRIBUTE_SYSTEM        As Long = &H4
-Private Const FILE_ATTRIBUTE_TEMPORARY     As Long = &H100&
-Private Const FILE_FLAG_DELETE_ON_CLOSE    As Long = &H4000000
-Private Const FILE_FLAG_NO_BUFFERING       As Long = &H20000000
-Private Const FILE_FLAG_OPEN_NO_RECALL     As Long = &H100000
-Private Const FILE_FLAG_OPEN_REPARSE_POINT As Long = &H200000
-Private Const FILE_FLAG_OVERLAPPED         As Long = &H40000000
-Private Const FILE_FLAG_POSIX_SEMANTICS    As Long = &H1000000
-Private Const FILE_FLAG_RANDOM_ACCESS      As Long = &H10000000
-Private Const FILE_FLAG_SEQUENTIAL_SCAN    As Long = &H8000000
-Private Const FILE_FLAG_SESSION_AWARE      As Long = &H800000
-Private Const FILE_FLAG_WRITE_THROUGH      As Long = &H80000000
+Private Const CREATE_ALWAYS As Long = 2
+Private Const OPEN_EXISTING As Long = 3
 
+'''
+''' Constant for dwFlagsAndAttributes
+'''
+Private Const FILE_ATTRIBUTE_NORMAL As Long = &H80
+
+'''
+''' Constant for invalid handle
+'''
 Private Const INVALID_HANDLE_VALUE As Long = -1&
 
 '''
 ''' Constants for ioctl
 '''
-Private Const FILE_ANY_ACCESS   As Long = &H0&
-Private Const FILE_READ_ACCESS  As Long = &H1&
-Private Const FILE_WRITE_ACCESS As Long = &H2&
+Private Const FILE_ANY_ACCESS As Long = &H0&
+Private Const FILE_READ_DATA  As Long = &H1&
+Private Const FILE_WRITE_DATA As Long = &H2&
 
 Private Const FILE_DEVICE_FILE_SYSTEM As Long = &H9&
 
@@ -197,19 +197,23 @@ Private Function GetVolumeFlags(ByRef drivename As String) As Long
    End If
 End Function
 
-Private Function DoesFilesystemSupportCompression(ByRef drivename As String) As Boolean
-   DoesFilesystemSupportCompression = ((GetVolumeFlags(drivename) And FILE_FILE_COMPRESSION) <> 0)
-End Function
-
 Private Function GetDriveName(ByRef fileName As String) As String
    GetDriveName = m_FSO.GetDriveName(m_FSO.GetAbsolutePathName(fileName)) & "\"
 End Function
 
+Private Function DoesFilesystemSupportCompression(ByRef fileName As String) As Boolean
+   DoesFilesystemSupportCompression = ((GetVolumeFlags(GetDriveName(fileName)) And FILE_FILE_COMPRESSION) <> 0)
+End Function
+
 Private Function MakeIOCtlCode(ByVal deviceType As Long, ByVal accessType As Long, ByVal functionCode As Long, ByVal ioMethod As Long) As Long
-   MakeIOCtlCode = ((deviceType * 65536) Or _
-                    (accessType * 16384&) Or _
-                    (functionCode * 4&) Or _
-                    ioMethod)
+   Dim result As Long
+
+   result = ((deviceType * &H10000) Or _
+            (accessType * &H4000&) Or _
+            (functionCode * 4&) Or _
+            ioMethod)
+
+   MakeIOCtlCode = result
 End Function
 
 Private Function GetCompressionAttribute(ByRef handle As Long) As Boolean
@@ -220,6 +224,12 @@ Private Function GetCompressionAttribute(ByRef handle As Long) As Boolean
 
    GetCompressionAttribute = False
 
+   '
+   ' The "required access" parameter *must* be set to "FILE_ANY_ACCESS" in order to read the compression state.
+   ' Setting it to "FILE_READ_DATA" results in an "invalid parameter" error.
+   '
+   ' From winioctl.h: #define FSCTL_GET_COMPRESSION CTL_CODE(FILE_DEVICE_FILE_SYSTEM, 15, METHOD_BUFFERED, FILE_ANY_ACCESS)
+   '
    rc = DeviceIoControl(handle, _
                         MakeIOCtlCode(FILE_DEVICE_FILE_SYSTEM, FILE_ANY_ACCESS, IOCTL_FUNCTION_GET_COMPRESSION, METHOD_BUFFERED), _
                         0&, _
@@ -248,8 +258,11 @@ Private Sub SetCompressionAttribute(ByRef handle As Long, ByVal shouldCompress A
       controlParameter = COMPRESSION_FORMAT_NONE
    End If
 
+   '
+   ' From winioctl.h: #define FSCTL_SET_COMPRESSION CTL_CODE(FILE_DEVICE_FILE_SYSTEM, 16, METHOD_BUFFERED, FILE_READ_DATA | FILE_WRITE_DATA)
+   '
    rc = DeviceIoControl(handle, _
-                        MakeIOCtlCode(FILE_DEVICE_FILE_SYSTEM, FILE_READ_ACCESS Or FILE_WRITE_ACCESS, IOCTL_FUNCTION_SET_COMPRESSION, METHOD_BUFFERED), _
+                        MakeIOCtlCode(FILE_DEVICE_FILE_SYSTEM, FILE_READ_DATA Or FILE_WRITE_DATA, IOCTL_FUNCTION_SET_COMPRESSION, METHOD_BUFFERED), _
                         VarPtr(controlParameter), _
                         LenB(controlParameter), _
                         0&, _
@@ -262,47 +275,56 @@ Private Sub SetCompressionAttribute(ByRef handle As Long, ByVal shouldCompress A
 End Sub
 
 Private Sub OpenFileAndSetCompressionState(ByRef fileName As String, ByVal creationDisposition As Long, ByVal shouldCompress As Boolean)
-   Dim handle As Long
-   
-   handle = CreateFile(fileName, _
-                       GENERIC_READ Or GENERIC_WRITE, _
-                       FILE_SHARE_READ, _
-                       0, _
-                       creationDisposition, _
-                       FILE_ATTRIBUTE_NORMAL, _
-                       0)
+   If DoesFilesystemSupportCompression(fileName) Then
+      Dim handle As Long
 
-   If handle <> INVALID_HANDLE_VALUE Then
-      If DoesFilesystemSupportCompression(GetDriveName(fileName)) Then _
-         SetCompressionAttribute handle, shouldCompress
+'
+' It is absolutely necessary to specify "GENERIC_READ or GENERIC_WRITE" as the
+' desired access parameter even though the attribute is only meant to be set
+' and not read. However, setting the compression attribute implies to read
+' the current compression attribute first.
+'
+      handle = CreateFile(fileName, _
+                          GENERIC_READ Or GENERIC_WRITE, _
+                          FILE_SHARE_READ, _
+                          0, _
+                          creationDisposition, _
+                          FILE_ATTRIBUTE_NORMAL, _
+                          0)
 
-      If CloseHandle(handle) = 0 Then _
-         HandleAPIError "CloseHandle", fileName
-   Else
-      HandleAPIError "CreateFile", fileName
+      If handle <> INVALID_HANDLE_VALUE Then
+            SetCompressionAttribute handle, shouldCompress
+
+         If CloseHandle(handle) = 0 Then _
+            HandleAPIError "CloseHandle", fileName
+      Else
+         HandleAPIError "CreateFile", fileName
+      End If
    End If
 End Sub
 
 Private Function GetCompressionAttributeForFile(ByRef fileName As String) As Boolean
-   Dim handle As Long
-   
    GetCompressionAttributeForFile = False
 
-   handle = CreateFile(fileName, _
-                       GENERIC_READ, _
-                       FILE_SHARE_READ, _
-                       0, _
-                       OPEN_EXISTING, _
-                       FILE_ATTRIBUTE_NORMAL, _
-                       0)
+   If DoesFilesystemSupportCompression(fileName) Then
+      Dim handle As Long
+   
+      handle = CreateFile(fileName, _
+                          GENERIC_READ, _
+                          FILE_SHARE_READ, _
+                          0, _
+                          OPEN_EXISTING, _
+                          FILE_ATTRIBUTE_NORMAL, _
+                          0)
 
-   If handle <> INVALID_HANDLE_VALUE Then
-      GetCompressionAttributeForFile = GetCompressionAttribute(handle)
+      If handle <> INVALID_HANDLE_VALUE Then
+         GetCompressionAttributeForFile = GetCompressionAttribute(handle)
 
-      If CloseHandle(handle) = 0 Then _
-         HandleAPIError "CloseHandle", fileName
-   Else
-      HandleAPIError "CreateFile", fileName
+         If CloseHandle(handle) = 0 Then _
+            HandleAPIError "CloseHandle", fileName
+      Else
+         HandleAPIError "CreateFile", fileName
+      End If
    End If
 End Function
 
