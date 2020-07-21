@@ -34,7 +34,9 @@ Show and clear an Access status line. The status line is automatically cleared w
 
 ## Crypto
 
-### HashCng.cls
+### HashCng
+
+A universal hashing class. It calculates SHA-1, SHA-2-256, SHA-2-384 and SHA-2-512 hashes and also [HMAC|https://en.wikipedia.org/wiki/HMAC] values with these hashes. It uses  the Windows CNG (Crypto Next Generation) API, so all calculations are done by Windows.
 
 ## ErrorHandling
 
