@@ -7,6 +7,44 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
+'
+'+-------------------------------------------------------------------------
+'|
+'| SPDX-License-Identifier: MIT
+'|
+'| Copyright 2020, Frank Schwab
+'|
+'| Permission is hereby granted, free of charge, to any person obtaining a
+'| copy of this software and associated documentation files (the "Software"),
+'| to deal in the Software without restriction, including without limitation
+'| the rights to use, copy, modify, merge, publish, distribute, sublicense,
+'| and/or sell copies of the Software, and to permit persons to whom the
+'| Software is furnished to do so, subject to the following conditions:
+'|
+'| The above copyright notice and this permission notice shall be included
+'| in all copies or substantial portions of the Software.
+'|
+'| THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+'| OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+'| FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+'| THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+'| LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+'| OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+'| IN THE SOFTWARE.
+'|
+'|-------------------------------------------------------------------------
+'| Class               | RomanNumberConverter
+'|---------------------+---------------------------------------------------
+'| Description         | Converts integers from and to roman number representation
+'|---------------------+---------------------------------------------------
+'| Author              | Frank Schwab
+'|---------------------+---------------------------------------------------
+'| Version             | 1.0.0
+'|---------------------+---------------------------------------------------
+'| Changes             | 2020-07-20  Created. fhs
+'|---------------------+---------------------------------------------------
+'
+
 Option Compare Database
 Option Explicit
 
@@ -35,23 +73,23 @@ Private Const STR_ERR_INVALID_ARABIC_NUMERAL As String = "Invalid arabic numeral
 '
 ' Private methods
 '
-Private Function isValidInteger(ByRef aString As String) As Boolean
+Private Function IsValidInteger(ByRef aString As String) As Boolean
    Dim i As Long
    Dim pos As Long
 
-   isValidInteger = True
+   IsValidInteger = True
 
    For i = 1 To Len(aString)
       pos = InStr(1, VALID_ARABIC_NUMERALS, Mid$(aString, i, 1))
 
       If pos = 0 Then
-         isValidInteger = False
+         IsValidInteger = False
 
          Exit Function
       Else
          If pos = 1 Then
             If i > 1 Then
-               isValidInteger = False
+               IsValidInteger = False
 
                Exit Function
             End If
@@ -65,7 +103,7 @@ End Function
 ' are the digits for 10, 5, and 1 at this
 ' power of ten. For example, 10/5/1 = X/V/I,
 ' 100/50/10 = C/L/X, etc.
-Private Function getLowRomanDigits(ByVal numberToConvert As Long, _
+Private Function GetLowRomanDigits(ByVal numberToConvert As Long, _
                                    ByVal tenLetter As String, _
                                    ByVal fiveLetter As String, _
                                    ByVal oneLetter As String) As String
@@ -88,7 +126,7 @@ Private Function getLowRomanDigits(ByVal numberToConvert As Long, _
           result = oneLetter & tenLetter
    End Select
 
-   getLowRomanDigits = result
+   GetLowRomanDigits = result
 End Function
 
 '
@@ -171,15 +209,15 @@ Public Function ArabicNumberToRoman(ByVal arabicNumber As Long) As String
       ' Pull out hundreds.
       quotient = arabicNumber \ 100
       arabicNumber = arabicNumber - quotient * 100
-      result = result & getLowRomanDigits(quotient, "M", "D", "C")
+      result = result & GetLowRomanDigits(quotient, "M", "D", "C")
    
       ' Pull out tens.
       quotient = arabicNumber \ 10
       arabicNumber = arabicNumber - quotient * 10
-      result = result & getLowRomanDigits(quotient, "C", "L", "X")
+      result = result & GetLowRomanDigits(quotient, "C", "L", "X")
    
       ' Pull out ones.
-      result = result & getLowRomanDigits(arabicNumber, "X", "V", "I")
+      result = result & GetLowRomanDigits(arabicNumber, "X", "V", "I")
    Else
       If arabicNumber = 0 Then
          result = "0"
@@ -193,7 +231,7 @@ End Function
 
 Public Function ArabicStringToRoman(ByVal arabicString As String) As String
    If Len(arabicString) > 0 Then
-      If isValidInteger(arabicString) Then
+      If IsValidInteger(arabicString) Then
          ArabicStringToRoman = Me.ArabicNumberToRoman(CLng(arabicString))
       Else
          Err.Raise ERR_INVALID_ARABIC_NUMERAL, _
