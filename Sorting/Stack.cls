@@ -7,7 +7,44 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
-Option Compare Database
+'
+'+-------------------------------------------------------------------------
+'|
+'| SPDX-License-Identifier: MIT
+'|
+'| Copyright 2020, Frank Schwab
+'|
+'| Permission is hereby granted, free of charge, to any person obtaining a
+'| copy of this software and associated documentation files (the "Software"),
+'| to deal in the Software without restriction, including without limitation
+'| the rights to use, copy, modify, merge, publish, distribute, sublicense,
+'| and/or sell copies of the Software, and to permit persons to whom the
+'| Software is furnished to do so, subject to the following conditions:
+'|
+'| The above copyright notice and this permission notice shall be included
+'| in all copies or substantial portions of the Software.
+'|
+'| THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+'| OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+'| FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+'| THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+'| LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+'| OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+'| IN THE SOFTWARE.
+'|
+'|-------------------------------------------------------------------------
+'| Class               | Stack
+'|---------------------+---------------------------------------------------
+'| Description         | An implementation of a stack
+'|---------------------+---------------------------------------------------
+'| Author              | Frank Schwab
+'|---------------------+---------------------------------------------------
+'| Version             | 1.0.0
+'|---------------------+---------------------------------------------------
+'| Changes             | 2020-07-20  Created. fhs
+'|---------------------+---------------------------------------------------
+'
+
 Option Explicit
 
 '
@@ -17,7 +54,7 @@ Private Const MODULNAME As String = "Stack"
 
 Private Const N_START_ERROR_MESSAGE As Long = vbObjectError + 2600
 
-Private Const ERR_STACK_IS_EMPTY     As Long = N_START_ERROR_MESSAGE
+Private Const ERR_STACK_IS_EMPTY     As Long = N_START_ERROR_MESSAGE + 0
 Private Const STR_ERR_STACK_IS_EMPTY As String = "Stack is empty"
 
 '
@@ -42,11 +79,11 @@ Private m_ActIndex As Long
 '
 ' Öffentliche Methoden
 '
-Public Property Get blockSize() As Long
-   blockSize = m_BlockSize
+Public Property Get BlockSize() As Long
+   BlockSize = m_BlockSize
 End Property
 
-Public Property Let blockSize(ByVal newBlockSize As Long)
+Public Property Let BlockSize(ByVal newBlockSize As Long)
    If newBlockSize < MIN_BLOCKSIZE Then _
       newBlockSize = MIN_BLOCKSIZE
 
@@ -56,27 +93,27 @@ Public Property Let blockSize(ByVal newBlockSize As Long)
    m_BlockSize = newBlockSize
 End Property
 
-Public Property Get isEmpty() As Boolean
-   isEmpty = (m_ActIndex = 0)
+Public Property Get IsEmpty() As Boolean
+   IsEmpty = (m_ActIndex = 0)
 End Property
 
-Public Property Get depth() As Long
-   depth = m_ActIndex
+Public Property Get Depth() As Long
+   Depth = m_ActIndex
 End Property
 
-Public Property Get topElement() As Variant
-   If Me.isEmpty Then
+Public Property Get TopElement() As Variant
+   If Me.IsEmpty Then
       Err.Raise ERR_STACK_IS_EMPTY, MODULNAME, STR_ERR_STACK_IS_EMPTY
    Else
-      topElement = m_Items(m_ActIndex)
+      TopElement = m_Items(m_ActIndex)
    End If
 End Property
 
-Public Sub reset()
+Public Sub Reset()
    m_ActIndex = 0
 End Sub
 
-Public Sub push(ByVal var As Variant)
+Public Sub Push(ByVal var As Variant)
    Dim newIndex As Long
 
    newIndex = m_ActIndex + 1
@@ -91,20 +128,20 @@ Public Sub push(ByVal var As Variant)
    m_ActIndex = newIndex
 End Sub
 
-Public Function pop() As Variant
-   If Me.isEmpty Then
+Public Function Pop() As Variant
+   If Me.IsEmpty Then
       Err.Raise ERR_STACK_IS_EMPTY, MODULNAME, STR_ERR_STACK_IS_EMPTY
    Else
-      pop = m_Items(m_ActIndex)
+      Pop = m_Items(m_ActIndex)
       m_ActIndex = m_ActIndex - 1
    End If
 End Function
 
-Public Function dump(Optional ByVal delim As String = ", ") As String
+Public Function Dump(Optional ByVal delim As String = ", ") As String
    Dim dumpText As String
    Dim i As Long
 
-   If Me.isEmpty Then
+   If Me.IsEmpty Then
       dumpText = "<Empty>"
    Else
       For i = 1 To m_ActIndex
@@ -112,11 +149,11 @@ Public Function dump(Optional ByVal delim As String = ", ") As String
       Next i
    End If
 
-   dump = Right$(dumpText, Len(dumpText) - Len(delim))
+   Dump = Right$(dumpText, Len(dumpText) - Len(delim))
 End Function
 
 '
-' Klassenmethoden
+' Class methods
 '
 Private Sub Class_Initialize()
    m_BlockSize = DEFAULT_BLOCKSIZE
