@@ -146,6 +146,10 @@ Get Windows special folder names.
 
 Get some system informations.
 
+### Waiter
+
+Wait for a specified amount of time. This class uses VBA and OS wait methods to keep the application responsive while not using too much CPU.
+
 ## Sorting
 
 ### Sorter
