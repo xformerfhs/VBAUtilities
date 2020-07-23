@@ -126,6 +126,10 @@ Converts integer to roman number representations.
 
 Class to set the currently running processes priority class to give it a higher or lower scheduling priority.
 
+### SpecialFolder
+
+Get Windows special folder names.
+
 ### SystemInformation
 
 Get some system informations.
