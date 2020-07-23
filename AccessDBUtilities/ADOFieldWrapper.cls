@@ -43,18 +43,6 @@ Attribute VB_Exposed = False
 '|---------------------+---------------------------------------------------
 '| Changes             | 2020-07-18  Created. fhs
 '|---------------------+---------------------------------------------------
-'| Typical usage       | Dim hc256 As New HashCng
-'|                     | hc256.InitializeSHA256
-'|                     | hc256.DigestBytes aByteArray
-'|                     | hc256.DigestStringAsUTF8 "Some string"
-'|                     | Dim hashValue() as Byte
-'|                     | hashValue = hc256.GetHash()
-'|                     | ' Digest... and GetHash may be called
-'|                     | ' again as often, as necessary
-'|                     |
-'|                     | ' If you want to change the hash type call
-'|                     | ' any of the Initialize... methods
-'|---------------------+---------------------------------------------------
 '
 
 Option Explicit
@@ -79,7 +67,7 @@ Private Const INVALID_SIZE As Long = -1
 Private m_Field As ADOX.Column
 
 '
-' Öffentliche Attribute
+' Ã–ffentliche Attribute
 '
 ' ADOField
 Public Property Get ADOField() As ADOX.Column
@@ -163,7 +151,7 @@ Public Property Let UnicodeCompression(ByVal newUnicodeCompression As Boolean)
 End Property
 
 '
-' Öffentliche Methoden
+' Ã–ffentliche Methoden
 '
 Public Sub CreateADOField(ByRef fieldName As String, _
                           ByVal fieldType As ADOX.DataTypeEnum, _
