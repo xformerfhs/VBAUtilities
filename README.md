@@ -16,6 +16,10 @@ A class to read an access lock file in order to find out which computer is holdi
 
 Wrapper around ADO fields for easier property access.
 
+### ADOTableWrapper
+
+Wrapper around ADO tables for easier property access.
+
 ### DAOPropertyManager
 
 Easily set and get DAO properties.
