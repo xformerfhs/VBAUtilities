@@ -174,7 +174,7 @@ An implementation of one of the most important classes that is missing in VBA: A
 
 ### UTF8Converter
 
-Converts VBA strings from and to [UTF-8](https://en.wikipedia.org/wiki/UTF-8) encoding. Note that the UTF-8 values are byte arrays, not strings. Everybody who returns UTF-8 encodings in strings is doing something seriously wrong.
+Converts VBA strings from and to [UTF-8](https://en.wikipedia.org/wiki/UTF-8) encoding. Note that the UTF-8 values are byte arrays, not strings. Storing UTF-8 encodings in strings is seriously wrong.
 
 ## Timing
 
