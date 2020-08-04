@@ -74,7 +74,7 @@ Get information about a drive, i.e. what type it is and whether it is a network 
 
 ### FileCompressionManager
 
-Managing file compression is horribly complicated under Windows as this is not an attribute but something that is achieved by issuing IO control command.
+Managing file compression is horribly complicated under Windows as this is not an attribute but something that is achieved by issuing I/O control command.
 This class puts a simple wrapper around the complexity of handling compressed files. One can create a compressed file and read, set and clear the compression state of a file.
 
 ### RandomFileName
