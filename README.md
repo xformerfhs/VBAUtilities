@@ -10,7 +10,7 @@ The utilities are categorized in the following way:
 
 ### AccessLockFileReader
 
-A class to read an access lock file in order to find out which computer is holding a lock on the access database.This can either be the database that this class is part of or another database file. It supports mdb and accdb files.
+A class to read an access lock file in order to find out which computer is holding a lock on the access database. This can either be the database that this class is part of or another database file. It supports mdb and accdb files.
 
 ### ADOFieldWrapper
 
