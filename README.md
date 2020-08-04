@@ -48,7 +48,7 @@ A universal hashing class. It calculates [SHA-1](https://en.wikipedia.org/wiki/S
 
 ### SecureRandomNumberCng
 
-Secure CNG random number generator.
+Secure CNG random number generator which is a wrapper around the Windows CNG (Crypto Next Generation) RNG API and uses the [BCryptGenRandom](https://docs.microsoft.com/en-us/windows/win32/api/bcrypt/nf-bcrypt-bcryptgenrandom) function.
 
 ## ErrorHandling
 
