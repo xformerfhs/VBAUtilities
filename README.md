@@ -130,7 +130,7 @@ Converts byte arrays to and from hexadecimal string representation.
 
 ### RomanNumberConverter
 
-Converts integer to roman number representations.
+Converts integer to and from roman number representations.
 
 ## OSUtilities
 
