@@ -32,7 +32,6 @@ Attribute VB_Exposed = False
 '| OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 '| IN THE SOFTWARE.
 '|
-'|
 '|-------------------------------------------------------------------------
 '| Class               | HashCng
 '|---------------------+---------------------------------------------------
@@ -40,9 +39,11 @@ Attribute VB_Exposed = False
 '|---------------------+---------------------------------------------------
 '| Author              | Frank Schwab
 '|---------------------+---------------------------------------------------
-'| Version             | 1.0.0
+'| Version             | 1.0.1
 '|---------------------+---------------------------------------------------
 '| Changes             | 2020-07-18  Created. fhs
+'|                     | 2020-08-03  Correct array length calculation
+'|                     |             because it was a hack. fhs
 '|---------------------+---------------------------------------------------
 '| Typical usage       | Dim hc256 As New HashCng
 '|                     | hc256.InitializeSHA256
@@ -215,16 +216,20 @@ End Function
 '| Author           | Frank Schwab
 '|------------------+-------------------------------------------------------
 '| Changes          | 2020-07-18  Created. fhs
+'|                  | 2020-08-03  Correct array check because it was a hack. fhs
 '|------------------+-------------------------------------------------------
 '| Remarks          | ./.
 '+--------------------------------------------------------------------------
 '
 Private Function GetArrayLength(ByRef aByteArray() As Byte) As Long
-   If (Not Not aByteArray) <> 0 Then  ' This is a hack! "Not Not anArray" is 0 if the array is empty and not 0 if it is not
-      GetArrayLength = UBound(aByteArray) - LBound(aByteArray) + 1
-   Else
+   On Error Resume Next
+
+   GetArrayLength = UBound(aByteArray) - LBound(aByteArray) + 1
+
+   ' If the array is empty there was an error so we set
+   ' the return value accordingly   
+   If Err.Number <> 0 Then _
       GetArrayLength = 0
-   End If
 End Function
 
 '
