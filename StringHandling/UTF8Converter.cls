@@ -39,10 +39,11 @@ Attribute VB_Exposed = False
 '|---------------------+---------------------------------------------------
 '| Author              | Frank Schwab
 '|---------------------+---------------------------------------------------
-'| Version             | 1.0.1
+'| Version             | 1.0.2
 '|---------------------+---------------------------------------------------
 '| Changes             | 2006-03-06  Created. fhs
-'|                     | 2006-07-19  Simplified array check. fhs
+'|                     | 2020-07-19  Simplified array check. fhs
+'|                     | 2020-08-03  Correct array check because it was a hack. fhs
 '|---------------------+---------------------------------------------------
 '| Remarks             | VBA stores strings in the UTF-16 encoding, i.e. each
 '|                     | character uses two bytes. However, for calling external
@@ -150,12 +151,20 @@ Private Const ERROR_NO_UNICODE_TRANSLATION As Long = 1113
 '|------------------+-------------------------------------------------------
 '| Changes          | 2006-03-06  Created. fhs
 '|                  | 2020-07-19  Simplified with hack. fhs
+'|                  | 2020-08-03  Correct array check because it was a hack. fhs
 '|------------------+-------------------------------------------------------
 '| Remarks          | ./.
 '+--------------------------------------------------------------------------
 '
 Private Function IsValidArray(ByRef aByteArray() As Byte) As Boolean
-   IsValidArray = ((Not Not aByteArray) <> 0) ' This is a hack! "Not Not anArray" is 0 if the array is empty and not 0 if it is not
+   On Error Resume Next
+   
+   Dim ub As Long
+   
+   ' UBound will raise an error if the array has not been initialized
+   ub = UBound(aByteArray)
+   
+   IsValidArray = (Err.Number = 0)
 End Function
 
 '
@@ -345,4 +354,3 @@ Public Function FromUTF8ToVB(ByRef utf8ByteArray() As Byte) As String
 
    FromUTF8ToVB = result
 End Function
-
