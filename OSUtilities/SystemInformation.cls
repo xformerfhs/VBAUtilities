@@ -39,9 +39,10 @@ Attribute VB_Exposed = False
 '|---------------------+---------------------------------------------------
 '| Author              | Frank Schwab
 '|---------------------+---------------------------------------------------
-'| Version             | 1.0.0
+'| Version             | 1.0.1
 '|---------------------+---------------------------------------------------
 '| Changes             | 2020-07-20  Created. fhs
+'|                     | 2020-08-24  Made 64 bit compatible. fhs
 '|---------------------+---------------------------------------------------
 '
 
@@ -160,21 +161,21 @@ Private Const UNKOWN As String = "<Unkown>"
 '
 ' References
 '
-Private Declare Function GetComputerName Lib "kernel32.dll" _
+Private Declare PtrSafe Function GetComputerName Lib "kernel32.dll" _
         Alias "GetComputerNameW" ( _
-        ByVal lpBuffer As Long, _
+        ByVal lpBuffer As LongPtr, _
         ByRef nSize As Long) As Long
 
-Private Declare Function GetUserName Lib "advapi32.dll" _
+Private Declare PtrSafe Function GetUserName Lib "advapi32.dll" _
         Alias "GetUserNameW" ( _
-        ByVal lpBuffer As Long, _
+        ByVal lpBuffer As LongPtr, _
         ByRef nSize As Long) As Long
 
-Private Declare Function GetLocaleInfo Lib "kernel32" _
+Private Declare PtrSafe Function GetLocaleInfo Lib "kernel32" _
         Alias "GetLocaleInfoW" ( _
         ByVal Locale As Long, _
         ByVal LCType As Long, _
-        ByVal lpLCData As Long, _
+        ByVal lpLCData As LongPtr, _
         ByVal cchData As Long) As Long
 
 '
