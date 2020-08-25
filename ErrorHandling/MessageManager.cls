@@ -10,26 +10,27 @@ Attribute VB_Exposed = False
 '
 '+-------------------------------------------------------------------------
 '|
-'|                            Copyright (C) 2018
-'|                            Frank Schwab
+'| SPDX-License-Identifier: MIT
 '|
-'| Permission is hereby granted, free of charge, to any person obtaining a copy
-'| of this software and associated documentation files (the "Software"), to deal
-'| in the Software without restriction, including without limitation the rights
-'| to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-'| copies of the Software, and to permit persons to whom the Software is
-'| furnished to do so, subject to the following conditions:
+'| Copyright 2020, Frank Schwab
 '|
-'| The above copyright notice and this permission notice shall be included in
-'| all copies or substantial portions of the Software.
+'| Permission is hereby granted, free of charge, to any person obtaining a
+'| copy of this software and associated documentation files (the "Software"),
+'| to deal in the Software without restriction, including without limitation
+'| the rights to use, copy, modify, merge, publish, distribute, sublicense,
+'| and/or sell copies of the Software, and to permit persons to whom the
+'| Software is furnished to do so, subject to the following conditions:
 '|
-'| THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-'| IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-'| FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-'| AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+'| The above copyright notice and this permission notice shall be included
+'| in all copies or substantial portions of the Software.
+'|
+'| THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+'| OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+'| FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+'| THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 '| LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-'| OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-'| THE SOFTWARE.
+'| OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+'| IN THE SOFTWARE.
 '|
 '|-------------------------------------------------------------------------
 '| Class               | MessageManager
@@ -39,7 +40,7 @@ Attribute VB_Exposed = False
 '|---------------------+---------------------------------------------------
 '| Author              | Frank Schwab
 '|---------------------+---------------------------------------------------
-'| Version             | 2.1.0
+'| Version             | 2.1.1
 '|---------------------+---------------------------------------------------
 '| Changes             | 2002-03-15  Created. fhs
 '|                     | 2006-03-06  Added formatting of general messages. fhs
@@ -47,10 +48,10 @@ Attribute VB_Exposed = False
 '|                     |                 codes. fhs
 '|                     | 2014-04-01  Simplified Windows NT status code handling. fhs
 '|                     | 2015-01-06  Added module error handling. fhs
+'|                     | 2020-08-24  Implemented 64 bit compatibility. fhs
 '+-------------------------------------------------------------------------
 
 Option Explicit
-Option Compare Binary
 
 '
 ' Private constants
@@ -71,24 +72,24 @@ Private Const FORMAT_MESSAGE_MAX_WIDTH_MASK As Long = &HFF&
 '
 ' Windows API declarations
 '
-Private Declare Function FormatMessage _
+Private Declare PtrSafe Function FormatMessage _
   Lib "kernel32.dll" _
   Alias "FormatMessageW" ( _
   ByVal dwFlags As Long, _
-  ByVal lpSource As Long, _
+  ByVal lpSource As LongPtr, _
   ByVal dwMessageId As Long, _
   ByVal dwLanguageId As Long, _
-  ByVal lpBuffer As Long, _
+  ByVal lpBuffer As LongPtr, _
   ByVal nSize As Long, _
   ByRef Arguments As Long _
   ) As Long
 
-Private Declare Function RtlNtStatusToDosError _
+Private Declare PtrSafe Function RtlNtStatusToDosError _
    Lib "ntdll.dll" ( _
    ByVal dwStatus As Long _
    ) As Long
 
-Private Declare Function GetModuleHandle _
+Private Declare PtrSafe Function GetModuleHandle _
    Lib "kernel32.dll" _
    Alias "GetModuleHandleA" ( _
    ByVal lpModuleName As String _
@@ -119,7 +120,7 @@ Private Declare Function GetModuleHandle _
 '|                  | Developer Network that can be found here:
 '|                  | http://www.microsoft.com/germany/msdn/library/visualtools/vb6/APIFehlermeldungenImKlartext.mspx
 '|------------------+-------------------------------------------------------
-'| Typical call     | rc = SomeWindowsAPIFunction(...)
+'| Typical call     | rc = SomeWindowsAPIFunction(..)
 '|                  | If rc = RC_FAILED Then
 '|                  |    rc = Err.LastDllError
 '|                  |    Err.Raise M_N_ERROR_NUM, M_STR_ERROR_SOURCE , _
@@ -179,7 +180,7 @@ End Function
 '|------------------+-------------------------------------------------------
 '| Remarks          | ./.
 '|------------------+-------------------------------------------------------
-'| Typical call     | rc = SomeModuleAPIFunction(...)
+'| Typical call     | rc = SomeModuleAPIFunction(..)
 '|                  | If rc = RC_FAILED Then
 '|                  |    rc = Err.LastDllError
 '|                  |    Err.Raise M_N_ERROR_NUM, M_STR_ERROR_SOURCE , _
@@ -255,7 +256,7 @@ End Function
 '|------------------+-------------------------------------------------------
 '| Remarks          | ./.
 '|------------------+-------------------------------------------------------
-'| Typical call     | rc = SomeNTSCReturningFunction(...)
+'| Typical call     | rc = SomeNTSCReturningFunction(..)
 '|                  | If rc <> STATUS_SUCCESS Then
 '|                  |    Err.Raise M_N_ERROR_NUM, M_STR_ERROR_SOURCE , _
 '|                  |              "SomeNTSCReturningFunction returned error code  0x" & Hex$(rc) & ": " & _
@@ -286,7 +287,7 @@ End Function
 '|------------------+-------------------------------------------------------
 '| Remarks          | ./.
 '|------------------+-------------------------------------------------------
-'| Typical call     | rc = SomeNTSCReturningFunction(...)
+'| Typical call     | rc = SomeNTSCReturningFunction(..)
 '|                  | If rc <> STATUS_SUCCESS Then
 '|                  |    Err.Raise M_N_ERROR_NUM, M_STR_ERROR_SOURCE , _
 '|                  |              "SomeNTSCReturningFunction returned error code 0x" & Hex$(rc) & ": " & _
@@ -330,7 +331,7 @@ Public Function FormatMessageWithParameters(ByRef formatText As String, _
                                             ParamArray parameterList() As Variant) As String
    Dim messageBuffer As String
    Dim parameterAsString() As String
-   Dim parameterPointer() As Long
+   Dim parameterPointer() As LongPtr
    Dim i As Integer
    Dim parameterListLowerBound As Integer
    Dim parameterListUpperBound As Integer
