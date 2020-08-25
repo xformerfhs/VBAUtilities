@@ -120,7 +120,7 @@ Private Declare PtrSafe Function GetModuleHandle _
 '|                  | Developer Network that can be found here:
 '|                  | http://www.microsoft.com/germany/msdn/library/visualtools/vb6/APIFehlermeldungenImKlartext.mspx
 '|------------------+-------------------------------------------------------
-'| Typical call     | rc = SomeWindowsAPIFunction(..)
+'| Typical call     | rc = SomeWindowsAPIFunction(...)
 '|                  | If rc = RC_FAILED Then
 '|                  |    rc = Err.LastDllError
 '|                  |    Err.Raise M_N_ERROR_NUM, M_STR_ERROR_SOURCE , _
@@ -180,7 +180,7 @@ End Function
 '|------------------+-------------------------------------------------------
 '| Remarks          | ./.
 '|------------------+-------------------------------------------------------
-'| Typical call     | rc = SomeModuleAPIFunction(..)
+'| Typical call     | rc = SomeModuleAPIFunction(...)
 '|                  | If rc = RC_FAILED Then
 '|                  |    rc = Err.LastDllError
 '|                  |    Err.Raise M_N_ERROR_NUM, M_STR_ERROR_SOURCE , _
@@ -256,7 +256,7 @@ End Function
 '|------------------+-------------------------------------------------------
 '| Remarks          | ./.
 '|------------------+-------------------------------------------------------
-'| Typical call     | rc = SomeNTSCReturningFunction(..)
+'| Typical call     | rc = SomeNTSCReturningFunction(...)
 '|                  | If rc <> STATUS_SUCCESS Then
 '|                  |    Err.Raise M_N_ERROR_NUM, M_STR_ERROR_SOURCE , _
 '|                  |              "SomeNTSCReturningFunction returned error code  0x" & Hex$(rc) & ": " & _
@@ -287,7 +287,7 @@ End Function
 '|------------------+-------------------------------------------------------
 '| Remarks          | ./.
 '|------------------+-------------------------------------------------------
-'| Typical call     | rc = SomeNTSCReturningFunction(..)
+'| Typical call     | rc = SomeNTSCReturningFunction(...)
 '|                  | If rc <> STATUS_SUCCESS Then
 '|                  |    Err.Raise M_N_ERROR_NUM, M_STR_ERROR_SOURCE , _
 '|                  |              "SomeNTSCReturningFunction returned error code 0x" & Hex$(rc) & ": " & _
