@@ -35,59 +35,102 @@ Attribute VB_Exposed = False
 '|-------------------------------------------------------------------------
 '| Class               | Waiter
 '|---------------------+---------------------------------------------------
-'| Description         | Wait for a specified time
+'| Description         | Suspend program operation for a specified
+'|                     | amount of time.
 '|---------------------+---------------------------------------------------
 '| Author              | Frank Schwab
 '|---------------------+---------------------------------------------------
 '| Version             | 1.0.0
 '|---------------------+---------------------------------------------------
-'| Changes             | 2020-07-23  Created. fhs
-'|---------------------+---------------------------------------------------
-'
+'| Changes             | 2020-08-24  Created. fhs
+'+-------------------------------------------------------------------------
 
 Option Explicit
 
 '
 ' API declarations
 '
-Private Declare Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As Long)
+Private Declare PtrSafe Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As Long)
 
 '
 ' Public methods
 '
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | WaitFor
+'|------------------+-------------------------------------------------------
+'| Purpose          | Suspends program execution for a specfified amount
+'|                  | of time
+'|------------------+-------------------------------------------------------
+'| Parameter        | waitTimeInSeconds: No. of seconds to wait
+'|------------------+-------------------------------------------------------
+'| Return value     | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-08-24  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | This implementation combines two wait methods:
+'|                  |
+'|                  |    1. There is a loop for every second that should be waited (VBA wait)
+'|                  |    2. 1 second is waited for by calling the sleep API function (OS wait)
+'|                  |
+'|                  | Why is this?
+'|                  |
+'|                  | If the wait is done purely in VBA Access has an extremely high CPU usage
+'|                  | as it constantly polls for the current time. This is not desirable.
+'|                  |
+'|                  | If the wait is done purely in the OS the whole Access application hangs while waiting
+'|                  | and does not respond to anything.
+'|                  |
+'|                  | Combining these two wait mechanisms lowers the CPU usage and leaves Access responsive
+'|                  | with a maximum delay of 1 second.
+'|------------------+-------------------------------------------------------
+'| Typical call     | Dim wtr As New Waiter
+'|                  | ...
+'|                  |    wtr.WaitFor 10   ' Wait 10 seconds
+'|                  | ...
+'+--------------------------------------------------------------------------
 Public Sub WaitFor(ByVal waitTimeInSeconds As Integer)
-   Dim secondsAlreadyWaited As Long
-   
-   '
-   ' This implementation combines two wait methods:
-   '
-   '    1. There is a loop for every second that should be waited (VBA wait)
-   '    2. 1 second is waited for by calling the sleep API function (OS wait)
-   '
-   ' Why is this?
-   '
-   ' If the wait is done purely in VBA the application has an extremely high CPU usage
-   ' as it constantly polls for the current time. This is not desirable.
-   '
-   ' If the wait is done purely in the OS the whole application hangs while waiting
-   ' and does not respond to anything.
-   '
-   ' Combining the 2 wait mechanisms lowers the CPU usage and leaves the application responsive
-   ' with a maximum delay of 1 second.
-   '
+   Dim secondsAlreadyWaited As Integer
+
    secondsAlreadyWaited = 0
 
    Do While secondsAlreadyWaited < waitTimeInSeconds
       Sleep 1000  ' Wait 1 second
 
-      DoEvents    ' Process events so the application is responsive
+      DoEvents ' Process events so Access is responsive
 
       secondsAlreadyWaited = secondsAlreadyWaited + 1
    Loop
 End Sub
 
+'
+'+--------------------------------------------------------------------------
+'| Method           | WaitForRandomTimeInInterval
+'|------------------+-------------------------------------------------------
+'| Purpose          | Suspends program execution for a random amount
+'|                  | of time
+'|------------------+-------------------------------------------------------
+'| Parameters       | minWaitTime: Minimum wait time in seconds
+'|                  | maxWaitTime: Minimum wait time in seconds
+'|------------------+-------------------------------------------------------
+'| Return value     | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-08-24  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'|------------------+-------------------------------------------------------
+'| Typical call     | Dim wtr As New Waiter
+'|                  | ...
+'|                  |    wtr.WaitForRandomTimeInInterval 10, 20   ' Wait between 10 and 20 seconds
+'|                  | ...
+'+--------------------------------------------------------------------------
 Public Sub WaitForRandomTimeInInterval(ByVal minWaitTime As Integer, ByVal maxWaitTime As Integer)
-   Me.waitFor CInt(Fix((Rnd() * (maxWaitTime - minWaitTime + 1)))) + minWaitTime
+   Me.WaitFor CInt(Fix((Rnd() * (maxWaitTime - minWaitTime + 1)))) + minWaitTime
 End Sub
 
 '
