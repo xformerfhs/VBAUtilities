@@ -39,9 +39,10 @@ Attribute VB_Exposed = False
 '|---------------------+---------------------------------------------------
 '| Author              | Frank Schwab
 '|---------------------+---------------------------------------------------
-'| Version             | 1.0.0
+'| Version             | 1.0.1
 '|---------------------+---------------------------------------------------
 '| Changes             | 2020-07-20  Created. fhs
+'|                     | 2020-08-24  Made 64 bit compatible. fhs
 '|---------------------+---------------------------------------------------
 '
 
@@ -126,17 +127,17 @@ Public Enum TPriorityClassValue
 End Enum
 
 ' The return value is a pseudo handle to the current process.
-Private Declare Function GetCurrentProcess Lib "kernel32" () As Long
+Private Declare PtrSafe Function GetCurrentProcess Lib "kernel32" () As Long
 
 ' Function returns the priority class for the specified process.
-Private Declare Function GetPriorityClass Lib "kernel32" ( _
+Private Declare PtrSafe Function GetPriorityClass Lib "kernel32" ( _
        ByVal hProcess As Long) _
        As Long
 
 ' Function sets the priority class for the specified process.
 ' This value together with the priority value of each thread
 ' of the process determines each thread's base priority level.
-Private Declare Function SetPriorityClass Lib "kernel32" ( _
+Private Declare PtrSafe Function SetPriorityClass Lib "kernel32" ( _
         ByVal hProcess As Long, _
         ByVal dwPriorityClass As Long) _
         As Long
