@@ -187,3 +187,7 @@ Converts VBA timestamps from and to Unix timestamps or local time from and to UT
 ### HighPrecisionTimer
 
 A high precision timer that uses the Windows Performance Counter which has a resolution better than 0.000001 seconds (1µs). 
+
+### Waiter
+
+Suspend program execution for a specified amount of time or for a random amount of time while keeping Access responsive.
