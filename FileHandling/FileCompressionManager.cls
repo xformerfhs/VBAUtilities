@@ -129,7 +129,7 @@ Private Declare PtrSafe Function CreateFile Lib "kernel32.dll" Alias "CreateFile
    ByVal lpFileName As String, _
    ByVal dwDesiredAccess As Long, _
    ByVal dwShareMode As Long, _
-   ByVal lpSecurityAttributes As Long, _
+   ByVal lpSecurityAttributes As LongPtr, _
    ByVal dwCreationDisposition As Long, _
    ByVal dwFlagsAndAttributes As Long, _
    ByVal hTemplateFile As Long) As Long
@@ -144,8 +144,8 @@ Private Declare PtrSafe Function DeviceIoControl Lib "kernel32.dll" ( _
    ByVal nInBufferSize As Long, _
    ByVal lpOutBuffer As LongPtr, _
    ByVal nOutBufferSize As Long, _
-   ByVal lpBytesReturned As Long, _
-   ByVal lpOverlapped As Long) As Long
+   ByVal lpBytesReturned As LongPtr, _
+   ByVal lpOverlapped As LongPtr) As Long
 
 '
 ' Instance variables
