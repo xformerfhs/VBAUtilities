@@ -40,9 +40,10 @@ Attribute VB_Exposed = False
 '|---------------------+---------------------------------------------------
 '| Author              | Frank Schwab
 '|---------------------+---------------------------------------------------
-'| Version             | 1.0.0
+'| Version             | 1.0.1
 '|---------------------+---------------------------------------------------
 '| Changes             | 2020-07-20  Created. fhs
+'|                     | 2020-08-30  Made 64 bit compatible. fhs
 '|---------------------+---------------------------------------------------
 '
 
@@ -62,7 +63,7 @@ Private Const ERR_TEXT_UNABLE_TO_DETERMINE_DRIVE_TYPE As String = "File does not
 '
 ' Windows API declarations
 '
-Private Declare Function GetDriveType _
+Private Declare PtrSafe Function GetDriveType _
   Lib "kernel32.dll" _
   Alias "GetDriveTypeA" ( _
   ByVal lpRootPathName As String _
