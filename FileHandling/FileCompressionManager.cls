@@ -40,9 +40,10 @@ Attribute VB_Exposed = False
 '|---------------------+---------------------------------------------------
 '| Author              | Frank Schwab
 '|---------------------+---------------------------------------------------
-'| Version             | 1.0.0
+'| Version             | 1.0.1
 '|---------------------+---------------------------------------------------
 '| Changes             | 2020-07-20  Created. fhs
+'|                     | 2020-08-30  Made 64 bit compatible. fhs
 '|---------------------+---------------------------------------------------
 '
 
@@ -114,7 +115,7 @@ Private Const COMPRESSION_FORMAT_DEFAULT As Long = 1&
 '
 ' Declare Windows API function
 '
-Private Declare Function GetVolumeInformation Lib "kernel32.dll" Alias "GetVolumeInformationA" ( _
+Private Declare PtrSafe Function GetVolumeInformation Lib "kernel32.dll" Alias "GetVolumeInformationA" ( _
    ByVal lpRootPathName As String, _
    ByVal lpVolumeNameBuffer As LongPtr, _
    ByVal nVolumeNameSize As Long, _
@@ -124,7 +125,7 @@ Private Declare Function GetVolumeInformation Lib "kernel32.dll" Alias "GetVolum
    ByVal lpFileSystemNameBuffer As LongPtr, _
    ByVal nFileSystemNameSize As Long) As Long
 
-Private Declare Function CreateFile Lib "kernel32.dll" Alias "CreateFileA" ( _
+Private Declare PtrSafe Function CreateFile Lib "kernel32.dll" Alias "CreateFileA" ( _
    ByVal lpFileName As String, _
    ByVal dwDesiredAccess As Long, _
    ByVal dwShareMode As Long, _
@@ -133,10 +134,10 @@ Private Declare Function CreateFile Lib "kernel32.dll" Alias "CreateFileA" ( _
    ByVal dwFlagsAndAttributes As Long, _
    ByVal hTemplateFile As Long) As Long
 
-Private Declare Function CloseHandle Lib "kernel32.dll" ( _
+Private Declare PtrSafe Function CloseHandle Lib "kernel32.dll" ( _
    ByVal hObject As Long) As Long
 
-Private Declare Function DeviceIoControl Lib "kernel32.dll" ( _
+Private Declare PtrSafe Function DeviceIoControl Lib "kernel32.dll" ( _
    ByVal hDevice As Long, _
    ByVal dwIoControlCode As Long, _
    ByVal lpInBuffer As LongPtr, _
