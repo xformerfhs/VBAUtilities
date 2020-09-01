@@ -40,9 +40,11 @@ Attribute VB_Exposed = False
 '|---------------------+---------------------------------------------------
 '| Author              | Frank Schwab
 '|---------------------+---------------------------------------------------
-'| Version             | 1.0.1
+'| Version             | 1.0.2
 '|---------------------+---------------------------------------------------
 '| Changes             | 2020-07-18  Created. fhs
+'|                     | 2020-08-03  Correct array length calculation
+'|                     |             because it was a hack. fhs
 '|                     | 2020-09-01  Made 64 bit compatible. fhs
 '|---------------------+---------------------------------------------------
 '| Typical usage       | Dim hc256 As New HashCng
@@ -216,6 +218,7 @@ End Function
 '| Author           | Frank Schwab
 '|------------------+-------------------------------------------------------
 '| Changes          | 2020-07-18  Created. fhs
+'|                  | 2020-08-03  Correct array check because it was a hack. fhs
 '|------------------+-------------------------------------------------------
 '| Remarks          | ./.
 '+--------------------------------------------------------------------------
@@ -224,7 +227,10 @@ Private Function GetArrayLength(ByRef aByteArray() As Byte) As Long
    On Error Resume Next
 
    GetArrayLength = UBound(aByteArray) - LBound(aByteArray) + 1
-   
+
+   ' If the array is empty there was an error so we set
+   ' the return value accordingly
+
    If Err.Number <> 0 Then _
       GetArrayLength = 0
 End Function
