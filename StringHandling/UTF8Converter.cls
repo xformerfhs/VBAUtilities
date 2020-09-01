@@ -39,11 +39,12 @@ Attribute VB_Exposed = False
 '|---------------------+---------------------------------------------------
 '| Author              | Frank Schwab
 '|---------------------+---------------------------------------------------
-'| Version             | 1.0.2
+'| Version             | 1.0.3
 '|---------------------+---------------------------------------------------
 '| Changes             | 2006-03-06  Created. fhs
 '|                     | 2020-07-19  Simplified array check. fhs
 '|                     | 2020-08-03  Correct array check because it was a hack. fhs
+'|                     | 2020-09-01  Made 64 bit compatible. fhs
 '|---------------------+---------------------------------------------------
 '| Remarks             | VBA stores strings in the UTF-16 encoding, i.e. each
 '|                     | character uses two bytes. However, for calling external
@@ -101,24 +102,24 @@ Private Const STR_ERR_CONVERSION As String = "Error calling '"
 '
 ' API declarations
 '
-Private Declare Function WideCharToMultiByte Lib "kernel32.dll" ( _
+Private Declare PtrSafe Function WideCharToMultiByte Lib "kernel32.dll" ( _
                          ByVal CodePage As Long, _
                          ByVal dwFlags As Long, _
-                         ByVal lpWideCharStr As Long, _
+                         ByVal lpWideCharStr As LongPtr, _
                          ByVal cchWideChar As Long, _
                          ByRef lpMultiByteStr As Byte, _
                          ByVal cbMultiByte As Long, _
-                         ByVal lpDefaultChar As Long, _
-                         ByVal lpUsedDefaultChar As Long) As Long
+                         ByVal lpDefaultChar As LongPtr, _
+                         ByVal lpUsedDefaultChar As LongPtr) As Long
 
-Private Declare Function MultiByteToWideChar Lib "kernel32.dll" ( _
+Private Declare PtrSafe Function MultiByteToWideChar Lib "kernel32.dll" ( _
                          ByVal CodePage As Long, _
                          ByVal dwFlags As Long, _
                          ByRef lpMultiByteStr As Byte, _
                          ByVal cbMultiByte As Long, _
-                         ByVal lpWideCharStr As Long, _
+                         ByVal lpWideCharStr As LongPtr, _
                          ByVal cchWideChar As Long) As Long
-                         
+
                         
 '
 ' API constants
@@ -221,7 +222,7 @@ End Sub
 '
 Public Function FromVBToUTF8(ByRef aVBString As String) As Byte()
    Dim stringSize As Long
-   Dim pointerToString As Long
+   Dim pointerToString As LongPtr
    Dim utf8Size As Long
    Dim result() As Byte
 
