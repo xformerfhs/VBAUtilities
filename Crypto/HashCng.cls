@@ -489,7 +489,7 @@ Private Sub InitializeHMAC(ByRef hashAlgorithm As String, ByRef key() As Byte)
 
    keyLength = CheckKey(key)
 
-   Dim keyPointer As Long
+                  Dim keyPointer As LongPtr
    
    keyPointer = VarPtr(key(LBound(key)))
    
