@@ -32,6 +32,7 @@ Attribute VB_Exposed = False
 '| OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 '| IN THE SOFTWARE.
 '|
+'|
 '|-------------------------------------------------------------------------
 '| Class               | HashCng
 '|---------------------+---------------------------------------------------
@@ -42,8 +43,7 @@ Attribute VB_Exposed = False
 '| Version             | 1.0.1
 '|---------------------+---------------------------------------------------
 '| Changes             | 2020-07-18  Created. fhs
-'|                     | 2020-08-03  Correct array length calculation
-'|                     |             because it was a hack. fhs
+'|                     | 2020-09-01  Made 64 bit compatible. fhs
 '|---------------------+---------------------------------------------------
 '| Typical usage       | Dim hc256 As New HashCng
 '|                     | hc256.InitializeSHA256
@@ -106,59 +106,59 @@ Private Const BCRYPT_HASH_REUSABLE_FLAG   As Long = &H20&
 '
 ' CNG API declarations
 '
-Private Declare Function BCryptOpenAlgorithmProvider _
+Private Declare PtrSafe Function BCryptOpenAlgorithmProvider _
                 Lib "bcrypt.dll" _
-                (ByRef phAlgorithm As Long, _
-                 ByVal pszAlgId As Long, _
-                 ByVal pszImplementation As Long, _
+                (ByRef phAlgorithm As LongPtr, _
+                 ByVal pszAlgId As LongPtr, _
+                 ByVal pszImplementation As LongPtr, _
                  ByVal dwFlags As Long) _
                 As Long
 
-Private Declare Function BCryptGetProperty _
+Private Declare PtrSafe Function BCryptGetProperty _
                 Lib "bcrypt.dll" _
-                (ByVal hObject As Long, _
-                 ByVal pszProperty As Long, _
+                (ByVal hObject As LongPtr, _
+                 ByVal pszProperty As LongPtr, _
                  ByRef pbOutput As Any, _
                  ByVal cbOutput As Long, _
                  ByRef pcbResult As Long, _
                  ByVal dwFlags As Long) _
                 As Long
-                
-Private Declare Function BCryptCreateHash _
+
+Private Declare PtrSafe Function BCryptCreateHash _
                 Lib "bcrypt.dll" _
-                (ByVal hAlgorithm As Long, _
-                 ByRef phHash As Long, _
-                 ByVal pbHashObject As Long, _
+                (ByVal hAlgorithm As LongPtr, _
+                 ByRef phHash As LongPtr, _
+                 ByVal pbHashObject As LongPtr, _
                  ByVal cbHashObject As Long, _
-                 ByVal pbSecret As Long, _
+                 ByVal pbSecret As LongPtr, _
                  ByVal cbSecret As Long, _
                  ByVal dwFlags As Long) _
                 As Long
 
-Private Declare Function BCryptHashData _
+Private Declare PtrSafe Function BCryptHashData _
                 Lib "bcrypt.dll" _
-                (ByVal hHash As Long, _
-                 ByRef pbInput As Any, _
+                (ByVal hHash As LongPtr, _
+                 ByRef pbInput As Byte, _
                  ByVal cbInput As Long, _
                  ByVal dwFlags As Long) _
                 As Long
 
-Private Declare Function BCryptFinishHash _
+Private Declare PtrSafe Function BCryptFinishHash _
                 Lib "bcrypt.dll" _
-                (ByVal hHash As Long, _
-                 ByRef pbOutput As Any, _
+                (ByVal hHash As LongPtr, _
+                 ByRef pbOutput As Byte, _
                  ByVal cbOutput As Long, _
                  ByVal dwFlags As Long) _
                 As Long
                 
-Private Declare Function BCryptDestroyHash _
+Private Declare PtrSafe Function BCryptDestroyHash _
                 Lib "bcrypt.dll" _
-                (ByVal hHash As Long) _
+                (ByVal hHash As LongPtr) _
                 As Long
                 
-Private Declare Function BCryptCloseAlgorithmProvider _
+Private Declare PtrSafe Function BCryptCloseAlgorithmProvider _
                 Lib "bcrypt.dll" _
-                (ByVal hAlgorithm As Long, _
+                (ByVal hAlgorithm As LongPtr, _
                  ByVal dwFlags As Long) _
                 As Long
 
@@ -173,8 +173,8 @@ Private Const MINIMUM_KEY_LENGTH As Long = 20
 Private m_MM As New MessageManager
 Private m_U8C As New UTF8Converter
 
-Private m_AlgorithmProviderHandle As Long
-Private m_HashHandle As Long
+Private m_AlgorithmProviderHandle As LongPtr
+Private m_HashHandle As LongPtr
 Private m_HashSize As Long
 Private m_IsHMAC As Boolean
 
@@ -216,7 +216,6 @@ End Function
 '| Author           | Frank Schwab
 '|------------------+-------------------------------------------------------
 '| Changes          | 2020-07-18  Created. fhs
-'|                  | 2020-08-03  Correct array check because it was a hack. fhs
 '|------------------+-------------------------------------------------------
 '| Remarks          | ./.
 '+--------------------------------------------------------------------------
@@ -225,9 +224,7 @@ Private Function GetArrayLength(ByRef aByteArray() As Byte) As Long
    On Error Resume Next
 
    GetArrayLength = UBound(aByteArray) - LBound(aByteArray) + 1
-
-   ' If the array is empty there was an error so we set
-   ' the return value accordingly   
+   
    If Err.Number <> 0 Then _
       GetArrayLength = 0
 End Function
@@ -403,7 +400,7 @@ Private Sub SetHashSize()
 
    Dim hashSizeSize As Long
 
-   hashSizeSize = LenB(m_HashSize)
+   hashSizeSize = 4   ' Need to specify a magic constant here. A long has 4 bytes.
 
    Dim newHashSize As Long
 
