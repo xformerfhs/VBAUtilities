@@ -71,7 +71,7 @@ Private Const ERR_STR_CLASS_NAME   As String = "HashCng"
 Private Const ERR_NUM_BASE As Long = vbObjectError + 33851
 
 ' Crypto API error
-Private Const ERR_STR_BCRYPT_API As String = "Unable to %1. %2 returned code 0x%3: %4"
+Private Const ERR_STR_BCRYPT_API As String = "Unable to %1. '%2' returned code 0x%3: %4"
 Private Const ERR_NUM_BCRYPT_API As Long = ERR_NUM_BASE
 
 ' Error message when this object has not been used properly
