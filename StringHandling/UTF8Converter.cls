@@ -80,24 +80,23 @@ Attribute VB_Exposed = False
 '|                     | aText = u8c.FromUTF8ToVB(utf8Text)
 '+-------------------------------------------------------------------------
 
-Option Compare Binary
 Option Explicit
 
 
 '
 ' Constants for error messages
 '
-Private Const STR_ERROR_SOURCE   As String = "UTF8Converter"
-Private Const ERR_BASE As Long = vbObjectError + 19907
+Private Const ERR_STR_CLASS_NAME   As String = "UTF8Converter"
+Private Const ERR_NUM_BASE         As Long = vbObjectError + 19907
 
-Private Const ERR_INVALID_UTF16_CODE     As Long = ERR_BASE
-Private Const STR_ERR_INVALID_UTF16_CODE As String = "A VB character is not a valid UTF-16 code point"
+Private Const ERR_NUM_INVALID_UTF16_CODE As Long = ERR_NUM_BASE
+Private Const ERR_STR_INVALID_UTF16_CODE As String = "A VB character is not a valid UTF-16 code point"
 
-Private Const ERR_INVALID_UTF8_CODE     As Long = ERR_BASE + 1
-Private Const STR_ERR_INVALID_UTF8_CODE As String = "Invalid UTF-8 byte sequence"
+Private Const ERR_NUM_INVALID_UTF8_CODE As Long = ERR_NUM_BASE + 1
+Private Const ERR_STR_INVALID_UTF8_CODE As String = "Invalid UTF-8 byte sequence"
 
-Private Const ERR_CONVERSION     As Long = ERR_BASE + 2
-Private Const STR_ERR_CONVERSION As String = "Error calling '"
+Private Const ERR_NUM_API As Long = ERR_NUM_BASE + 2
+Private Const ERR_STR_API As String = "Unable to convert. '%1' returned code 0x%2: %3"
 
 
 '
@@ -132,6 +131,11 @@ Private Const WC_ERR_INVALID_CHARS As Long = &H80
 Private Const MB_ERR_INVALID_CHARS As Long = &H8
 
 Private Const ERROR_NO_UNICODE_TRANSLATION As Long = 1113
+
+'
+' Instance variables
+'
+Private m_MM As New MessageManager
 
 '
 ' Private methods
@@ -172,13 +176,13 @@ End Function
 
 '
 '+--------------------------------------------------------------------------
-'| Method           | RaiseConversionError
+'| Method           | HandleAPIError
 '|------------------+-------------------------------------------------------
-'| Description      | Raise an error with an informative error message
+'| Description      | Raise an error from for Windows API calls that set
+'|                  | Err.LastDLLError
 '|------------------+-------------------------------------------------------
-'| Parameters       | functionName: The name of the function that returned
-'|                  |               an error.
-'|                  | rc:           The error code.
+'| Parameters       | apiFunctionName: The name of the function that returned
+'|                  |                  an error.
 '|------------------+-------------------------------------------------------
 '| Return values    | None.
 '|------------------+-------------------------------------------------------
@@ -186,19 +190,21 @@ End Function
 '|------------------+-------------------------------------------------------
 '| Changes          | 2006-03-06  Created. fhs
 '|------------------+-------------------------------------------------------
-'| Remarks          | ./.
+'| Remarks          | This method does not return because it raises an
+'|                  | error.
 '+--------------------------------------------------------------------------
 '
-Private Sub RaiseConversionError(ByRef functionName As String, ByVal rc As Long)
-   Err.Raise ERR_CONVERSION, _
-             STR_ERROR_SOURCE, _
-             STR_ERR_CONVERSION & _
-                functionName & _
-                "': " & _
-                Format$(rc) & _
-                " (0x" & _
-                Hex$(rc) & _
-                ")"
+Private Sub HandleAPIError(ByRef apiFunctionName As String)
+   Dim errorCode As Long
+   
+   errorCode = Err.LastDllError
+      
+   Err.Raise ERR_NUM_API, _
+             ERR_STR_CLASS_NAME, _
+             m_MM.FormatMessageWithParameters(ERR_STR_API, _
+                                              apiFunctionName, _
+                                              Hex$(errorCode), _
+                                              m_MM.GetMessageForWindowsErrorCode(errorCode))
 End Sub
 
 '
@@ -272,11 +278,11 @@ Public Function FromVBToUTF8(ByRef aVBString As String) As Byte()
                              0&
       Else
          If Err.LastDllError = ERROR_NO_UNICODE_TRANSLATION Then
-            Err.Raise ERR_INVALID_UTF16_CODE, _
-                      STR_ERROR_SOURCE, _
-                      STR_ERR_INVALID_UTF16_CODE
+            Err.Raise ERR_NUM_INVALID_UTF16_CODE, _
+                      ERR_STR_CLASS_NAME, _
+                      ERR_STR_INVALID_UTF16_CODE
          Else
-            RaiseConversionError "WideCharToMultiByte", Err.LastDllError
+            HandleAPIError "WideCharToMultiByte"
          End If
       End If
    End If
@@ -344,11 +350,11 @@ Public Function FromUTF8ToVB(ByRef utf8ByteArray() As Byte) As String
                              resultSize
       Else
          If Err.LastDllError = ERROR_NO_UNICODE_TRANSLATION Then
-            Err.Raise ERR_INVALID_UTF8_CODE, _
-                      STR_ERROR_SOURCE, _
-                      STR_ERR_INVALID_UTF8_CODE
+            Err.Raise ERR_NUM_INVALID_UTF8_CODE, _
+                      ERR_STR_CLASS_NAME, _
+                      ERR_STR_INVALID_UTF8_CODE
          Else
-            RaiseConversionError "MultiByteToWideChar", Err.LastDllError
+            HandleAPIError "MultiByteToWideChar"
          End If
       End If
    Else
