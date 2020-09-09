@@ -311,7 +311,7 @@ Public Function FromUTF8ToVB(ByRef utf8ByteArray() As Byte) As String
    
    If utf8Size > 0 Then
       '
-      ' First, get size of string to receive the UTF-16 representation
+      ' First, get size of the string to receive the UTF-16 representation
       '
       resultSize = MultiByteToWideChar(CP_UTF8, _
                                        MB_ERR_INVALID_CHARS, _
