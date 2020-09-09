@@ -40,12 +40,13 @@ Attribute VB_Exposed = False
 '|---------------------+---------------------------------------------------
 '| Author              | Frank Schwab
 '|---------------------+---------------------------------------------------
-'| Version             | 1.0.2
+'| Version             | 1.0.3
 '|---------------------+---------------------------------------------------
 '| Changes             | 2020-07-18  Created. fhs
 '|                     | 2020-08-03  Correct array length calculation
 '|                     |             because it was a hack. fhs
 '|                     | 2020-09-01  Made 64 bit compatible. fhs
+'|                     | 2020-09-09  Simplified. fhs
 '|---------------------+---------------------------------------------------
 '| Typical usage       | Dim hc256 As New HashCng
 '|                     | hc256.InitializeSHA256
@@ -66,20 +67,20 @@ Option Explicit
 '
 ' Private constants for error messages
 '
-Private Const STR_ERROR_SOURCE   As String = "HashCng"
-Private Const ERR_BASE As Long = vbObjectError + 33851
+Private Const ERR_STR_CLASS_NAME   As String = "HashCng"
+Private Const ERR_NUM_BASE As Long = vbObjectError + 33851
 
 ' Crypto API error
-Private Const STR_ERR_BCRYPT_API As String = "Unable to %1. %2 returned code 0x%3: %4"
-Private Const ERR_BCRYPT_API     As Long = ERR_BASE
+Private Const ERR_STR_BCRYPT_API As String = "Unable to %1. %2 returned code 0x%3: %4"
+Private Const ERR_NUM_BCRYPT_API As Long = ERR_NUM_BASE
 
 ' Error message when this object has not been used properly
-Private Const STR_ERR_INVALID_USAGE As String = "Hash has not been %1"
-Private Const ERR_INVALID_USAGE     As Long = ERR_BASE + 1
+Private Const ERR_STR_INVALID_USAGE As String = "Hash has not been %1"
+Private Const ERR_NUM_INVALID_USAGE As Long = ERR_NUM_BASE + 1
 
 ' Error message when key is too short
-Private Const STR_ERR_KEY_TOO_SHORT As String = "Key is too short (minimum length: %1)"
-Private Const ERR_KEY_TOO_SHORT     As Long = ERR_BASE + 2
+Private Const ERR_STR_KEY_TOO_SHORT As String = "Key is too short (minimum length: %1)"
+Private Const ERR_NUM_KEY_TOO_SHORT As Long = ERR_NUM_BASE + 2
 
 '
 ' NT Status Code
@@ -237,6 +238,35 @@ End Function
 
 '
 '+--------------------------------------------------------------------------
+'| Method           | HandleNTAPIError
+'|------------------+-------------------------------------------------------
+'| Description      | Handle Windows NT API error
+'|------------------+-------------------------------------------------------
+'| Parameter        | actionDescription: Description of the action
+'|                  | apiFunctionName  : Name of the API function
+'|                  | ntStatusCode     : NT status code
+'|------------------+-------------------------------------------------------
+'| Return values    | Length of byte array
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-09-09  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | This method does not return because it raises an error.
+'+--------------------------------------------------------------------------
+'
+Private Sub HandleNTAPIError(ByRef actionText As String, ByRef apiFunctionName As String, ByRef ntStatusCode As Long)
+   Err.Raise ERR_NUM_BCRYPT_API, _
+             ERR_STR_CLASS_NAME, _
+             m_MM.FormatMessageWithParameters(ERR_STR_BCRYPT_API, _
+                                              actionDescription, _
+                                              apiFunctionName, _
+                                              Hex$(ntStatusCode), _
+                                              m_MM.GetMessageForNTStatusCode(ntStatusCode))
+End Sub
+
+'
+'+--------------------------------------------------------------------------
 '| Method           | CheckKey
 '|------------------+-------------------------------------------------------
 '| Description      | Check if key is long enough
@@ -258,9 +288,9 @@ Private Function CheckKey(ByRef key() As Byte) As Long
    arrayLength = GetArrayLength(key)
 
    If arrayLength < MINIMUM_KEY_LENGTH Then _
-      Err.Raise ERR_KEY_TOO_SHORT, _
-                STR_ERROR_SOURCE, _
-                m_MM.FormatMessageWithParameters(STR_ERR_KEY_TOO_SHORT, Format$(MINIMUM_KEY_LENGTH))
+      Err.Raise ERR_NUM_KEY_TOO_SHORT, _
+                ERR_STR_CLASS_NAME, _
+                m_MM.FormatMessageWithParameters(ERR_STR_KEY_TOO_SHORT, Format$(MINIMUM_KEY_LENGTH))
 
    CheckKey = arrayLength
 End Function
@@ -293,13 +323,7 @@ Private Sub DestroyHash()
       If IsNTSuccess(rc) Then
          m_HashHandle = 0
       Else
-         Err.Raise ERR_BCRYPT_API, _
-                   STR_ERROR_SOURCE, _
-                   m_MM.FormatMessageWithParameters(STR_ERR_BCRYPT_API, _
-                                                    "destroy hash", _
-                                                    "BCryptDestroyHash", _
-                                                    Hex$(rc), _
-                                                    m_MM.GetMessageForNTStatusCode(rc))
+         HandleNTAPIError "destroy hash", "BCryptDestroyHash", rc
       End If
    End If
 End Sub
@@ -332,13 +356,7 @@ Private Sub DestroyProvider()
       If IsNTSuccess(rc) Then
          m_AlgorithmProviderHandle = 0
       Else
-         Err.Raise ERR_BCRYPT_API, _
-                   STR_ERROR_SOURCE, _
-                   m_MM.FormatMessageWithParameters(STR_ERR_BCRYPT_API, _
-                                                    "close algorithm provider", _
-                                                    "BCryptCloseAlgorithmProvider", _
-                                                    Hex$(rc), _
-                                                    m_MM.GetMessageForNTStatusCode(rc))
+         HandleNTAPIError "close algorithm provider", "BCryptCloseAlgorithmProvider", rc
       End If
    End If
 End Sub
@@ -373,15 +391,8 @@ Private Sub InitializeProvider(ByRef hashAlgorithm As String, ByVal algorithmFla
                                     0&, _
                                     BCRYPT_HASH_REUSABLE_FLAG Or algorithmFlag)
 
-   If Not IsNTSuccess(rc) Then
-      Err.Raise ERR_BCRYPT_API, _
-             STR_ERROR_SOURCE, _
-             m_MM.FormatMessageWithParameters(STR_ERR_BCRYPT_API, _
-                                              "open algorithm provider", _
-                                              "BCryptOpenAlgorithmProvider", _
-                                              Hex$(rc), _
-                                              m_MM.GetMessageForNTStatusCode(rc))
-   End If
+   If Not IsNTSuccess(rc) Then _
+      HandleNTAPIError "open algorithm provider", "BCryptOpenAlgorithmProvider", rc
 End Sub
 
 '
@@ -416,13 +427,7 @@ Private Sub SetHashSize()
       If newHashSize <> m_HashSize Then _
          m_HashSize = newHashSize
    Else
-      Err.Raise ERR_BCRYPT_API, _
-                STR_ERROR_SOURCE, _
-                m_MM.FormatMessageWithParameters(STR_ERR_BCRYPT_API, _
-                                                 "get hash size", _
-                                                 "BCryptGetProperty", _
-                                                 Hex$(rc), _
-                                                 m_MM.GetMessageForNTStatusCode(rc))
+      HandleNTAPIError "get hash size", "BCryptGetProperty", rc
    End If
 End Sub
 
@@ -453,13 +458,7 @@ Private Sub InitializeHash(ByRef hashAlgorithm As String)
    If IsNTSuccess(rc) Then
       SetHashSize
    Else
-      Err.Raise ERR_BCRYPT_API, _
-                STR_ERROR_SOURCE, _
-                m_MM.FormatMessageWithParameters(STR_ERR_BCRYPT_API, _
-                                                 "create hash", _
-                                                 "BCryptCreateHash", _
-                                                 Hex$(rc), _
-                                                 m_MM.GetMessageForNTStatusCode(rc))
+      HandleNTAPIError "create hash hash", "BCryptCreateHash", rc
    End If
 
    m_IsHMAC = False
@@ -500,13 +499,7 @@ Private Sub InitializeHMAC(ByRef hashAlgorithm As String, ByRef key() As Byte)
    If IsNTSuccess(rc) Then
       SetHashSize
    Else
-      Err.Raise ERR_BCRYPT_API, _
-                STR_ERROR_SOURCE, _
-                m_MM.FormatMessageWithParameters(STR_ERR_BCRYPT_API, _
-                                                 "create hash", _
-                                                 "BCryptCreateHash", _
-                                                 Hex$(rc), _
-                                                 m_MM.GetMessageForNTStatusCode(rc))
+      HandleNTAPIError "create HMAC hash", "BCryptCreateHash", rc
    End If
 
    m_IsHMAC = True
@@ -531,9 +524,9 @@ End Sub
 '
 Private Sub CheckState()
    If m_HashHandle = 0 Then _
-      Err.Raise ERR_INVALID_USAGE, _
-                STR_ERROR_SOURCE, _
-                m_MM.FormatMessageWithParameters(STR_ERR_INVALID_USAGE, "initialized")
+      Err.Raise ERR_NUM_INVALID_USAGE, _
+                ERR_STR_CLASS_NAME, _
+                m_MM.FormatMessageWithParameters(ERR_STR_INVALID_USAGE, "initialized")
 End Sub
 
 '
@@ -792,13 +785,7 @@ Public Sub DigestBytes(ByRef sourceByteArray() As Byte)
       rc = BCryptHashData(m_HashHandle, sourceByteArray(LBound(sourceByteArray)), arrayLength, 0&)
 
       If Not IsNTSuccess(rc) Then _
-         Err.Raise ERR_BCRYPT_API, _
-                   STR_ERROR_SOURCE, _
-                   m_MM.FormatMessageWithParameters(STR_ERR_BCRYPT_API, _
-                                                    "get hash", _
-                                                    "BCryptHashData", _
-                                                    Hex$(rc), _
-                                                    m_MM.GetMessageForNTStatusCode(rc))
+         HandleNTAPIError "hash bytes", "BCryptHashData", rc
    End If
 End Sub
 
@@ -889,13 +876,7 @@ Public Function GetHash() As Byte()
    If IsNTSuccess(rc) Then
       GetHash = result
    Else
-      Err.Raise ERR_BCRYPT_API, _
-                STR_ERROR_SOURCE, _
-                m_MM.FormatMessageWithParameters(STR_ERR_BCRYPT_API, _
-                                                 "finish hash", _
-                                                 "BCryptFinishHash", _
-                                                 Hex$(rc), _
-                                                 m_MM.GetMessageForNTStatusCode(rc))
+      HandleNTAPIError "get hash value", "BCryptFinishHash", rc
    End If
 End Function
 
