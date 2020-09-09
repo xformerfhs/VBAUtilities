@@ -39,12 +39,13 @@ Attribute VB_Exposed = False
 '|---------------------+---------------------------------------------------
 '| Author              | Frank Schwab
 '|---------------------+---------------------------------------------------
-'| Version             | 1.0.3
+'| Version             | 1.0.4
 '|---------------------+---------------------------------------------------
 '| Changes             | 2006-03-06  Created. fhs
 '|                     | 2020-07-19  Simplified array check. fhs
 '|                     | 2020-08-03  Correct array check because it was a hack. fhs
 '|                     | 2020-09-01  Made 64 bit compatible. fhs
+'|                     | 2020-09-09  Simplified. fhs
 '|---------------------+---------------------------------------------------
 '| Remarks             | VBA stores strings in the UTF-16 encoding, i.e. each
 '|                     | character uses two bytes. However, for calling external
@@ -138,34 +139,35 @@ Private Const ERROR_NO_UNICODE_TRANSLATION As Long = 1113
 
 '
 '+--------------------------------------------------------------------------
-'| Method           | IsValidArray
+'| Method           | GetArrayLength
 '|------------------+-------------------------------------------------------
-'| Description      | Check if a byte array is valid. I.e. check whether
-'|                  | the array has been initialized.
+'| Description      | Get length of a byte array
 '|------------------+-------------------------------------------------------
-'| Parameters       | aByteArray: The array to check.
+'| Parameter        | aByteArray: Byte array to get the length for
 '|------------------+-------------------------------------------------------
-'| Return values    | True: Array has been initialized
-'|                  | False: Array has not been initialized
+'| Return values    | Length of byte array
 '|------------------+-------------------------------------------------------
 '| Author           | Frank Schwab
 '|------------------+-------------------------------------------------------
-'| Changes          | 2006-03-06  Created. fhs
-'|                  | 2020-07-19  Simplified with hack. fhs
+'| Changes          | 2020-07-18  Created. fhs
 '|                  | 2020-08-03  Correct array check because it was a hack. fhs
 '|------------------+-------------------------------------------------------
-'| Remarks          | ./.
+'| Remarks          | When one tries to calculate the length of an
+'|                  | uninitialized array an error is raised.
+'|                  | This function catches this error and returns a
+'|                  | length of 0, instead.
 '+--------------------------------------------------------------------------
 '
-Private Function IsValidArray(ByRef aByteArray() As Byte) As Boolean
+Private Function GetArrayLength(ByRef aByteArray() As Byte) As Long
    On Error Resume Next
-   
-   Dim ub As Long
-   
-   ' UBound will raise an error if the array has not been initialized
-   ub = UBound(aByteArray)
-   
-   IsValidArray = (Err.Number = 0)
+
+   GetArrayLength = UBound(aByteArray) - LBound(aByteArray) + 1
+
+   ' If the array is empty there was an error so we set
+   ' the return value accordingly
+
+   If Err.Number <> 0 Then _
+      GetArrayLength = 0
 End Function
 
 '
@@ -305,9 +307,9 @@ Public Function FromUTF8ToVB(ByRef utf8ByteArray() As Byte) As String
    Dim result As String
    Dim rc As Long
 
-   If IsValidArray(utf8ByteArray) Then
-      utf8Size = UBound(utf8ByteArray) - LBound(utf8ByteArray) + 1
-
+   utf8Size = GetArrayLength(utf8ByteArray)
+   
+   If utf8Size > 0 Then
       '
       ' First, get size of string to receive the UTF-16 representation
       '
