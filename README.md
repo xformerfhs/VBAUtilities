@@ -122,7 +122,11 @@ Adds missing trigonometric functions to VBA:
 
 ### Base64Converter
 
-Converts byte arrays to and from Base64 representation.
+Pure VB implementation of a Base64 converter. Converts byte arrays to and from Base64 representation.
+
+### Base64ConverterCryptAPI
+
+Implementation of a Base64 converter as a wrapper around crypt32.dll API calls. Converts byte arrays to and from Base64 representation.
 
 ### HexConverter
 
