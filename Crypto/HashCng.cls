@@ -40,25 +40,33 @@ Attribute VB_Exposed = False
 '|---------------------+---------------------------------------------------
 '| Author              | Frank Schwab
 '|---------------------+---------------------------------------------------
-'| Version             | 1.0.3
+'| Version             | 1.0.4
 '|---------------------+---------------------------------------------------
 '| Changes             | 2020-07-18  Created. fhs
 '|                     | 2020-08-03  Correct array length calculation
 '|                     |             because it was a hack. fhs
 '|                     | 2020-09-01  Made 64 bit compatible. fhs
 '|                     | 2020-09-09  Simplified. fhs
+'|                     | 2020-09-10  Removed unnecessary constant. fhs
 '|---------------------+---------------------------------------------------
-'| Typical usage       | Dim hc256 As New HashCng
-'|                     | hc256.InitializeSHA256
-'|                     | hc256.DigestBytes aByteArray
-'|                     | hc256.DigestStringAsUTF8 "Some string"
+'| Typical usage       | ' For getting a hash value
+'|                     | Dim hc As New HashCng
+'|                     | hc.InitializeSHA256
+'|                     | hc.DigestBytes aByteArray
+'|                     | hc.DigestStringAsUTF8 someText
 '|                     | Dim hashValue() as Byte
-'|                     | hashValue = hc256.GetHash()
-'|                     | ' Digest... and GetHash may be called
-'|                     | ' again as often, as necessary
+'|                     | hashValue = hc.GetHash()
+'|                     | ' hc.Digest... and hc.GetHash may be called
+'|                     | ' again as often, as necessary.
+'|                     | ' One may even switch the hash type by calling
+'|                     | ' one of the hc.Initialize... methods.
 '|                     |
-'|                     | ' If you want to change the hash type call
-'|                     | ' any of the Initialize... methods
+'|                     | ' For getting an HMAC value
+'|                     | Dim hc As New HashCng
+'|                     | hc.InitializeSHA256HMAC key
+'|                     | hc.DigestBytes aByteArray
+'|                     | hc.DigestStringAsUTF8 someText
+'|                     | hashValue = hc.GetHash
 '|---------------------+---------------------------------------------------
 '
 
@@ -81,11 +89,6 @@ Private Const ERR_NUM_INVALID_USAGE As Long = ERR_NUM_BASE + 1
 ' Error message when key is too short
 Private Const ERR_STR_KEY_TOO_SHORT As String = "Key is too short (minimum length: %1)"
 Private Const ERR_NUM_KEY_TOO_SHORT As Long = ERR_NUM_BASE + 2
-
-'
-' NT Status Code
-'
-Private Const STATUS_SUCCESS As Long = 0&
 
 '
 ' CNG constants
