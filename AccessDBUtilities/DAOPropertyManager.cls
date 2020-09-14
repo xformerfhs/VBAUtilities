@@ -40,10 +40,12 @@ Attribute VB_Exposed = False
 '|---------------------+---------------------------------------------------
 '| Author              | Frank Schwab
 '|---------------------+---------------------------------------------------
-'| Version             | 1.0.1
+'| Version             | 1.0.2
 '|---------------------+---------------------------------------------------
 '| Changes             | 2020-07-18  Created. fhs
 '|                     | 2020-09-14  Added comments. fhs
+'|                     | 2020-09-14  Correct data type for SetProperty
+'|                     |             propertyType parameter. fhs
 '|---------------------+---------------------------------------------------
 '
 Option Compare Database
@@ -74,6 +76,7 @@ Private Const ERR_PROPERTY_NOT_FOUND As Long = 3270
 '| Author           | Frank Schwab
 '|------------------+-------------------------------------------------------
 '| Changes          | 2020-07-18  Created. fhs
+'|                  | 2020-09-14  Correct data type for propertyType. fhs
 '|------------------+-------------------------------------------------------
 '| Remarks          | This method automaically adds the property if it
 '|                  | does not exist.
@@ -81,7 +84,7 @@ Private Const ERR_PROPERTY_NOT_FOUND As Long = 3270
 '
 Public Sub SetProperty(ByRef obj As Object, _
                        ByRef propertyName As String, _
-                       ByRef propertyType As Long, _
+                       ByRef propertyType As DAO.DataTypeEnum, _
                        ByRef propertyValue As Variant)
    Dim propertyList As DAO.Properties
    Dim aProperty As DAO.Property
