@@ -39,16 +39,17 @@ Attribute VB_Exposed = False
 '|---------------------+---------------------------------------------------
 '| Author              | Frank Schwab
 '|---------------------+---------------------------------------------------
-'| Version             | 1.0.0
+'| Version             | 1.0.1
 '|---------------------+---------------------------------------------------
 '| Changes             | 2020-07-18  Created. fhs
+'|                     | 2020-09-14  Corrected comments. fhs
 '|---------------------+---------------------------------------------------
 '
 
 Option Explicit
 
 '
-' Private Konstanten
+' Private constants
 '
 Private Const TABLE_PROPERTY_HIDDEN                    As String = "Jet OLEDB:Table Hidden in Access"
 Private Const TABLE_PROPERTY_LINK                      As String = "Jet OLEDB:Create Link"
@@ -61,13 +62,14 @@ Private Const TABLE_PROPERTY_VALIDATION_MESSAGE        As String = "Jet OLEDB:Ta
 Private Const TABLE_PROPERTY_VALIDATION_RULE           As String = "Jet OLEDB:Table Validation Rule"
 
 '
-' Instanzvariable
+' Instance variable
 '
 Private m_Table As ADOX.Table
 
 '
-' Öffentliche Attribute
+' Public attributes
 '
+
 ' ADOTable
 Public Property Get ADOTable() As ADOX.Table
    Set ADOTable = m_Table
@@ -76,6 +78,7 @@ End Property
 Public Property Set ADOTable(ByRef newTable As ADOX.Table)
    Set m_Table = newTable
 End Property
+
 
 ' CacheLinkAuthentication
 Public Property Get CacheLinkAuthentication() As Boolean
@@ -86,6 +89,7 @@ Public Property Let CacheLinkAuthentication(ByVal newCacheLinkAuthentication As 
    m_Table.Properties(TABLE_PROPERTY_LINK_CACHE_AUTHENTICATION).Value = newCacheLinkAuthentication
 End Property
 
+
 ' IsHidden
 Public Property Get IsHidden() As Boolean
    IsHidden = m_Table.Properties(TABLE_PROPERTY_HIDDEN).Value
@@ -94,6 +98,7 @@ End Property
 Public Property Let IsHidden(ByVal newIsHidden As Boolean)
    m_Table.Properties(TABLE_PROPERTY_HIDDEN).Value = newIsHidden
 End Property
+
 
 ' LinkDataSource
 Public Property Get LinkDataSource() As String
@@ -104,6 +109,7 @@ Public Property Let LinkDataSource(ByRef newLinkDataSource As String)
    m_Table.Properties(TABLE_PROPERTY_LINK_DATA_SOURCE).Value = newLinkDataSource
 End Property
 
+
 ' ExclusiveLink
 Public Property Get ExclusiveLink() As Boolean
    LinkDataSource = m_Table.Properties(TABLE_PROPERTY_LINK_EXCLUSIVE).Value
@@ -112,6 +118,7 @@ End Property
 Public Property Let ExclusiveLink(ByVal newExclusiveLink As Boolean)
    m_Table.Properties(TABLE_PROPERTY_LINK_EXCLUSIVE).Value = newExclusiveLink
 End Property
+
 
 ' LinkProvider
 Public Property Get LinkProvider() As String
@@ -122,6 +129,7 @@ Public Property Let LinkProvider(ByRef newLinkProvider As String)
    m_Table.Properties(TABLE_PROPERTY_LINK_PROVIDER_STRING).Value = newLinkProvider
 End Property
 
+
 ' RemoteTableName
 Public Property Get RemoteTableName() As String
    RemoteTableName = m_Table.Properties(TABLE_PROPERTY_LINK_REMOTE_TABLE_NAME).Value
@@ -130,6 +138,7 @@ End Property
 Public Property Let RemoteTableName(ByRef newRemoteTableName As String)
    m_Table.Properties(TABLE_PROPERTY_LINK_REMOTE_TABLE_NAME).Value = newRemoteTableName
 End Property
+
 
 ' ValidationMessage
 Public Property Get ValidationMessage() As String
@@ -140,6 +149,7 @@ Public Property Let ValidationMessage(ByRef newValidationMessage As String)
    m_Table.Properties(TABLE_PROPERTY_VALIDATION_MESSAGE).Value = newValidationMessage
 End Property
 
+
 ' ValidationRule
 Public Property Get ValidationRule() As String
    ValidationRule = m_Table.Properties(TABLE_PROPERTY_VALIDATION_RULE).Value
@@ -149,8 +159,28 @@ Public Property Let ValidationRule(ByRef newValidationRule As String)
    m_Table.Properties(TABLE_PROPERTY_VALIDATION_RULE).Value = newValidationRule
 End Property
 
+
 '
-' Öffentliche Methoden
+' Public methods
+'
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | CreateADOTable
+'|------------------+-------------------------------------------------------
+'| Description      | Create this wrapper with a specific ADO table.
+'|------------------+-------------------------------------------------------
+'| Parameter        | tableName : Table name
+'|                  | adoCatalog: ADO catalog the table should belong to
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-18  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
 '
 Public Sub CreateADOTable(ByRef tableName As String, _
                           ByRef adoCatalog As ADOX.Catalog)
@@ -163,10 +193,44 @@ Public Sub CreateADOTable(ByRef tableName As String, _
    End With
 End Sub
 
+'
+'+--------------------------------------------------------------------------
+'| Method           | CreateNew
+'|------------------+-------------------------------------------------------
+'| Description      | Create this wrapper with a blank ADO table.
+'|------------------+-------------------------------------------------------
+'| Parameter        | ./.
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-18  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Public Sub CreateNew()
    Set m_Table = New ADOX.Table
 End Sub
 
+'
+'+--------------------------------------------------------------------------
+'| Method           | fromADOTable
+'|------------------+-------------------------------------------------------
+'| Description      | Create this wrapper from an existing ADO table.
+'|------------------+-------------------------------------------------------
+'| Parameter        | ./.
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-18  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Public Sub fromADOTable(ByRef aTable As ADOX.Table)
    Set m_Table = aTable
 End Sub
