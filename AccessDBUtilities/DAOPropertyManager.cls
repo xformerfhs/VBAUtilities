@@ -40,27 +40,56 @@ Attribute VB_Exposed = False
 '|---------------------+---------------------------------------------------
 '| Author              | Frank Schwab
 '|---------------------+---------------------------------------------------
-'| Version             | 1.0.0
+'| Version             | 1.0.1
 '|---------------------+---------------------------------------------------
 '| Changes             | 2020-07-18  Created. fhs
+'|                     | 2020-09-14  Added comments. fhs
 '|---------------------+---------------------------------------------------
 '
 Option Compare Database
 Option Explicit
 
+'
+' Private constants
+'
 Private Const ERR_PROPERTY_NOT_FOUND As Long = 3270
 
+'
+' Public methods
+'
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | SetProperty
+'|------------------+-------------------------------------------------------
+'| Description      | Set a property of a DAO object.
+'|------------------+-------------------------------------------------------
+'| Parameter        | obj: The DAO object
+'|                  | propertyName: The name of the property
+'|                  | propertyType: The property type
+'|                  | propertyValue: The value of the property
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-18  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | This method automaically adds the property if it
+'|                  | does not exist.
+'+--------------------------------------------------------------------------
+'
 Public Sub SetProperty(ByRef obj As Object, _
                        ByRef propertyName As String, _
                        ByRef propertyType As Long, _
                        ByRef propertyValue As Variant)
-   Dim properyList As DAO.Properties
+   Dim propertyList As DAO.Properties
    Dim aProperty As DAO.Property
 
-   Set properyList = obj.Properties
+   Set propertyList = obj.Properties
 
    On Error Resume Next
-   properyList(propertyName).Value = propertyValue
+   propertyList(propertyName).Value = propertyValue
 
    If Err.Number <> 0 Then
       If Err.Number = ERR_PROPERTY_NOT_FOUND Then
@@ -73,7 +102,7 @@ Public Sub SetProperty(ByRef obj As Object, _
             .Value = propertyValue
          End With
 
-         properyList.Append aProperty
+         propertyList.Append aProperty
 
          Set aProperty = Nothing
       Else
@@ -81,18 +110,36 @@ Public Sub SetProperty(ByRef obj As Object, _
       End If
    End If
 
-   Set properyList = Nothing
+   Set propertyList = Nothing
 End Sub
 
+'
+'+--------------------------------------------------------------------------
+'| Method           | GetProperty
+'|------------------+-------------------------------------------------------
+'| Description      | Get a property of a DAO object.
+'|------------------+-------------------------------------------------------
+'| Parameter        | obj: The DAO object
+'|                  | propertyName: The name of the property
+'|------------------+-------------------------------------------------------
+'| Return values    | The value of the property or Null if it is not set.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-18  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Public Function GetProperty(ByRef obj As Object, _
                             ByRef propertyName As String) As Variant
-   Dim properyList As DAO.Properties
+   Dim propertyList As DAO.Properties
    Dim aProperty As DAO.Property
 
-   Set properyList = obj.Properties
+   Set propertyList = obj.Properties
 
    On Error Resume Next
-   GetProperty = properyList(propertyName).Value
+   GetProperty = propertyList(propertyName).Value
    
    If Err.Number <> 0 Then _
       GetProperty = Null
@@ -100,6 +147,26 @@ Public Function GetProperty(ByRef obj As Object, _
    On Error GoTo 0
 End Function
 
+'
+'+--------------------------------------------------------------------------
+'| Method           | GetPropertyWithDefault
+'|------------------+-------------------------------------------------------
+'| Description      | Get a property of a DAO object or a default if it 
+'|                  | is not set.
+'|------------------+-------------------------------------------------------
+'| Parameter        | obj: The DAO object
+'|                  | propertyName: The name of the property
+'|------------------+-------------------------------------------------------
+'| Return values    | The value of the property or the supplied default
+'|                  | if it is not set.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-18  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Public Function GetPropertyWithDefault(ByRef obj As Object, _
                                        ByRef propertyName As String, _
                                        ByRef defaultValue As Variant) As Variant
