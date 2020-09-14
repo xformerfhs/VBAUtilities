@@ -49,7 +49,7 @@ Attribute VB_Exposed = False
 Option Explicit
 
 '
-' Private Konstanten
+' Private constants
 '
 Private Const FIELD_PROPERTY_AUTO_VALUE          As String = "Autoincrement"
 Private Const FIELD_PROPERTY_DESCRIPTION         As String = "Description"
@@ -63,7 +63,7 @@ Private Const FIELD_PROPERTY_DEFAULT_VALUE       As String = "Default"
 Private Const INVALID_SIZE As Long = -1
 
 '
-' Instanzvariable
+' Instance variable
 '
 Private m_Field As ADOX.Column
 
@@ -160,6 +160,7 @@ End Property
 Public Property Let UnicodeCompression(ByVal newUnicodeCompression As Boolean)
    m_Field.Properties(FIELD_PROPERTY_UNICODE_COMPRESSION).Value = newUnicodeCompression
 End Property
+
 
 '
 ' Public methods
