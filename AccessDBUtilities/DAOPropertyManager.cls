@@ -40,12 +40,13 @@ Attribute VB_Exposed = False
 '|---------------------+---------------------------------------------------
 '| Author              | Frank Schwab
 '|---------------------+---------------------------------------------------
-'| Version             | 1.0.2
+'| Version             | 1.0.3
 '|---------------------+---------------------------------------------------
 '| Changes             | 2020-07-18  Created. fhs
 '|                     | 2020-09-14  Added comments. fhs
 '|                     | 2020-09-14  Correct data type for SetProperty
 '|                     |             propertyType parameter. fhs
+'|                     | 2020-09-14  Simplified creation of new property. fhs
 '|---------------------+---------------------------------------------------
 '
 Option Compare Database
@@ -76,7 +77,8 @@ Private Const ERR_PROPERTY_NOT_FOUND As Long = 3270
 '| Author           | Frank Schwab
 '|------------------+-------------------------------------------------------
 '| Changes          | 2020-07-18  Created. fhs
-'|                  | 2020-09-14  Correct data type for propertyType. fhs
+'|                  | 2020-09-14  Corrected data type for propertyType. fhs
+'|                  | 2020-09-14  Simplified creation of new property. fhs
 '|------------------+-------------------------------------------------------
 '| Remarks          | This method automaically adds the property if it
 '|                  | does not exist.
@@ -98,12 +100,7 @@ Public Sub SetProperty(ByRef obj As Object, _
       If Err.Number = ERR_PROPERTY_NOT_FOUND Then
          On Error GoTo 0
 
-         Set aProperty = obj.CreateProperty(propertyName)
-
-         With aProperty
-            .Type = propertyType
-            .Value = propertyValue
-         End With
+         Set aProperty = obj.CreateProperty(propertyName, propertyType, propertyValue)
 
          propertyList.Append aProperty
 
