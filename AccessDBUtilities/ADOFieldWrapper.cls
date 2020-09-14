@@ -39,9 +39,10 @@ Attribute VB_Exposed = False
 '|---------------------+---------------------------------------------------
 '| Author              | Frank Schwab
 '|---------------------+---------------------------------------------------
-'| Version             | 1.0.0
+'| Version             | 1.0.1
 '|---------------------+---------------------------------------------------
 '| Changes             | 2020-07-18  Created. fhs
+'|                     | 2020-09-14  Corrected comments. fhs
 '|---------------------+---------------------------------------------------
 '
 
@@ -67,7 +68,9 @@ Private Const INVALID_SIZE As Long = -1
 Private m_Field As ADOX.Column
 
 '
-' Öffentliche Attribute
+' Public attributes
+'
+
 '
 ' ADOField
 Public Property Get ADOField() As ADOX.Column
@@ -78,6 +81,7 @@ Public Property Set ADOField(ByRef newField As ADOX.Column)
    Set m_Field = newField
 End Property
 
+
 ' AllowZeroLength
 Public Property Get AllowZeroLength() As Boolean
    AllowZeroLength = m_Field.Properties(FIELD_PROPERTY_ALLOW_0_LENGTH).Value
@@ -86,6 +90,7 @@ End Property
 Public Property Let AllowZeroLength(ByVal newAllowZeroLength As Boolean)
    m_Field.Properties(FIELD_PROPERTY_ALLOW_0_LENGTH).Value = newAllowZeroLength
 End Property
+
 
 ' DefaultValue
 Public Property Get DefaultValue() As Variant
@@ -96,6 +101,7 @@ Public Property Let DefaultValue(ByVal newDefaultValue As Variant)
    m_Field.Properties(FIELD_PROPERTY_DEFAULT_VALUE).Value = newDefaultValue
 End Property
 
+
 ' Description
 Public Property Get Description() As String
    Description = m_Field.Properties(FIELD_PROPERTY_DESCRIPTION).Value
@@ -104,6 +110,7 @@ End Property
 Public Property Let Description(ByRef newDescription As String)
    m_Field.Properties(FIELD_PROPERTY_DESCRIPTION).Value = newDescription
 End Property
+
 
 ' IsAutoValue
 Public Property Get IsAutoValue() As Boolean
@@ -114,6 +121,7 @@ Public Property Let IsAutoValue(ByVal newIsAutoValue As Boolean)
    m_Field.Properties(FIELD_PROPERTY_AUTO_VALUE).Value = newIsAutoValue
 End Property
 
+
 ' Required
 Public Property Get Required() As Boolean
    Required = Not m_Field.Properties(FIELD_PROPERTY_NULLABLE).Value
@@ -122,6 +130,7 @@ End Property
 Public Property Let Required(ByVal newRequired As Boolean)
    m_Field.Properties(FIELD_PROPERTY_NULLABLE).Value = Not newRequired
 End Property
+
 
 ' ValidationMessage
 Public Property Get ValidationMessage() As String
@@ -132,6 +141,7 @@ Public Property Let ValidationMessage(ByRef newValidationMessage As String)
    m_Field.Properties(FIELD_PROPERTY_VALIDATION_MESSAGE).Value = newValidationMessage
 End Property
 
+
 ' ValidationRule
 Public Property Get ValidationRule() As String
    ValidationRule = m_Field.Properties(FIELD_PROPERTY_VALIDATION_RULE).Value
@@ -140,6 +150,7 @@ End Property
 Public Property Let ValidationRule(ByRef newValidationRule As String)
    m_Field.Properties(FIELD_PROPERTY_VALIDATION_RULE).Value = newValidationRule
 End Property
+
 
 ' UnicodeCompression
 Public Property Get UnicodeCompression() As Boolean
@@ -151,7 +162,29 @@ Public Property Let UnicodeCompression(ByVal newUnicodeCompression As Boolean)
 End Property
 
 '
-' Öffentliche Methoden
+' Public methods
+'
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | CreateADOField
+'|------------------+-------------------------------------------------------
+'| Description      | Create this wrapper with a specific ADO field.
+'|------------------+-------------------------------------------------------
+'| Parameter        | fieldName : Field name
+'|                  | fieldtype : Field type
+'|                  | adoCatalog: ADO catalog the field should belong to
+'|                  | fieldSize : Size of the field, if it is necessary
+'|                  |             for the field definition (e.g. strings)
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-18  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
 '
 Public Sub CreateADOField(ByRef fieldName As String, _
                           ByVal fieldType As ADOX.DataTypeEnum, _
@@ -171,19 +204,86 @@ Public Sub CreateADOField(ByRef fieldName As String, _
    End With
 End Sub
 
+'
+'+--------------------------------------------------------------------------
+'| Method           | CreateNew
+'|------------------+-------------------------------------------------------
+'| Description      | Create this wrapper with a blank ADO field.
+'|------------------+-------------------------------------------------------
+'| Parameter        | ./.
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-18  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Public Sub CreateNew()
    Set m_Field = New ADOX.Column
 End Sub
 
+'
+'+--------------------------------------------------------------------------
+'| Method           | FromADOField
+'|------------------+-------------------------------------------------------
+'| Description      | Create this wrapper from an existing ADO field.
+'|------------------+-------------------------------------------------------
+'| Parameter        | ./.
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-18  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Public Sub FromADOField(ByRef aField As ADOX.Column)
    Set m_Field = aField
 End Sub
 
+'
+'+--------------------------------------------------------------------------
+'| Method           | SetAutoValue
+'|------------------+-------------------------------------------------------
+'| Description      | Set the AutoValue attribute of the field in this wrapper.
+'|------------------+-------------------------------------------------------
+'| Parameter        | ./.
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-18  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Public Sub SetAutoValue()
    Me.IsAutoValue = True
 End Sub
 
+'
+'+--------------------------------------------------------------------------
+'| Method           | NoAutoValue
+'|------------------+-------------------------------------------------------
+'| Description      | Clear the AutoValue attribute of the field in this wrapper.
+'|------------------+-------------------------------------------------------
+'| Parameter        | ./.
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-18  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Public Sub NoAutoValue()
    Me.IsAutoValue = False
 End Sub
-
