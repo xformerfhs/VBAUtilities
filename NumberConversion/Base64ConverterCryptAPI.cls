@@ -10,6 +10,8 @@ Attribute VB_Exposed = False
 '
 '+-------------------------------------------------------------------------
 '|
+'| SPDX-FileCopyrightText: 2020 Frank Schwab
+'|
 '| SPDX-License-Identifier: MIT
 '|
 '| Copyright 2020, Frank Schwab
@@ -390,4 +392,3 @@ Public Function Decode(ByRef sourceB64Text As String) As Byte()
 
    Decode = resultByteArray
 End Function
-
