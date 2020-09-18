@@ -157,11 +157,49 @@ Private m_FSO As New Scripting.FileSystemObject
 '
 ' Private methods
 '
-Private Function FileExists(ByRef fileName As String) As Boolean
-   FileExists = (Len(Dir$(fileName)) > 0)
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | FileExists
+'|------------------+-------------------------------------------------------
+'| Description      | Check if a file exists
+'|------------------+-------------------------------------------------------
+'| Parameter        | filePath: Path of the file
+'|------------------+-------------------------------------------------------
+'| Return values    | True : File exists
+'|                  | False: File does not exist
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-20  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
+Private Function FileExists(ByRef filePath As String) As Boolean
+   FileExists = (Len(Dir$(filePath)) > 0)
 End Function
 
-Private Sub HandleAPIError(ByRef source As String, Optional ByRef additionalInformation As String = "")
+'
+'+--------------------------------------------------------------------------
+'| Method           | HandleAPIError
+'|------------------+-------------------------------------------------------
+'| Description      | Handle Windows API error
+'|------------------+-------------------------------------------------------
+'| Parameter        | winApiFunctionName: Name of the failing Windows API
+'|                  |                     function
+'|                  | additionalInformation: Optional additional information
+'|------------------+-------------------------------------------------------
+'| Return values    | ./..
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-20  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | This method does not return but raises an error.
+'+--------------------------------------------------------------------------
+'
+Private Sub HandleAPIError(ByRef winApiFunctionName As String, Optional ByRef additionalInformation As String = "")
    Dim ErrorCode As Long
 
    ErrorCode = Err.LastDllError
@@ -188,26 +226,100 @@ Private Sub HandleAPIError(ByRef source As String, Optional ByRef additionalInfo
                 mm.GetMessageForWindowsErrorCode(ErrorCode)
 End Sub
 
-Private Function GetVolumeFlags(ByRef drivename As String) As Long
+'
+'+--------------------------------------------------------------------------
+'| Method           | GetVolumeFlags
+'|------------------+-------------------------------------------------------
+'| Description      | Get the colume flags of a drive
+'|------------------+-------------------------------------------------------
+'| Parameter        | drivePath: Path of the drive
+'|                  |           (e.g. "C:\" or "\\Server\Share\")
+'|------------------+-------------------------------------------------------
+'| Return values    | Volume flags
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-20  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
+Private Function GetVolumeFlags(ByRef drivePath As String) As Long
    Dim result As Long
 
    GetVolumeFlags = 0
 
-   If GetVolumeInformation(drivename, 0, 0, 0, 0, VarPtr(result), 0, 0) <> 0 Then
+   If GetVolumeInformation(drivePath, 0, 0, 0, 0, VarPtr(result), 0, 0) <> 0 Then
       GetVolumeFlags = result
    Else
       HandleAPIError "GetVolumeInformation"
    End If
 End Function
 
-Private Function GetDriveName(ByRef fileName As String) As String
-   GetDriveName = m_FSO.GetDriveName(m_FSO.GetAbsolutePathName(fileName)) & "\"
+'
+'+--------------------------------------------------------------------------
+'| Method           | GetDrivePath
+'|------------------+-------------------------------------------------------
+'| Description      | Get the drive path part of a file path
+'|------------------+-------------------------------------------------------
+'| Parameter        | filePath: Path of the file
+'|------------------+-------------------------------------------------------
+'| Return values    | The drive path part of the file path
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-20  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
+Private Function GetDrivePath(ByRef filePath As String) As String
+   GetDrivePath = m_FSO.GetDrivePath(m_FSO.GetAbsolutePathName(filePath)) & "\"
 End Function
 
-Private Function DoesFilesystemSupportCompression(ByRef fileName As String) As Boolean
-   DoesFilesystemSupportCompression = ((GetVolumeFlags(GetDriveName(fileName)) And FILE_FILE_COMPRESSION) <> 0)
+'
+'+--------------------------------------------------------------------------
+'| Method           | DoesFilesystemSupportCompression
+'|------------------+-------------------------------------------------------
+'| Description      | Check if the file system where a file resides
+'|                  | supports compression
+'|------------------+-------------------------------------------------------
+'| Parameter        | filePath: Path of the file
+'|------------------+-------------------------------------------------------
+'| Return values    | True : The file system supports compression
+'|                  | False: The file system does not support compression
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-20  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
+Private Function DoesFilesystemSupportCompression(ByRef filePath As String) As Boolean
+   DoesFilesystemSupportCompression = ((GetVolumeFlags(GetDrivePath(filePath)) And FILE_FILE_COMPRESSION) <> 0)
 End Function
 
+'
+'+--------------------------------------------------------------------------
+'| Method           | MakeIOCtlCode
+'|------------------+-------------------------------------------------------
+'| Description      | Build an I/O Control code from its components
+'|------------------+-------------------------------------------------------
+'| Parameter        | deviceType  : Device type
+'|                  | accessType  : Access type
+'|                  | functionCode: Function code
+'|                  | ioMethod    : I/O method
+'|------------------+-------------------------------------------------------
+'| Return values    | I/O control code
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-20  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Private Function MakeIOCtlCode(ByVal deviceType As Long, ByVal accessType As Long, ByVal functionCode As Long, ByVal ioMethod As Long) As Long
    Dim result As Long
 
@@ -219,6 +331,24 @@ Private Function MakeIOCtlCode(ByVal deviceType As Long, ByVal accessType As Lon
    MakeIOCtlCode = result
 End Function
 
+'
+'+--------------------------------------------------------------------------
+'| Method           | GetCompressionAttribute
+'|------------------+-------------------------------------------------------
+'| Description      | Get the compression attribute for a file handle
+'|------------------+-------------------------------------------------------
+'| Parameter        | handle: File handle
+'|------------------+-------------------------------------------------------
+'| Return values    | True : File is compressed
+'|                  | False: File is not compressed
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-20  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Private Function GetCompressionAttribute(ByRef handle As Long) As Boolean
    Dim controlParameter As Integer
    Dim returnedBytesCount As Long
@@ -277,8 +407,29 @@ Private Sub SetCompressionAttribute(ByRef handle As Long, ByVal shouldCompress A
       HandleAPIError "DeviceIoControl(FSCTL_SET_COMPRESSION)"
 End Sub
 
-Private Sub OpenFileAndSetCompressionState(ByRef fileName As String, ByVal creationDisposition As Long, ByVal shouldCompress As Boolean)
-   If DoesFilesystemSupportCompression(fileName) Then
+'
+'+--------------------------------------------------------------------------
+'| Method           | OpenFileAndSetCompressionState
+'|------------------+-------------------------------------------------------
+'| Description      | Open a file and set its compression state
+'|------------------+-------------------------------------------------------
+'| Parameter        | filePath           : Path of the file
+'|                  | creationDisposition: Creation disposition for the call
+'|                  |                      to the Windows API call CreateFile
+'|                  | shouldCompress     : True : Set compression
+'|                  |                      False: Unset compression
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-20  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
+Private Sub OpenFileAndSetCompressionState(ByRef filePath As String, ByVal creationDisposition As Long, ByVal shouldCompress As Boolean)
+   If DoesFilesystemSupportCompression(filePath) Then
       Dim handle As Long
 
 '
@@ -287,7 +438,7 @@ Private Sub OpenFileAndSetCompressionState(ByRef fileName As String, ByVal creat
 ' and not read. However, setting the compression attribute implies to read
 ' the current compression attribute first.
 '
-      handle = CreateFile(fileName, _
+      handle = CreateFile(filePath, _
                           GENERIC_READ Or GENERIC_WRITE, _
                           FILE_SHARE_READ, _
                           0, _
@@ -299,20 +450,38 @@ Private Sub OpenFileAndSetCompressionState(ByRef fileName As String, ByVal creat
             SetCompressionAttribute handle, shouldCompress
 
          If CloseHandle(handle) = 0 Then _
-            HandleAPIError "CloseHandle", fileName
+            HandleAPIError "CloseHandle", filePath
       Else
-         HandleAPIError "CreateFile", fileName
+         HandleAPIError "CreateFile", filePath
       End If
    End If
 End Sub
 
-Private Function GetCompressionAttributeForFile(ByRef fileName As String) As Boolean
+'
+'+--------------------------------------------------------------------------
+'| Method           | GetCompressionAttributeForFile
+'|------------------+-------------------------------------------------------
+'| Description      | Get the compression attribute of a file
+'|------------------+-------------------------------------------------------
+'| Parameter        | filePath: Path of the file
+'|------------------+-------------------------------------------------------
+'| Return values    | True : The file is compressed
+'|                  | False: The file is not compressed
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-20  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
+Private Function GetCompressionAttributeForFile(ByRef filePath As String) As Boolean
    GetCompressionAttributeForFile = False
 
-   If DoesFilesystemSupportCompression(fileName) Then
+   If DoesFilesystemSupportCompression(filePath) Then
       Dim handle As Long
    
-      handle = CreateFile(fileName, _
+      handle = CreateFile(filePath, _
                           GENERIC_READ, _
                           FILE_SHARE_READ, _
                           0, _
@@ -324,9 +493,9 @@ Private Function GetCompressionAttributeForFile(ByRef fileName As String) As Boo
          GetCompressionAttributeForFile = GetCompressionAttribute(handle)
 
          If CloseHandle(handle) = 0 Then _
-            HandleAPIError "CloseHandle", fileName
+            HandleAPIError "CloseHandle", filePath
       Else
-         HandleAPIError "CreateFile", fileName
+         HandleAPIError "CreateFile", filePath
       End If
    End If
 End Function
@@ -335,18 +504,92 @@ End Function
 '
 ' Public methods
 '
-Public Sub CreateCompressedFile(ByRef fileName As String)
-   OpenFileAndSetCompressionState fileName, CREATE_ALWAYS, True
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | CreateCompressedFile
+'|------------------+-------------------------------------------------------
+'| Description      | Create a compressed file
+'|------------------+-------------------------------------------------------
+'| Parameter        | filePath: Path of the file
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-20  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | If the file already exists before a call to this
+'|                  | method and it is not compressed it will be
+'|                  | compressed afterwards.
+'+--------------------------------------------------------------------------
+'
+Public Sub CreateCompressedFile(ByRef filePath As String)
+   OpenFileAndSetCompressionState filePath, CREATE_ALWAYS, True
 End Sub
 
-Public Sub SetCompression(ByRef fileName As String)
-   OpenFileAndSetCompressionState fileName, OPEN_EXISTING, True
+'
+'+--------------------------------------------------------------------------
+'| Method           | SetCompression
+'|------------------+-------------------------------------------------------
+'| Description      | Compress an uncompressed file
+'|------------------+-------------------------------------------------------
+'| Parameter        | filePath: Path of the file
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-20  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | If the file is already compressed before a call to this
+'|                  | method nothing is changed.
+'+--------------------------------------------------------------------------
+'
+Public Sub SetCompression(ByRef filePath As String)
+   OpenFileAndSetCompressionState filePath, OPEN_EXISTING, True
 End Sub
 
-Public Sub ClearCompression(ByRef fileName As String)
-   OpenFileAndSetCompressionState fileName, OPEN_EXISTING, False
+'
+'+--------------------------------------------------------------------------
+'| Method           | ClearCompression
+'|------------------+-------------------------------------------------------
+'| Description      | Uncompress a compressed file
+'|------------------+-------------------------------------------------------
+'| Parameter        | filePath: Path of the file
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-20  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | If the file is not compressed before a call to this
+'|                  | method nothing is changed.
+'+--------------------------------------------------------------------------
+'
+Public Sub ClearCompression(ByRef filePath As String)
+   OpenFileAndSetCompressionState filePath, OPEN_EXISTING, False
 End Sub
 
-Public Function IsFileCompressed(ByRef fileName As String) As Boolean
-   IsFileCompressed = GetCompressionAttributeForFile(fileName)
+'
+'+--------------------------------------------------------------------------
+'| Method           | IsFileCompressed
+'|------------------+-------------------------------------------------------
+'| Description      | Check if a file is compressed
+'|------------------+-------------------------------------------------------
+'| Parameter        | filePath: Path of the file
+'|------------------+-------------------------------------------------------
+'| Return values    | True : The file is compressed
+'|                  | False: The file is not compressed
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-20  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
+Public Function IsFileCompressed(ByRef filePath As String) As Boolean
+   IsFileCompressed = GetCompressionAttributeForFile(filePath)
 End Function
