@@ -1,6 +1,8 @@
 '
 '+-------------------------------------------------------------------------
 '|
+'| SPDX-FileCopyrightText: 2020 Frank Schwab
+'|
 '| SPDX-License-Identifier: MIT
 '|
 '| Copyright 2020, Frank Schwab
