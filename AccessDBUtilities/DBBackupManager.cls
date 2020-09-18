@@ -10,6 +10,8 @@ Attribute VB_Exposed = False
 '
 '+-------------------------------------------------------------------------
 '|
+'| SPDX-FileCopyrightText: 2020 Frank Schwab
+'|
 '| SPDX-License-Identifier: MIT
 '|
 '| Copyright 2020, Frank Schwab
@@ -31,6 +33,7 @@ Attribute VB_Exposed = False
 '| LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 '| OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 '| IN THE SOFTWARE.
+'|
 '|
 '|-------------------------------------------------------------------------
 '| Class               | DBBackupManager
