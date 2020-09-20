@@ -44,7 +44,7 @@ Attribute VB_Exposed = False
 '|---------------------+---------------------------------------------------
 '| Version             | 1.0.0
 '|---------------------+---------------------------------------------------
-'| Changes             | 2020-07-20  Created. fhs
+'| Changes             | 2018-09-25  Created. fhs
 '|---------------------+---------------------------------------------------
 '
 
@@ -53,6 +53,26 @@ Option Explicit
 
 '
 ' Private methods
+'
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | GetDateIndexedFileList
+'|------------------+-------------------------------------------------------
+'| Description      | Create an associative array which is indexed
+'|                  | by file creation date and contains Scripting.File
+'|                  | objects as values
+'|------------------+-------------------------------------------------------
+'| Parameter        | fileList: Scripting.Files list of files
+'|------------------+-------------------------------------------------------
+'| Return values    | A Scripting.Dictionary of the Scripting.File objects
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2018-09-25  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
 '
 Private Function GetDateIndexedFileList(ByRef fileList As Scripting.Files) As Variant
    Dim result As New Scripting.Dictionary
@@ -67,6 +87,24 @@ Private Function GetDateIndexedFileList(ByRef fileList As Scripting.Files) As Va
    Set GetDateIndexedFileList = result
 End Function
 
+'
+'+--------------------------------------------------------------------------
+'| Method           | GetDateSortedFileList
+'|------------------+-------------------------------------------------------
+'| Description      | Create an array of Scripting.File objects
+'|                  | sorted by file creation date
+'|------------------+-------------------------------------------------------
+'| Parameter        | fileList: Scripting.Files list of files
+'|------------------+-------------------------------------------------------
+'| Return values    | An array of Scripting.File objects
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2018-09-25  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Private Function GetDateSortedFileList(ByRef fileList As Scripting.Files) As Scripting.File()
    Dim aFile As Scripting.File
 
@@ -97,6 +135,26 @@ Private Function GetDateSortedFileList(ByRef fileList As Scripting.Files) As Scr
    GetDateSortedFileList = result
 End Function
 
+'
+'+--------------------------------------------------------------------------
+'| Method           | DeleteOldBackups
+'|------------------+-------------------------------------------------------
+'| Description      | Delete files in excess of the no. of files to keep, 
+'|                  | oldest files first
+'|------------------+-------------------------------------------------------
+'| Parameter        | fso: A Scripting.FileSystemObject
+'|                  | backupDirectory: The path of the backup directory
+'|                  | noOfFilesToKeep: The no. of files to keep
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2018-09-25  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Private Sub DeleteOldBackups(ByRef fso As Scripting.FileSystemObject, ByRef backupDirectory As String, ByVal noOfFilesToKeep As Integer)
    Dim backupFolder As Scripting.Folder
 
@@ -121,6 +179,27 @@ End Sub
 
 '
 ' Public methods
+'
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | BackupDB
+'|------------------+-------------------------------------------------------
+'| Description      | Back up a database file with a maximum no. of files 
+'|                  | to keep as backups
+'|------------------+-------------------------------------------------------
+'| Parameter        | dbPath: Path of the database
+'|                  | noOfFilesToKeep: The no. of files to keep
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2018-09-25  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | This method creates a subdirectory with the name
+'|                  | "Backups" in the directory where the database resides.
+'+--------------------------------------------------------------------------
 '
 Public Sub BackupDB(ByRef dbPath As String, ByVal noOfFilesToKeep As Integer)
    Dim fso As New Scripting.FileSystemObject
