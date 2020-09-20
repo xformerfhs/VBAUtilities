@@ -7,27 +7,72 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
+'
+'+-------------------------------------------------------------------------
+'|
+'| SPDX-FileCopyrightText: 2020 Frank Schwab
+'|
+'| SPDX-License-Identifier: MIT
+'|
+'| Copyright 2020, Frank Schwab
+'|
+'| Permission is hereby granted, free of charge, to any person obtaining a
+'| copy of this software and associated documentation files (the "Software"),
+'| to deal in the Software without restriction, including without limitation
+'| the rights to use, copy, modify, merge, publish, distribute, sublicense,
+'| and/or sell copies of the Software, and to permit persons to whom the
+'| Software is furnished to do so, subject to the following conditions:
+'|
+'| The above copyright notice and this permission notice shall be included
+'| in all copies or substantial portions of the Software.
+'|
+'| THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+'| OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+'| FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+'| THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+'| LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+'| OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+'| IN THE SOFTWARE.
+'|
+'|-------------------------------------------------------------------------
+'| Class               | WorkbookCustomPropertyHandler
+'|---------------------+---------------------------------------------------
+'| Description         | Wrapper class for managing Excel workbook
+'|                     | custom properties
+'|---------------------+---------------------------------------------------
+'| Author              | Frank Schwab
+'|---------------------+---------------------------------------------------
+'| Version             | 1.0.0
+'|---------------------+---------------------------------------------------
+'| Changes             | 2018-09-25  Created. fhs
+'|---------------------+---------------------------------------------------
+'| Remarks             | The MS supplied API for custom properties is 
+'|                     | cumbersome and incomplete. This wrapper class
+'|                     | makes custom property handling much easier.
+'|---------------------+---------------------------------------------------
+'| Typical usage       | Dim wbcph As New WorkbookCustomPropertyHandler
+'|                     | ...
+'|                     | Dim lastModDate As Variant
+'|                     | lastModDate = wbcph.SafeGetCustomProperty(ActiveWorkbook, "LastModificationDate")
+'|                     | ...
+'|                     | wbcph.SetCustomProperty(ActiveWorkbook, "LastModificationDate", newDate)
+'+-------------------------------------------------------------------------
 Option Explicit
-
-'''
-''' Wrapper class for managing Excel workbook custom properties, as the MS supplied API
-''' is cumbersome and incomplete.
-'''
 
 '
 ' Error constants
 '
-Private Const MODULE_NAME As String = "WorkbookCustomPropertyHandler"
-Private Const ERROR_NUMBER_BASE As Long = 38803
+Private Const STR_CLASS_NAME As String = "WorkbookCustomPropertyHandler"
+Private Const ERR_NUM_START As Long = 38803
 
-Private Const ERROR_NUMBER_NOT_FOUND As Long = ERROR_NUMBER_BASE + 0
-Private Const ERROR_TEXT_NOT_FOUND As String = "There is no property named '"
+Private Const ERR_NUM_PROPERTY_NOT_FOUND As Long = ERR_NUM_START + 0
+Private Const ERR_STR_PROPERTY_NOT_FOUND As String = "There is no property named '"
 
-Private Const ERROR_NUMBER_TYPE_NOT_MAPPABLE As Long = ERROR_NUMBER_BASE + 1
-Private Const ERROR_TEXT_TYPE_NOT_MAPPABLE As String = "variant data type can not be mapped to document property data type"
+Private Const ERR_NUM_TYPE_NOT_MAPPABLE As Long = ERR_NUM_START + 1
+Private Const ERR_STR_TYPE_NOT_MAPPABLE As String = "variant data type can not be mapped to document property data type"
 
-Private Const ERROR_NUMBER_TYPE_MISMATCH As Long = ERROR_NUMBER_BASE + 2
-Private Const ERROR_TEXT_TYPE_MISMATCH As String = "property data type mismatch: "
+Private Const ERR_NUM_TYPE_MISMATCH As Long = ERR_NUM_START + 2
+Private Const ERR_STR_TYPE_MISMATCH As String = "property data type mismatch: "
 
 '
 ' Helper constant for StrComp
@@ -39,18 +84,46 @@ Private Const STRCOMP_EQUAL As Integer = 0
 ' Private methods
 '
 
-'''
-''' Check wether the variant data type is empty or null
-'''
+'
+'+--------------------------------------------------------------------------
+'| Method           | IsEmptyOrNull
+'|------------------+-------------------------------------------------------
+'| Description      | Check wether the variant data type is empty or null
+'|------------------+-------------------------------------------------------
+'| Parameter        | propertyValue: Variant variable to check
+'|------------------+-------------------------------------------------------
+'| Return values    | True : Variable is empty or null
+'|                  | False: Variable is not empty or null
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2018-09-25  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Private Function IsEmptyOrNull(ByRef propertyValue As Variant) As Boolean
    IsEmptyOrNull = (VarType(propertyValue) <= 1)
 End Function
    
-'''
-''' Map the variant data type to a corresponding property data type
-'''
-''' Raise an error if such a mapping is not possible
-'''
+'
+'+--------------------------------------------------------------------------
+'| Method           | GetPropertyTypeFromVariantType
+'|------------------+-------------------------------------------------------
+'| Description      | Map the variant data type to a corresponding
+'|                  | property data type
+'|------------------+-------------------------------------------------------
+'| Parameter        | propertyValue: Variant variable to map
+'|------------------+-------------------------------------------------------
+'| Return values    | The corresponding MsoDocProperties type
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2018-09-25  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | Raises an error if mapping is not possible.
+'+--------------------------------------------------------------------------
+'
 Private Function GetPropertyTypeFromVariantType(ByRef propertyValue As Variant) As MsoDocProperties
    Select Case VarType(propertyValue)
       Case vbInteger, vbLong, vbByte, 20
@@ -69,9 +142,9 @@ Private Function GetPropertyTypeFromVariantType(ByRef propertyValue As Variant) 
          GetPropertyTypeFromVariantType = MsoDocProperties.msoPropertyTypeBoolean
 
       Case Else
-         Err.Raise ERROR_NUMBER_TYPE_NOT_MAPPABLE, _
-                   MODULE_NAME, _
-                   ERROR_TEXT_TYPE_NOT_MAPPABLE
+         Err.Raise ERR_NUM_TYPE_NOT_MAPPABLE, _
+                   STR_CLASS_NAME, _
+                   ERR_STR_TYPE_NOT_MAPPABLE
    End Select
 End Function
 
@@ -80,12 +153,28 @@ End Function
 ' Public methods
 '
 
-'''
-''' Check wether a property with a given name exists
-'''
-''' Property name comparisons are case-insensitive! This is the way Excel works.
-''' A property with the name "aProperty" is the same as a property with the name "ApRoPeRtY".
-'''
+'
+'+--------------------------------------------------------------------------
+'| Method           | CustomPropertyExists
+'|------------------+-------------------------------------------------------
+'| Description      | Checks wether a property with a given name exists
+'|------------------+-------------------------------------------------------
+'| Parameter        | propertyWorkbook: The workbook for the property
+'|                  | propertyName    : The property name
+'|------------------+-------------------------------------------------------
+'| Return values    | True : A property with the specified name exists
+'|                  | False: A property with the specified name does not exist
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2018-09-25  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | Property name comparisons are case-insensitive!
+'|                  | A property with the name "aProperty" is the same as
+'|                  | a property with the name "ApRoPeRtY". This is the way
+'|                  | Excel works.
+'+--------------------------------------------------------------------------
+'
 Public Function CustomPropertyExists(ByRef propertyWorkbook As Workbook, ByRef propertyName As String) As Boolean
    Dim aProperty As DocumentProperty
 
@@ -100,25 +189,57 @@ Public Function CustomPropertyExists(ByRef propertyWorkbook As Workbook, ByRef p
    Next
 End Function
 
-'''
-''' Get the value of a property and raise an error if the property does not exist
-'''
+'
+'+--------------------------------------------------------------------------
+'| Method           | GetCustomProperty
+'|------------------+-------------------------------------------------------
+'| Description      | Get the value of a custom property
+'|------------------+-------------------------------------------------------
+'| Parameter        | propertyWorkbook: The workbook for the property
+'|                  | propertyName    : The property name
+'|------------------+-------------------------------------------------------
+'| Return values    | Value of the custom property
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2018-09-25  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | This method raises an error if a custom property
+'|                  | with the specified name does not exist.
+'+--------------------------------------------------------------------------
+'
 Public Function GetCustomProperty(ByRef propertyWorkbook As Workbook, ByRef propertyName As String) As Variant
    If CustomPropertyExists(propertyWorkbook, propertyName) Then
       GetCustomProperty = propertyWorkbook.CustomDocumentProperties.Item(propertyName).value
    Else
-      Err.Raise ERROR_NUMBER_NOT_FOUND, _
-                MODULE_NAME, _
-                ERROR_TEXT_NOT_FOUND & _
+      Err.Raise ERR_NUM_PROPERTY_NOT_FOUND, _
+                STR_CLASS_NAME, _
+                ERR_STR_PROPERTY_NOT_FOUND & _
                    propertyName & _
                    "'"
    End If
 End Function
 
-'''
-''' Get the value of a property and do not raise an error if the property does not exist.
-''' Instead return a value of "Empty".
-'''
+'
+'+--------------------------------------------------------------------------
+'| Method           | SafeGetCustomProperty
+'|------------------+-------------------------------------------------------
+'| Description      | Get the value of a custom property
+'|------------------+-------------------------------------------------------
+'| Parameter        | propertyWorkbook: The workbook for the property
+'|                  | propertyName    : The property name
+'|------------------+-------------------------------------------------------
+'| Return values    | Value of the custom property
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2018-09-25  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | This method does not raise an error if a custom property
+'|                  | with the specified name does not exist. An empty
+'|                  | value is returned in this case.
+'+--------------------------------------------------------------------------
+'
 Public Function SafeGetCustomProperty(ByRef propertyWorkbook As Workbook, ByRef propertyName As String) As Variant
    If CustomPropertyExists(propertyWorkbook, propertyName) Then
       SafeGetCustomProperty = propertyWorkbook.CustomDocumentProperties.Item(propertyName).value
@@ -127,14 +248,26 @@ Public Function SafeGetCustomProperty(ByRef propertyWorkbook As Workbook, ByRef 
    End If
 End Function
 
-'''
-''' Set a property to a value
-'''
-''' The property data type is derived from the variant data type.
-'''
-''' This method raises an error if the variant data type can not be matched to a property data type
-''' and if the property already exists and the new and the old property data types do not match.
-'''
+'
+'+--------------------------------------------------------------------------
+'| Method           | SetCustomProperty
+'|------------------+-------------------------------------------------------
+'| Description      | Set a custom property to a value
+'|------------------+-------------------------------------------------------
+'| Parameter        | propertyWorkbook: The workbook for the property
+'|                  | propertyName    : The property name
+'|                  | propertyValue   : The property value
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2018-09-25  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | This method shows how incredibly complicated
+'|                  | the handling of custom properties in Excel is.
+'+--------------------------------------------------------------------------
+'
 Public Sub SetCustomProperty(ByRef propertyWorkbook As Workbook, ByRef propertyName As String, ByVal propertyValue As Variant)
    Dim actualProperty As CustomProperty
 
@@ -178,11 +311,11 @@ Public Sub SetCustomProperty(ByRef propertyWorkbook As Workbook, ByRef propertyN
             actualProperty.value = propertyValue
          Else
             '
-            ' The old and the new property data type are not compatible. raise an error
+            ' The old and the new property data type are not compatible. Raise an error
             '
-            Err.Raise ERROR_NUMBER_TYPE_MISMATCH, _
-                      MODULE_NAME, _
-                      ERROR_TEXT_TYPE_MISMATCH & _
+            Err.Raise ERR_NUM_TYPE_MISMATCH, _
+                      STR_CLASS_NAME, _
+                      ERR_STR_TYPE_MISMATCH & _
                          "Name = '" & _
                          propertyName & _
                          "', requested type = " & _
@@ -195,7 +328,7 @@ Public Sub SetCustomProperty(ByRef propertyWorkbook As Workbook, ByRef propertyN
       '
       ' The property does not exist
       '
-      ' Just add it (That was easy)
+      ' Just add it (That was the easy part)
       '
       propertyWorkbook.CustomDocumentProperties.Add Name:=propertyName, _
                                                     LinkToContent:=False, _
@@ -204,16 +337,32 @@ Public Sub SetCustomProperty(ByRef propertyWorkbook As Workbook, ByRef propertyN
    End If
 End Sub
 
-'''
-''' Delete a property and raise an error if it did not exist
-'''
+'
+'+--------------------------------------------------------------------------
+'| Method           | DeleteProperty
+'|------------------+-------------------------------------------------------
+'| Description      | Delete a custom property
+'|------------------+-------------------------------------------------------
+'| Parameter        | propertyWorkbook: The workbook for the property
+'|                  | propertyName    : The property name
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2018-09-25  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | This method raises an error if a custom property
+'|                  | with the specified name does not exist.
+'+--------------------------------------------------------------------------
+'
 Public Sub DeleteProperty(ByRef propertyWorkbook As Workbook, ByRef propertyName As String)
    If CustomPropertyExists(propertyWorkbook, propertyName) Then
       propertyWorkbook.CustomDocumentProperties.Item(propertyName).Delete
    Else
-      Err.Raise ERROR_NUMBER_NOT_FOUND, _
-                MODULE_NAME, _
-                ERROR_TEXT_NOT_FOUND & _
+      Err.Raise ERR_NUM_PROPERTY_NOT_FOUND, _
+                STR_CLASS_NAME, _
+                ERR_STR_PROPERTY_NOT_FOUND & _
                    propertyName & _
                    "'"
    End If
@@ -222,6 +371,25 @@ End Sub
 '''
 ''' Delete a property without throwing an error if it did not exist
 '''
+'
+'+--------------------------------------------------------------------------
+'| Method           | SafeDeleteProperty
+'|------------------+-------------------------------------------------------
+'| Description      | Delete a custom property
+'|------------------+-------------------------------------------------------
+'| Parameter        | propertyWorkbook: The workbook for the property
+'|                  | propertyName    : The property name
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2018-09-25  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | This method does not raise an error if a custom property
+'|                  | with the specified name does not exist.
+'+--------------------------------------------------------------------------
+'
 Public Sub SafeDeleteProperty(ByRef propertyWorkbook As Workbook, ByRef propertyName As String)
    If CustomPropertyExists(propertyWorkbook, propertyName) Then
       propertyWorkbook.CustomDocumentProperties.Item(propertyName).Delete
