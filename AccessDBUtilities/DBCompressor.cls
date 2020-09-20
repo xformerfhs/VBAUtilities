@@ -44,7 +44,7 @@ Attribute VB_Exposed = False
 '|---------------------+---------------------------------------------------
 '| Version             | 1.0.0
 '|---------------------+---------------------------------------------------
-'| Changes             | 2020-07-20  Created. fhs
+'| Changes             | 2018-09-25  Created. fhs
 '|---------------------+---------------------------------------------------
 '
 
@@ -54,16 +54,36 @@ Option Explicit
 '
 ' Private constants for error message
 '
-Private Const CLASS_NAME As String = "DBCompressor"
+Private Const ERR_STR_CLASS_NAME As String = "DBCompressor"
+Private Const ERR_NUM_START As Long = vbObjectError + 5727
 
-Private Const N_START_ERROR_MESSAGE As Long = vbObjectError + 5727
-
-Private Const ERR_NUM_FILE_DOES_NOT_EXIST As Long = N_START_ERROR_MESSAGE + 0
-
-Private Const ERR_TEXT_FILE_DOES_NOT_EXIST As String = "File does not exist: '"
+Private Const ERR_NUM_FILE_DOES_NOT_EXIST As Long = ERR_NUM_START + 0
+Private Const ERR_STR_FILE_DOES_NOT_EXIST As String = "File does not exist: '"
 
 '
 ' Private methods
+'
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | DoDBCompression
+'|------------------+-------------------------------------------------------
+'| Description      | Create a compressed version of a database file
+'|------------------+-------------------------------------------------------
+'| Parameter        | oldPath: Path of the database to compress
+'|                  | newPath: Path of the compressed database to create
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2018-09-25  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | This method deletes the file "oldPath" and
+'|                  | renames "newPath" to "oldPath". In effect it
+'|                  | compresses the database "oldPath" with "newPath"
+'|                  | as a temporary file.
+'+--------------------------------------------------------------------------
 '
 Private Sub DoDBCompression(ByRef oldPath As String, ByRef newPath As String)
    '
@@ -78,6 +98,27 @@ Private Sub DoDBCompression(ByRef oldPath As String, ByRef newPath As String)
    Name newPath As oldPath
 End Sub
 
+'
+'+--------------------------------------------------------------------------
+'| Method           | GetFilePathParts
+'|------------------+-------------------------------------------------------
+'| Description      | Parse a file file path and return its components
+'|------------------+-------------------------------------------------------
+'| Parameter        | anFSO         : A Scripting.FileSystemObject
+'|                  | aFilePath     : File path to parse
+'|                  | aDirectoryName: Directory of "aFilePath" (return value)
+'|                  | aFileBaseName : File base name of "aFilePath" (return value)
+'|                  | aFileExtension: Extension of "aFilePath" (return value)
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2018-09-25  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Private Sub GetFilePathParts(ByRef anFSO As Scripting.FileSystemObject, _
                              ByRef aFilePath As String, _
                              ByRef aDirectoryName As String, _
@@ -90,6 +131,24 @@ Private Sub GetFilePathParts(ByRef anFSO As Scripting.FileSystemObject, _
    End With
 End Sub
 
+'
+'+--------------------------------------------------------------------------
+'| Method           | GetNewDBPath
+'|------------------+-------------------------------------------------------
+'| Description      | Create a random name for the temporary database
+'|------------------+-------------------------------------------------------
+'| Parameter        | anFSO : A Scripting.FileSystemObject
+'|                  | dbPath: File path of database
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2018-09-25  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Private Function GetNewDBPath(ByRef anFSO As Scripting.FileSystemObject, ByRef dbPath As String) As String
    Dim dbDirectory As String
    Dim dbBaseFileName As String
@@ -110,6 +169,24 @@ End Function
 '
 ' Public methods
 '
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | CompressDB
+'|------------------+-------------------------------------------------------
+'| Description      | Compress an MS Access database
+'|------------------+-------------------------------------------------------
+'| Parameter        | dbPath: File path of database
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2018-09-25  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Public Sub CompressDB(ByRef dbPath As String)
    Dim anFSO As New Scripting.FileSystemObject
 
@@ -117,7 +194,7 @@ Public Sub CompressDB(ByRef dbPath As String)
       DoDBCompression dbPath, GetNewDBPath(anFSO, dbPath)
    Else
       Err.Raise ERR_NUM_FILE_DOES_NOT_EXIST, _
-                CLASS_NAME, _
-                ERR_TEXT_FILE_DOES_NOT_EXIST & dbPath & "'"
+                ERR_STR_CLASS_NAME, _
+                ERR_STR_FILE_DOES_NOT_EXIST & dbPath & "'"
    End If
 End Sub
