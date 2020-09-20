@@ -57,15 +57,16 @@ Attribute VB_Exposed = False
 '|                     | ...
 '|                     | wbcph.SetCustomProperty(ActiveWorkbook, "LastModificationDate", newDate)
 '+-------------------------------------------------------------------------
+
 Option Explicit
 
 '
 ' Error constants
 '
-Private Const STR_CLASS_NAME As String = "WorkbookCustomPropertyHandler"
+Private Const ERR_STR_CLASS_NAME As String = "WorkbookCustomPropertyHandler"
 Private Const ERR_NUM_START As Long = 38803
 
-Private Const ERR_NUM_PROPERTY_NOT_FOUND As Long = ERR_NUM_START + 0
+Private Const ERR_NUM_PROPERTY_NOT_FOUND As Long = ERR_NUM_START
 Private Const ERR_STR_PROPERTY_NOT_FOUND As String = "There is no property named '"
 
 Private Const ERR_NUM_TYPE_NOT_MAPPABLE As Long = ERR_NUM_START + 1
@@ -143,7 +144,7 @@ Private Function GetPropertyTypeFromVariantType(ByRef propertyValue As Variant) 
 
       Case Else
          Err.Raise ERR_NUM_TYPE_NOT_MAPPABLE, _
-                   STR_CLASS_NAME, _
+                   ERR_STR_CLASS_NAME, _
                    ERR_STR_TYPE_NOT_MAPPABLE
    End Select
 End Function
@@ -213,7 +214,7 @@ Public Function GetCustomProperty(ByRef propertyWorkbook As Workbook, ByRef prop
       GetCustomProperty = propertyWorkbook.CustomDocumentProperties.Item(propertyName).value
    Else
       Err.Raise ERR_NUM_PROPERTY_NOT_FOUND, _
-                STR_CLASS_NAME, _
+                ERR_STR_CLASS_NAME, _
                 ERR_STR_PROPERTY_NOT_FOUND & _
                    propertyName & _
                    "'"
@@ -314,7 +315,7 @@ Public Sub SetCustomProperty(ByRef propertyWorkbook As Workbook, ByRef propertyN
             ' The old and the new property data type are not compatible. Raise an error
             '
             Err.Raise ERR_NUM_TYPE_MISMATCH, _
-                      STR_CLASS_NAME, _
+                      ERR_STR_CLASS_NAME, _
                       ERR_STR_TYPE_MISMATCH & _
                          "Name = '" & _
                          propertyName & _
@@ -361,7 +362,7 @@ Public Sub DeleteProperty(ByRef propertyWorkbook As Workbook, ByRef propertyName
       propertyWorkbook.CustomDocumentProperties.Item(propertyName).Delete
    Else
       Err.Raise ERR_NUM_PROPERTY_NOT_FOUND, _
-                STR_CLASS_NAME, _
+                ERR_STR_CLASS_NAME, _
                 ERR_STR_PROPERTY_NOT_FOUND & _
                    propertyName & _
                    "'"
