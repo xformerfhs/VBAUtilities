@@ -42,9 +42,10 @@ Attribute VB_Exposed = False
 '|---------------------+---------------------------------------------------
 '| Author              | Frank Schwab
 '|---------------------+---------------------------------------------------
-'| Version             | 1.0.0
+'| Version             | 1.0.1
 '|---------------------+---------------------------------------------------
-'| Changes             | 2020-07-20  Created. fhs
+'| Changes             | 2018-09-25  Created. fhs
+'|                     | 2020-09-20  Made get of current DB instance robust. fhs
 '|---------------------+---------------------------------------------------
 '
 
@@ -54,13 +55,97 @@ Option Explicit
 '
 ' Private methods
 '
-Private Function GetDBPathFromTablePath(ByRef dbPath As String) As String
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | GetCurrentDBPath
+'|------------------+-------------------------------------------------------
+'| Description      | Get the file path of the current database
+'|------------------+-------------------------------------------------------
+'| Parameter        | ./.
+'|------------------+-------------------------------------------------------
+'| Return values    | Current database path
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-09-20  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
+Private Function GetCurrentDBPath() As String
+   Dim cdb As DAO.Database
+   
+   Set cdb = CurrentDb
+   
+   GetCurrentDBPath = cdb.Name
+   
+   cdb.Close
+   
+   Set cdb = Nothing
+End Function
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | GetThisDBInstance
+'|------------------+-------------------------------------------------------
+'| Description      | Get the instance of the current database
+'|------------------+-------------------------------------------------------
+'| Parameter        | ./.
+'|------------------+-------------------------------------------------------
+'| Return values    | Database instance of the current database
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-09-20  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | This method is like the "CurrentDB" function only
+'|                  | that it returns the instance of the current database
+'|                  | and not a copy of it.
+'+--------------------------------------------------------------------------
+'
+Private Function GetThisDBInstance() As DAO.Database
+   Dim currentDBPath As String
+   
+   currentDBPath = GetCurrentDBPath
+   
+   Dim ws As DAO.Workspace
+   Dim db As DAO.Database
+
+   For Each ws In DBEngine.Workspaces
+      For Each db In ws.Databases
+         If db.Name = currentDBPath Then
+            Set GetThisDBInstance = db
+            Exit Function
+         End If
+      Next
+   Next
+End Function
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | GetDBPathFromTablePath
+'|------------------+-------------------------------------------------------
+'| Description      | Extract database path from table path
+'|------------------+-------------------------------------------------------
+'| Parameter        | tablePath: Path of table
+'|------------------+-------------------------------------------------------
+'| Return values    | Database path
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2018-09-25  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
+Private Function GetDBPathFromTablePath(ByRef tablePath As String) As String
    Dim pos As Long
 
-   pos = InStr(1, dbPath, "=")
+   pos = InStr(1, tablePath, "=")
    
    If pos <> 0 Then
-      GetDBPathFromTablePath = Right$(dbPath, Len(dbPath) - pos)
+      GetDBPathFromTablePath = Right$(tablePath, Len(tablePath) - pos)
    Else
       GetDBPathFromTablePath = CurrentProject.Path
    End If
@@ -68,6 +153,24 @@ End Function
 
 '
 ' Public methods
+'
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | GetDBPath
+'|------------------+-------------------------------------------------------
+'| Description      | Get database path for a linked table
+'|------------------+-------------------------------------------------------
+'| Parameter        | tableName: Table name
+'|------------------+-------------------------------------------------------
+'| Return values    | Database path
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2018-09-25  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
 '
 Public Function GetDBPath(ByRef tableName As String) As String
    Dim db As DAO.Database
@@ -85,15 +188,34 @@ Public Function GetDBPath(ByRef tableName As String) As String
    Set db = Nothing
 End Function
 
+'
+'+--------------------------------------------------------------------------
+'| Method           | ChangeDBPath
+'|------------------+-------------------------------------------------------
+'| Description      | Change the database path for all linked tables
+'|                  | from one path to another
+'|------------------+-------------------------------------------------------
+'| Parameter        | fromDBPath: Database path to change
+'|                  | toDBPath  : New database path
+'|------------------+-------------------------------------------------------
+'| Return values    | Number of paths changed
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2018-09-25  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Public Function ChangeDBPath(ByRef fromDBPath As String, ByRef toDBPath As String) As Integer
    Dim count As Integer
    
    Dim db As DAO.Database
 
-   Set db = DBEngine.Workspaces(0).Databases(0)
-   
+   Set db = GetCurrentDBPath   ' This needs to be the exact instance that is currently running. Do not use CurrentDB
+
    Dim tdf As DAO.TableDef
-   
+
    For Each tdf In db.TableDefs
       If Len(tdf.Connect) <> 0 Then
          If GetDBPathFromTablePath(tdf.Connect) = fromDBPath Then
@@ -107,5 +229,5 @@ Public Function ChangeDBPath(ByRef fromDBPath As String, ByRef toDBPath As Strin
 
    db.TableDefs.Refresh
 
-   Set db = Nothing
+   Set db = Nothing  ' Never do close the current DB instance!
 End Function
