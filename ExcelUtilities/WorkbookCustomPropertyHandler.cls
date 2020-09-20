@@ -368,9 +368,6 @@ Public Sub DeleteProperty(ByRef propertyWorkbook As Workbook, ByRef propertyName
    End If
 End Sub
 
-'''
-''' Delete a property without throwing an error if it did not exist
-'''
 '
 '+--------------------------------------------------------------------------
 '| Method           | SafeDeleteProperty
