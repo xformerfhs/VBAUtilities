@@ -44,8 +44,11 @@ Attribute VB_Exposed = False
 '|---------------------+---------------------------------------------------
 '| Version             | 1.0.0
 '|---------------------+---------------------------------------------------
-'| Changes             | 2020-07-20  Created. fhs
+'| Changes             | 2018-09-25  Created. fhs
 '|---------------------+---------------------------------------------------
+'| Remarks             | The status area is automatically cleared upon
+'|                     | termination of this instance.
+'|-------------------------------------------------------------------------
 '
 
 Option Compare Database
@@ -54,19 +57,54 @@ Option Explicit
 '
 ' Public methods
 '
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | Clear
+'|------------------+-------------------------------------------------------
+'| Description      | Clear the status area
+'|------------------+-------------------------------------------------------
+'| Parameter        | ./.
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2018-09-25  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Public Sub Clear()
    SysCmd acSysCmdClearStatus
    
-   DoEvents
+   DoEvents	  ' This is necessary for the status area to be cleared
 End Sub
 
+'
+'+--------------------------------------------------------------------------
+'| Method           | Show
+'|------------------+-------------------------------------------------------
+'| Description      | Show a text in the status area
+'|------------------+-------------------------------------------------------
+'| Parameter        | aText: Text to show
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2018-09-25  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Public Sub Show(ByRef aText As String)
    If Len(aText) > 0 Then
       SysCmd acSysCmdSetStatus, aText
    
-      DoEvents
+      DoEvents	' This is necessary for the text to be shown
    Else
-      Me.clear
+      Me.Clear
    End If
 End Sub
 
@@ -74,5 +112,5 @@ End Sub
 ' Class methods
 '
 Private Sub Class_Terminate()
-   Me.clear
+   Me.Clear	  ' Clear the status area upon termination of this class (very handy :-)
 End Sub
