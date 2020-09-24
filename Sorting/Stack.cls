@@ -1,16 +1,5 @@
-VERSION 1.0 CLASS
-BEGIN
-  MultiUse = -1  'True
-END
-Attribute VB_Name = "Stack"
-Attribute VB_GlobalNameSpace = False
-Attribute VB_Creatable = False
-Attribute VB_PredeclaredId = False
-Attribute VB_Exposed = False
 '
 '+-------------------------------------------------------------------------
-'|
-'| SPDX-FileCopyrightText: 2020 Frank Schwab
 '|
 '| SPDX-License-Identifier: MIT
 '|
@@ -41,80 +30,205 @@ Attribute VB_Exposed = False
 '|---------------------+---------------------------------------------------
 '| Author              | Frank Schwab
 '|---------------------+---------------------------------------------------
-'| Version             | 1.0.0
+'| Version             | 1.1.0
 '|---------------------+---------------------------------------------------
-'| Changes             | 2020-07-20  Created. fhs
+'| Changes             | 2018-09-25  Created. fhs
+'|                     | 2020-09-20  Refactored. fhs
 '|---------------------+---------------------------------------------------
+'| Remarks             | This implementation allocates space for the
+'|                     | stack in blocks, the size of which can be set.
+'+-------------------------------------------------------------------------
 '
 
 Option Explicit
 
 '
-' Private Konstanten für Fehlermeldungen
+' Constants for error messages
 '
-Private Const MODULNAME As String = "Stack"
+Private Const ERR_STR_CLASS_NAME As String = "Stack"
 
-Private Const N_START_ERROR_MESSAGE As Long = vbObjectError + 2600
+Private Const ERR_NUM_START As Long = vbObjectError + 2600
 
-Private Const ERR_STACK_IS_EMPTY     As Long = N_START_ERROR_MESSAGE + 0
-Private Const STR_ERR_STACK_IS_EMPTY As String = "Stack is empty"
+Private Const ERR_NUM_STACK_IS_EMPTY As Long = ERR_NUM_START
+Private Const ERR_STR_STACK_IS_EMPTY As String = "Stack is empty"
+
+Private Const ERR_NUM_INVALID_BLOCK_SIZE As Long = ERR_NUM_START + 1
+Private Const ERR_STR_INVALID_BLOCK_SIZE As String = "Invalid block size"
 
 '
-' Private Konstanten
+' Private constants
 '
 Private Const DEFAULT_BLOCKSIZE As Long = 50
 Private Const MIN_BLOCKSIZE     As Long = 10
 Private Const MAX_BLOCKSIZE     As Long = 100000
 
 '
-' Instanzvariable
+' Instance variables
 '
 Private m_Items() As Variant
 Private m_BlockSize As Long
 Private m_ActSize As Long
 Private m_ActIndex As Long
 
+
 '
-' Private Methoden
+' Public attributes
 '
 
 '
-' Öffentliche Methoden
+'+--------------------------------------------------------------------------
+'| Method           | BlockSize
+'|------------------+-------------------------------------------------------
+'| Description      | Get block size of stack
+'|------------------+-------------------------------------------------------
+'| Parameter        | ./.
+'|------------------+-------------------------------------------------------
+'| Return values    | Block size of stack
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2018-09-25  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
 '
 Public Property Get BlockSize() As Long
    BlockSize = m_BlockSize
 End Property
 
+'
+'+--------------------------------------------------------------------------
+'| Method           | BlockSize
+'|------------------+-------------------------------------------------------
+'| Description      | Set new block size for stack
+'|------------------+-------------------------------------------------------
+'| Parameter        | newBlockSize: New block size for stack
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2018-09-25  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Public Property Let BlockSize(ByVal newBlockSize As Long)
-   If newBlockSize < MIN_BLOCKSIZE Then _
-      newBlockSize = MIN_BLOCKSIZE
-
-   If newBlockSize > MAX_BLOCKSIZE Then _
-      newBlockSize = MAX_BLOCKSIZE
+   If (newBlockSize < MIN_BLOCKSIZE) Or _
+      (newBlockSize > MAX_BLOCKSIZE) Then _
+      Err.Raise ERR_NUM_INVALID_BLOCK_SIZE, _
+                ERR_STR_CLASS_NAME, _
+                ERR_STR_INVALID_BLOCK_SIZE
 
    m_BlockSize = newBlockSize
 End Property
 
+'
+'+--------------------------------------------------------------------------
+'| Method           | IsEmpty
+'|------------------+-------------------------------------------------------
+'| Description      | Check if stack is empty
+'|------------------+-------------------------------------------------------
+'| Parameter        | ./.
+'|------------------+-------------------------------------------------------
+'| Return values    | True : Stack is empty
+'|                  | False: Stack is not empty
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2018-09-25  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Public Property Get IsEmpty() As Boolean
    IsEmpty = (m_ActIndex = 0)
 End Property
 
+'
+'+--------------------------------------------------------------------------
+'| Method           | Depth
+'|------------------+-------------------------------------------------------
+'| Description      | Get stack depth
+'|------------------+-------------------------------------------------------
+'| Parameter        | ./.
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2018-09-25  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Public Property Get Depth() As Long
    Depth = m_ActIndex
 End Property
 
-Public Property Get TopElement() As Variant
+'
+'+--------------------------------------------------------------------------
+'| Method           | Peek
+'|------------------+-------------------------------------------------------
+'| Description      | Get top element from stack (without popping it)
+'|------------------+-------------------------------------------------------
+'| Parameter        | ./.
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2018-09-25  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
+Public Function Peek() As Variant
    If Me.IsEmpty Then
-      Err.Raise ERR_STACK_IS_EMPTY, MODULNAME, STR_ERR_STACK_IS_EMPTY
+      Err.Raise ERR_NUM_STACK_IS_EMPTY, ERR_STR_CLASS_NAME, ERR_STR_STACK_IS_EMPTY
    Else
-      TopElement = m_Items(m_ActIndex)
+      Peek = m_Items(m_ActIndex)
    End If
-End Property
+End Function
 
+'
+'+--------------------------------------------------------------------------
+'| Method           | Reset
+'|------------------+-------------------------------------------------------
+'| Description      | Reset (and empty) stack
+'|------------------+-------------------------------------------------------
+'| Parameter        | ./.
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2018-09-25  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Public Sub Reset()
    m_ActIndex = 0
 End Sub
 
+'
+'+--------------------------------------------------------------------------
+'| Method           | Push
+'|------------------+-------------------------------------------------------
+'| Description      | Push value on stack
+'|------------------+-------------------------------------------------------
+'| Parameter        | var: Value to push
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2018-09-25  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Public Sub Push(ByVal var As Variant)
    Dim newIndex As Long
 
@@ -130,15 +244,50 @@ Public Sub Push(ByVal var As Variant)
    m_ActIndex = newIndex
 End Sub
 
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | Pop
+'|------------------+-------------------------------------------------------
+'| Description      | Pop value from stack
+'|------------------+-------------------------------------------------------
+'| Parameter        | ./.
+'|------------------+-------------------------------------------------------
+'| Return values    | Topmost value of stack
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2018-09-25  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Public Function Pop() As Variant
    If Me.IsEmpty Then
-      Err.Raise ERR_STACK_IS_EMPTY, MODULNAME, STR_ERR_STACK_IS_EMPTY
+      Err.Raise ERR_NUM_STACK_IS_EMPTY, ERR_STR_CLASS_NAME, ERR_STR_STACK_IS_EMPTY
    Else
       Pop = m_Items(m_ActIndex)
       m_ActIndex = m_ActIndex - 1
    End If
 End Function
 
+'
+'+--------------------------------------------------------------------------
+'| Method           | Dump
+'|------------------+-------------------------------------------------------
+'| Description      | Get string with stack content
+'|------------------+-------------------------------------------------------
+'| Parameter        | delim: Optional delimiter
+'|------------------+-------------------------------------------------------
+'| Return values    | String with stack content
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2018-09-25  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Public Function Dump(Optional ByVal delim As String = ", ") As String
    Dim dumpText As String
    Dim i As Long
