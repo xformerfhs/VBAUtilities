@@ -1,9 +1,17 @@
-'
+VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1  'True
+END
+Attribute VB_Name = "Stack"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = False
+Attribute VB_Exposed = False'
 '+-------------------------------------------------------------------------
 '|
-'| SPDX-License-Identifier: MIT
+'|SPDX-FileCopyrightText: 2020 Frank Schwab
 '|
-'| Copyright 2020, Frank Schwab
+'| SPDX-License-Identifier: MIT
 '|
 '| Permission is hereby granted, free of charge, to any person obtaining a
 '| copy of this software and associated documentation files (the "Software"),
