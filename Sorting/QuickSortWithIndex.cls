@@ -164,9 +164,6 @@ Private Sub QuickSortWithIndexArrayAndBoundaries(ByRef arrayToSort As Variant, _
    Dim rightSize As Long
    Dim insertionSorter As New InsertionSortWithIndex
 
-   idxFrom = LBound(arrayToSort)
-   idxTo = UBound(arrayToSort)
-
 '
 ' The whole thing is pushed to the stack as a dummy. If it is popped from the stack
 ' the sorting just finishes. It is not executed again with these boundaries.
