@@ -2,7 +2,7 @@ VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
-Attribute VB_Name = "QuickSortWithIndex"
+Attribute VB_Name = "PureQuickSortWithIndex"
 Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
@@ -35,10 +35,9 @@ Attribute VB_Exposed = False
 '| IN THE SOFTWARE.
 '|
 '|-------------------------------------------------------------------------
-'| Class               | QuickSortWithIndex
+'| Class               | PureQuickSortWithIndex
 '|---------------------+---------------------------------------------------
-'| Description         | Optimized quicksort implementation with an
-'|                     | index array
+'| Description         | Pure quicksort implementation with an index array
 '|---------------------+---------------------------------------------------
 '| Author              | Frank Schwab
 '|---------------------+---------------------------------------------------
@@ -46,8 +45,9 @@ Attribute VB_Exposed = False
 '|---------------------+---------------------------------------------------
 '| Changes             | 2020-09-25  Created. fhs
 '|---------------------+---------------------------------------------------
-'| Remarks             | This is an optimized QuickSort implementation
-'|                     | that is combined with InsertionSort.
+'| Remarks             | This is a pure QuickSort implementation.
+'|                     | Note that QuickSort can be made more efficient
+'|                     | when combined with InsertionSort.
 '|---------------------+---------------------------------------------------
 '
 
@@ -56,17 +56,12 @@ Option Explicit
 '
 ' Constants for errors
 '
-Private Const ERR_STR_CLASS_NAME As String = "QuickSortWithIndex"
+Private Const ERR_STR_CLASS_NAME As String = "PureQuickSortWithIndex"
 
-Private Const ERR_NUM_START As Long = vbObjectError + 53495
+Private Const ERR_NUM_START As Long = vbObjectError + 57421
 
 Private Const ERR_NUM_NO_ARRAY As Long = ERR_NUM_START
 Private Const ERR_STR_NO_ARRAY As String = "Supplied parameter is not an array"
-
-'
-' Private constants
-'
-Private Const CUTOFF_SIZE_MINUS_1 As Long = 9   ' Cut off if 10 elements or less to sort, so set to 10 - 1 = 9
 
 '
 ' Private methods
@@ -111,10 +106,10 @@ End Sub
 
 '
 '+--------------------------------------------------------------------------
-'| Method           | QuickSortWithIndexArrayAndBoundaries
+'| Method           | PureQuickSortWithIndexArrayAndBoundaries
 '|------------------+-------------------------------------------------------
 '| Description      | Sort an array of any data type with an index array
-'|                  | with optimized QuickSort
+'|                  | with pure QuickSort
 '|------------------+-------------------------------------------------------
 '| Parameter        | arrayToSort: Array to sort
 '|                  | indexArray : Index array with indices into the
@@ -149,10 +144,10 @@ End Sub
 '|                  | index array to get them in sorted order.
 '+--------------------------------------------------------------------------
 '
-Private Sub QuickSortWithIndexArrayAndBoundaries(ByRef arrayToSort As Variant, _
-                                                 ByRef indexArray() As Long, _
-                                                 ByVal idxFrom As Long, _
-                                                 ByVal idxTo As Long)
+Private Sub PureQuickSortWithIndexArrayAndBoundaries(ByRef arrayToSort As Variant, _
+                                                     ByRef indexArray() As Long, _
+                                                     ByVal idxFrom As Long, _
+                                                     ByVal idxTo As Long)
    Dim pivot As Variant
    Dim aStack As New Stack
    Dim idxCenter As Long
@@ -162,7 +157,6 @@ Private Sub QuickSortWithIndexArrayAndBoundaries(ByRef arrayToSort As Variant, _
    Dim parkElement As Long
    Dim leftSize As Long
    Dim rightSize As Long
-   Dim insertionSorter As New InsertionSortWithIndex
 
 '
 ' The whole thing is pushed to the stack as a dummy. If it is popped from the stack
@@ -173,8 +167,8 @@ Private Sub QuickSortWithIndexArrayAndBoundaries(ByRef arrayToSort As Variant, _
    aStack.Push idxTo
 
    Do
-' Only do quicksort if the partition is larger then the cutoff size
-      If (idxTo - idxFrom) >= CUTOFF_SIZE_MINUS_1 Then
+'      Debug.Print "("; Format$(aStack.depth); ": "; Format$(idxFrom); ", "; Format$(idxTo); ")"
+      If idxTo > idxFrom Then
 '
 ' Median of 3
 '
@@ -208,15 +202,13 @@ Private Sub QuickSortWithIndexArrayAndBoundaries(ByRef arrayToSort As Variant, _
             indexArray(idxTo) = parkElement
          End If
 
-         idxPartitionTo = idxTo - 1
-
-'
-' Here it is safe to assume that idxPartitionTo is not equal to idxCenter
-' since the cutoff value will always be greater than 2
-'
          parkElement = indexArray(idxCenter)
-         indexArray(idxCenter) = indexArray(idxPartitionTo)
-         indexArray(idxPartitionTo) = parkElement
+
+         idxPartitionTo = idxTo - 1
+         If idxCenter <> idxPartitionTo Then
+            indexArray(idxCenter) = indexArray(idxPartitionTo)
+            indexArray(idxPartitionTo) = parkElement
+         End If
 
          pivot = arrayToSort(indexArray(idxPartitionTo))
 
@@ -237,37 +229,38 @@ Private Sub QuickSortWithIndexArrayAndBoundaries(ByRef arrayToSort As Variant, _
          idxRight = idxPartitionTo
 
 '
-' Here we can safely assume that idxRight is greater than idxLeft since the
-' CUTOFF_SIZE_MINUS_1 will always be larger than 3.
+' Only start Quicksort if we have more than three elements, so the difference between idxLeft
+' and idxRight has to be *greater* than 1. A difference of 1 indicates a partition size of 3.
 '
-         Do
+         If (idxRight - idxLeft) > 1 Then
             Do
-               idxLeft = idxLeft + 1
-            Loop Until arrayToSort(indexArray(idxLeft)) >= pivot
+               Do
+                  idxLeft = idxLeft + 1
+               Loop Until arrayToSort(indexArray(idxLeft)) >= pivot
 
-            Do
-               idxRight = idxRight - 1
-            Loop Until arrayToSort(indexArray(idxRight)) <= pivot
+               Do
+                  idxRight = idxRight - 1
+               Loop Until arrayToSort(indexArray(idxRight)) <= pivot
 
 '
 ' Exchange the elements at indices idxLeft and idxRight,
 ' but only if the indices haven't crossed yet.
 ' If they crossed, just end the loop and don't exchange.
 '
-            parkElement = indexArray(idxLeft)
-            If idxLeft < idxRight Then
-               indexArray(idxLeft) = indexArray(idxRight)
-               indexArray(idxRight) = parkElement
-            Else
-               Exit Do
-            End If
-         Loop
+               parkElement = indexArray(idxLeft)
+               If idxLeft < idxRight Then
+                  indexArray(idxLeft) = indexArray(idxRight)
+                  indexArray(idxRight) = parkElement
+               Else
+                  Exit Do
+               End If
+            Loop
 
 '
 ' Now put the pivot in the correct place at idxLeft
 '
-         indexArray(idxLeft) = indexArray(idxPartitionTo)
-         indexArray(idxPartitionTo) = parkElement
+            indexArray(idxLeft) = indexArray(idxPartitionTo)
+            indexArray(idxPartitionTo) = parkElement
 
 '
 ' Now check which part to sort next.
@@ -275,24 +268,24 @@ Private Sub QuickSortWithIndexArrayAndBoundaries(ByRef arrayToSort As Variant, _
 ' push the larger part on the stack and immediately sort the smaller part
 ' by reassigning the boundaries.
 '
-         leftSize = idxLeft - idxFrom
-         rightSize = idxTo - idxLeft
-         If leftSize > rightSize Then
-            aStack.Push idxFrom
-            aStack.Push idxLeft - 1
+            leftSize = idxLeft - idxFrom
+            rightSize = idxTo - idxLeft
+            If leftSize > rightSize Then
+               aStack.Push idxFrom
+               aStack.Push idxLeft - 1
 
-            idxFrom = idxLeft + 1
+               idxFrom = idxLeft + 1
+            Else
+               aStack.Push idxLeft + 1
+               aStack.Push idxTo
+
+               idxTo = idxLeft - 1
+            End If
          Else
-            aStack.Push idxLeft + 1
-            aStack.Push idxTo
-
-            idxTo = idxLeft - 1
+            idxTo = aStack.Pop
+            idxFrom = aStack.Pop
          End If
       Else
-' Use insertion sort if the partition is smaller than or equal to the cutoff size
-         If idxTo > idxFrom Then _
-            insertionSorter.SortPartWithIndex arrayToSort, indexArray, idxFrom, idxTo
-
          idxTo = aStack.Pop
          idxFrom = aStack.Pop
       End If
@@ -305,14 +298,15 @@ End Sub
 
 '
 '+--------------------------------------------------------------------------
-'| Method           | SortWithIndex
+'| Method           | SortPartWithIndex
 '|------------------+-------------------------------------------------------
-'| Description      | Sort an array of any data type with an index array
-'|                  | with optimized QuickSort
+'| Description      | Sort a part of an array of any data type with an
+'|                  | index array with insertion sort
 '|------------------+-------------------------------------------------------
 '| Parameter        | arrayToSort: Array to sort
 '|                  | indexArray : Index array with indices into the
-'|                  | array to sort (this array is created in this method)
+'|                  |              array to sort (this array is created
+'|                  |              in this method)
 '|                  | idxFrom    : Start index into the array
 '|                  | idxTo      : End   index into the array
 '|------------------+-------------------------------------------------------
@@ -323,30 +317,14 @@ End Sub
 '| Changes          | 2018-09-25  Created. fhs
 '|------------------+-------------------------------------------------------
 '| Remarks          | The array that is supplied as the parameter is
-'|                  | not sorted. Instead an array of indices into the
-'|                  | array to sort is created and the array indices are
-'|                  | sorted according to the array to sort.
-'|                  |
-'|                  | If one wants the array elements in sorted order one
-'|                  | has to access them like this:
-'|                  |
-'|                  | For i = LBound(dataArray) To UBound(dataArray)
-'|                  |    Debug.Print dataArray(indexArray(i))
-'|                  | Next i
-'|                  |
-'|                  | This method is especially useful if the data to be
-'|                  | sorted is large and the cost of moving the data in
-'|                  | memory is high, like e.g. for strings.
-'|                  |
-'|                  | With this method the data is not moved at all and
-'|                  | one only needs to access the elements through the
-'|                  | index array to get them in sorted order.
+'|                  | changed so that its elements from idxFrom to idxTo
+'|                  | are sorted.
 '+--------------------------------------------------------------------------
 '
 Public Sub SortPartWithIndex(ByRef arrayToSort As Variant, ByRef indexArray() As Long, ByVal idxFrom As Long, ByVal idxTo As Long)
    If IsArray(arrayToSort) Then
       InitializeIndexArray arrayToSort, indexArray
-      QuickSortWithIndexArrayAndBoundaries arrayToSort, indexArray, idxFrom, idxTo
+      PureQuickSortWithIndexArrayAndBoundaries arrayToSort, indexArray, idxFrom, idxTo
    Else
       Err.Raise ERR_NUM_NO_ARRAY, _
                 ERR_STR_CLASS_NAME, _
@@ -359,7 +337,7 @@ End Sub
 '| Method           | SortWithIndex
 '|------------------+-------------------------------------------------------
 '| Description      | Sort an array of any data type with an index array
-'|                  | with optimized QuickSort
+'|                  | with pure QuickSort
 '|------------------+-------------------------------------------------------
 '| Parameter        | arrayToSort: Array to sort
 '|                  | indexArray : Index array with indices into the
