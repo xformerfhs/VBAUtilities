@@ -41,9 +41,10 @@ Attribute VB_Exposed = False
 '|---------------------+---------------------------------------------------
 '| Author              | Frank Schwab
 '|---------------------+---------------------------------------------------
-'| Version             | 1.0.0
+'| Version             | 1.1.0
 '|---------------------+---------------------------------------------------
 '| Changes             | 2020-09-25  Created. fhs
+'|                     | 2020-09-26  Parameters are checked. fhs
 '|---------------------+---------------------------------------------------
 '| Remarks             | This is a pure QuickSort implementation.
 '|                     | Note that QuickSort can be made more efficient
@@ -63,9 +64,45 @@ Private Const ERR_NUM_START As Long = vbObjectError + 2823
 Private Const ERR_NUM_NO_ARRAY As Long = ERR_NUM_START
 Private Const ERR_STR_NO_ARRAY As String = "Supplied parameter is not an array"
 
+Private Const ERR_NUM_INVALID_BOUNDARY As Long = ERR_NUM_START + 1
+Private Const ERR_STR_INVALID_BOUNDARY_LEFT As String = "Invalid "
+Private Const ERR_STR_INVALID_BOUNDARY_RIGHT As String = " boundary"
+
 '
 ' Private methods
 '
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | GetArrayLength
+'|------------------+-------------------------------------------------------
+'| Description      | Get the length of an array
+'|------------------+-------------------------------------------------------
+'| Parameter        | aByteArray: Array to get the length for
+'|------------------+-------------------------------------------------------
+'| Return values    | Length of array
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-09-26  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | When one tries to calculate the length of an
+'|                  | uninitialized array an error is raised.
+'|                  | This function catches this error and returns a
+'|                  | length of 0, instead.
+'+--------------------------------------------------------------------------
+'
+Private Function GetArrayLength(ByRef anArray As Variant) As Long
+   On Error Resume Next
+
+   GetArrayLength = UBound(anArray) - LBound(anArray) + 1
+
+   ' If the array is empty there was an error so we set
+   ' the return value accordingly
+
+   If Err.Number <> 0 Then _
+      GetArrayLength = 0
+End Function
 
 '
 '+--------------------------------------------------------------------------
@@ -258,7 +295,24 @@ End Sub
 '
 Public Sub SortPart(ByRef arrayToSort As Variant, ByVal idxFrom As Long, ByVal idxTo As Long)
    If IsArray(arrayToSort) Then
-      PureQuicksortWithBoundaries arrayToSort, idxFrom, idxTo
+      Dim arrayLength As Long
+      arrayLength = GetArrayLength(arrayToSort)
+
+      If arrayLength > 1 Then
+         If idxFrom < LBound(arrayToSort) Then
+            Err.Raise ERR_NUM_INVALID_BOUNDARY, _
+                      ERR_STR_CLASS_NAME, _
+                      ERR_STR_INVALID_BOUNDARY_LEFT & "left" & ERR_STR_INVALID_BOUNDARY_RIGHT
+         Else
+            If idxTo > UBound(arrayToSort) Then
+               Err.Raise ERR_NUM_INVALID_BOUNDARY, _
+                         ERR_STR_CLASS_NAME, _
+                         ERR_STR_INVALID_BOUNDARY_LEFT & "right" & ERR_STR_INVALID_BOUNDARY_RIGHT
+            Else
+               PureQuicksortWithBoundaries arrayToSort, idxFrom, idxTo
+            End If
+         End If
+      End If
    Else
       Err.Raise ERR_NUM_NO_ARRAY, _
           ERR_STR_CLASS_NAME, _
