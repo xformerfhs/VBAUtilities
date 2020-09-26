@@ -41,9 +41,11 @@ Attribute VB_Exposed = False
 '|---------------------+---------------------------------------------------
 '| Author              | Frank Schwab
 '|---------------------+---------------------------------------------------
-'| Version             | 1.0.0
+'| Version             | 1.1.0
 '|---------------------+---------------------------------------------------
 '| Changes             | 2020-09-25  Created. fhs
+'|                     | 2020-09-26  Parameters are checked and an insertion
+'|                     |             singleton is used. fhs
 '|---------------------+---------------------------------------------------
 '| Remarks             | This is an optimized QuickSort implementation
 '|                     | that is combined with InsertionSort.
@@ -62,14 +64,80 @@ Private Const ERR_NUM_START As Long = vbObjectError + 50665
 Private Const ERR_NUM_NO_ARRAY As Long = ERR_NUM_START
 Private Const ERR_STR_NO_ARRAY As String = "Supplied parameter is not an array"
 
+Private Const ERR_NUM_INVALID_BOUNDARY As Long = ERR_NUM_START + 1
+Private Const ERR_STR_INVALID_BOUNDARY_LEFT As String = "Invalid "
+Private Const ERR_STR_INVALID_BOUNDARY_RIGHT As String = " boundary"
+
 '
 ' Private constants
 '
 Private Const CUTOFF_SIZE_MINUS_1 As Long = 9   ' Cut off if 10 elements or less to sort, so set to 10 - 1 = 9
 
 '
+' Instance variables
+'
+Private m_InsertionSortSingleton As InsertionSort
+
+'
 ' Private methods
 '
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | GetInsertionSortInstance
+'|------------------+-------------------------------------------------------
+'| Description      | Get the insertion sort instance singelton
+'|------------------+-------------------------------------------------------
+'| Parameter        | ./.
+'|------------------+-------------------------------------------------------
+'| Return values    | The insertion sort singleton
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-09-26  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | The InsertionSort singleton is instanciated only
+'|                  | once so it can be reused across calls.
+'+--------------------------------------------------------------------------
+'
+Private Function GetInsertionSortInstance() As InsertionSort
+   If m_InsertionSortSingleton Is Nothing Then _
+      Set m_InsertionSortSingleton = New InsertionSort
+
+   Set GetInsertionSortInstance = m_InsertionSortSingleton
+End Function
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | GetArrayLength
+'|------------------+-------------------------------------------------------
+'| Description      | Get the length of an array
+'|------------------+-------------------------------------------------------
+'| Parameter        | aByteArray: Array to get the length for
+'|------------------+-------------------------------------------------------
+'| Return values    | Length of array
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-09-26  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | When one tries to calculate the length of an
+'|                  | uninitialized array an error is raised.
+'|                  | This function catches this error and returns a
+'|                  | length of 0, instead.
+'+--------------------------------------------------------------------------
+'
+Private Function GetArrayLength(ByRef anArray As Variant) As Long
+   On Error Resume Next
+
+   GetArrayLength = UBound(anArray) - LBound(anArray) + 1
+
+   ' If the array is empty there was an error so we set
+   ' the return value accordingly
+
+   If Err.Number <> 0 Then _
+      GetArrayLength = 0
+End Function
 
 '
 '+--------------------------------------------------------------------------
@@ -101,7 +169,9 @@ Private Sub QuicksortWithBoundaries(ByRef arrayToSort As Variant, ByVal idxFrom 
    Dim parkElement As Variant
    Dim leftSize As Long
    Dim rightSize As Long
-   Dim insertionSorter As New InsertionSort
+   Dim insertionSortInstance As InsertionSort
+
+   Set insertionSortInstance = GetInsertionSortInstance
 
 '
 ' The whole thing is pushed to the stack as a dummy. If it is popped from the stack
@@ -226,7 +296,7 @@ Private Sub QuicksortWithBoundaries(ByRef arrayToSort As Variant, ByVal idxFrom 
       Else
 ' Use insertion sort if the partition is smaller than or equal to the cutoff size
          If idxTo > idxFrom Then _
-            insertionSorter.SortPart arrayToSort, idxFrom, idxTo
+            insertionSortInstance.SortPart arrayToSort, idxFrom, idxTo
 
          idxTo = aStack.Pop
          idxFrom = aStack.Pop
@@ -262,7 +332,24 @@ End Sub
 '
 Public Sub SortPart(ByRef arrayToSort As Variant, ByVal idxFrom As Long, ByVal idxTo As Long)
    If IsArray(arrayToSort) Then
-      QuicksortWithBoundaries arrayToSort, idxFrom, idxTo
+      Dim arrayLength As Long
+      arrayLength = GetArrayLength(arrayToSort)
+
+      If arrayLength > 1 Then
+         If idxFrom < LBound(arrayToSort) Then
+            Err.Raise ERR_NUM_INVALID_BOUNDARY, _
+                      ERR_STR_CLASS_NAME, _
+                      ERR_STR_INVALID_BOUNDARY_LEFT & "left" & ERR_STR_INVALID_BOUNDARY_RIGHT
+         Else
+            If idxTo > UBound(arrayToSort) Then
+               Err.Raise ERR_NUM_INVALID_BOUNDARY, _
+                         ERR_STR_CLASS_NAME, _
+                         ERR_STR_INVALID_BOUNDARY_LEFT & "right" & ERR_STR_INVALID_BOUNDARY_RIGHT
+            Else
+               QuicksortWithBoundaries arrayToSort, idxFrom, idxTo
+            End If
+         End If
+      End If
    Else
       Err.Raise ERR_NUM_NO_ARRAY, _
           ERR_STR_CLASS_NAME, _
