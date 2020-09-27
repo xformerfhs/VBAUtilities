@@ -42,12 +42,35 @@ Attribute VB_Exposed = False
 '|---------------------+---------------------------------------------------
 '| Author              | Frank Schwab
 '|---------------------+---------------------------------------------------
-'| Version             | 1.0.0
+'| Version             | 2.0.0
 '|---------------------+---------------------------------------------------
 '| Changes             | 2020-09-25  Created. fhs
+'|                     | 2020-09-26  Parameters are checked and an insertion
+'|                     |             singleton is used. fhs
+'|                     | 2020-09-27  Completely reworked interface. fhs
 '|---------------------+---------------------------------------------------
 '| Remarks             | This is an optimized QuickSort implementation
 '|                     | that is combined with InsertionSort.
+'|                     |
+'|                     | The array that is supplied as the parameter is
+'|                     | not sorted. Instead an array of indices into the
+'|                     | array to sort is created and the array indices are
+'|                     | sorted according to the array to sort.
+'|                     |
+'|                     | If one wants the array elements in sorted order one
+'|                     | has to access them like this:
+'|                     |
+'|                     | For i = LBound(dataArray) To UBound(dataArray)
+'|                     |    Debug.Print dataArray(indexArray(i))
+'|                     | Next i
+'|                     |
+'|                     | This method is especially useful if the data to be
+'|                     | sorted is large and the cost of moving the data in
+'|                     | memory is high, like e.g. for strings.
+'|                     |
+'|                     | With this method the data is not moved at all and
+'|                     | one only needs to access the elements through the
+'|                     | index array to get them in sorted order.
 '|---------------------+---------------------------------------------------
 '
 
@@ -63,10 +86,22 @@ Private Const ERR_NUM_START As Long = vbObjectError + 53495
 Private Const ERR_NUM_NO_ARRAY As Long = ERR_NUM_START
 Private Const ERR_STR_NO_ARRAY As String = "Supplied parameter is not an array"
 
+Private Const ERR_NUM_INVALID_BOUNDARY As Long = ERR_NUM_START + 1
+Private Const ERR_STR_INVALID_BOUNDARY_LEFT As String = "Invalid "
+Private Const ERR_STR_INVALID_BOUNDARY_RIGHT As String = " boundary"
+
+Private Const ERR_NUM_INVALID_INDEX_ARRAY_BOUNDARY As Long = ERR_NUM_START + 2
+Private Const ERR_STR_INVALID_INDEX_ARRAY_BOUNDARY As String = "Boundaries of index array do not match those of the array to sort"
+
 '
 ' Private constants
 '
 Private Const CUTOFF_SIZE_MINUS_1 As Long = 9   ' Cut off if 10 elements or less to sort, so set to 10 - 1 = 9
+
+'
+' Instance variables
+'
+Private m_InsertionSortSingleton As InsertionSortWithIndex
 
 '
 ' Private methods
@@ -74,15 +109,155 @@ Private Const CUTOFF_SIZE_MINUS_1 As Long = 9   ' Cut off if 10 elements or less
 
 '
 '+--------------------------------------------------------------------------
-'| Method           | InitializeIndexArray
+'| Method           | GetInsertionSortInstance
+'|------------------+-------------------------------------------------------
+'| Description      | Get the insertion sort instance singelton
+'|------------------+-------------------------------------------------------
+'| Parameter        | ./.
+'|------------------+-------------------------------------------------------
+'| Return values    | The insertion sort singleton
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-09-26  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | The InsertionSort singleton is instanciated only
+'|                  | once so it can be reused across calls.
+'+--------------------------------------------------------------------------
+'
+Private Function GetInsertionSortInstance() As InsertionSortWithIndex
+   If m_InsertionSortSingleton Is Nothing Then _
+      Set m_InsertionSortSingleton = New InsertionSortWithIndex
+
+   Set GetInsertionSortInstance = m_InsertionSortSingleton
+End Function
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | CheckIsArray
+'|------------------+-------------------------------------------------------
+'| Description      | Check if supplied paramater is an array
+'|------------------+-------------------------------------------------------
+'| Parameter        | anArray: Variable to check
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-09-27  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | This method raises an error if the supplied variable
+'|                  | is not an array.
+'+--------------------------------------------------------------------------
+'
+Private Sub CheckIsArray(ByRef anArray As Variant)
+   If Not IsArray(anArray) Then _
+      Err.Raise ERR_NUM_NO_ARRAY, _
+                ERR_STR_CLASS_NAME, _
+                ERR_STR_NO_ARRAY
+End Sub
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | CheckIndicesAgainstArrayBoundaries
+'|------------------+-------------------------------------------------------
+'| Description      | Check if supplied paramater is an array
+'|------------------+-------------------------------------------------------
+'| Parameter        | anArray: Array to check
+'|                  | idxFrom: Start index into the array
+'|                  | idxTo  : End   index into the array
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-09-27  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | This method raises an error if idxFrom or idxTo are
+'|                  | outside the array boundaries.
+'+--------------------------------------------------------------------------
+'
+Private Sub CheckIndicesAgainstArrayBoundaries(ByRef anArray As Variant, ByVal idxFrom As Long, ByVal idxTo As Long)
+   If idxFrom < LBound(anArray) Then _
+      Err.Raise ERR_NUM_INVALID_BOUNDARY, _
+                ERR_STR_CLASS_NAME, _
+                ERR_STR_INVALID_BOUNDARY_LEFT & "left" & ERR_STR_INVALID_BOUNDARY_RIGHT
+
+   If idxTo > UBound(anArray) Then _
+      Err.Raise ERR_NUM_INVALID_BOUNDARY, _
+                ERR_STR_CLASS_NAME, _
+                ERR_STR_INVALID_BOUNDARY_LEFT & "right" & ERR_STR_INVALID_BOUNDARY_RIGHT
+End Sub
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | CheckArrayBoundariesMatch
+'|------------------+-------------------------------------------------------
+'| Description      | Check if the boundaries of the supplied arrays match
+'|------------------+-------------------------------------------------------
+'| Parameter        | anArray: Array to check
+'|                  | idxFrom: Start index into the array
+'|                  | idxTo  : End   index into the array
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-09-27  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | This method raises an error if the boundaries of the
+'|                  | supplied arrays do not match.
+'+--------------------------------------------------------------------------
+'
+Private Sub CheckArrayBoundariesMatch(ByRef anArray As Variant, ByRef indexArray() As Long)
+   If (LBound(indexArray) <> LBound(anArray)) Or _
+      (UBound(indexArray) <> UBound(anArray)) Then _
+      Err.Raise ERR_NUM_INVALID_INDEX_ARRAY_BOUNDARY, _
+                ERR_STR_CLASS_NAME, _
+                ERR_STR_INVALID_INDEX_ARRAY_BOUNDARY
+End Sub
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | GetArrayLength
+'|------------------+-------------------------------------------------------
+'| Description      | Get the length of an array
+'|------------------+-------------------------------------------------------
+'| Parameter        | anArray: Array to get the length for
+'|------------------+-------------------------------------------------------
+'| Return values    | Length of array
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-09-26  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | When one tries to calculate the length of an
+'|                  | uninitialized array an error is raised.
+'|                  | This function catches this error and returns a
+'|                  | length of 0, instead.
+'+--------------------------------------------------------------------------
+'
+Private Function GetArrayLength(ByRef anArray As Variant) As Long
+   On Error Resume Next
+
+   GetArrayLength = UBound(anArray) - LBound(anArray) + 1
+
+   ' If the array is empty there was an error so we set
+   ' the return value accordingly
+
+   If Err.Number <> 0 Then _
+      GetArrayLength = 0
+End Function
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | CreateIndexArray
 '|------------------+-------------------------------------------------------
 '| Description      | Initialize the index array to be used for sorting
 '|------------------+-------------------------------------------------------
 '| Parameter        | arrayToSort: Array to sort
-'|                  | indexArray : Index array with indices into the
-'|                  | array to sort (this array is created in this method)
 '|------------------+-------------------------------------------------------
-'| Return values    | ./.
+'| Return values    | Index array with indices into the array to sort
 '|------------------+-------------------------------------------------------
 '| Author           | Frank Schwab
 '|------------------+-------------------------------------------------------
@@ -91,7 +266,9 @@ Private Const CUTOFF_SIZE_MINUS_1 As Long = 9   ' Cut off if 10 elements or less
 '| Remarks          | ./.
 '+--------------------------------------------------------------------------
 '
-Private Sub InitializeIndexArray(ByRef arrayToSort As Variant, ByRef indexArray() As Long)
+Private Function CreateIndexArray(ByRef arrayToSort As Variant) As Long()
+   Dim result() As Long
+   
    Dim i As Long
    Dim j As Long
    Dim low As Long
@@ -100,14 +277,16 @@ Private Sub InitializeIndexArray(ByRef arrayToSort As Variant, ByRef indexArray(
    low = LBound(arrayToSort) - 1
    Size = UBound(arrayToSort) - low
 
-   ReDim indexArray(1 To Size)
+   ReDim result(1 To Size)
 
    j = low
    For i = 1 To Size
       j = j + 1
-      indexArray(i) = j
+      result(i) = j
    Next i
-End Sub
+
+   CreateIndexArray = result
+End Function
 
 '
 '+--------------------------------------------------------------------------
@@ -162,7 +341,9 @@ Private Sub QuickSortWithIndexArrayAndBoundaries(ByRef arrayToSort As Variant, _
    Dim parkElement As Long
    Dim leftSize As Long
    Dim rightSize As Long
-   Dim insertionSorter As New InsertionSortWithIndex
+   Dim insertionSortInstance As InsertionSortWithIndex
+
+   Set insertionSortInstance = GetInsertionSortInstance
 
 '
 ' The whole thing is pushed to the stack as a dummy. If it is popped from the stack
@@ -291,7 +472,7 @@ Private Sub QuickSortWithIndexArrayAndBoundaries(ByRef arrayToSort As Variant, _
       Else
 ' Use insertion sort if the partition is smaller than or equal to the cutoff size
          If idxTo > idxFrom Then _
-            insertionSorter.SortPartWithIndex arrayToSort, indexArray, idxFrom, idxTo
+            insertionSortInstance.SortPartWithExistingIndex arrayToSort, indexArray, idxFrom, idxTo
 
          idxTo = aStack.Pop
          idxFrom = aStack.Pop
@@ -305,14 +486,14 @@ End Sub
 
 '
 '+--------------------------------------------------------------------------
-'| Method           | SortWithIndex
+'| Method           | SortPartWithExistingIndex
 '|------------------+-------------------------------------------------------
-'| Description      | Sort an array of any data type with an index array
-'|                  | with optimized QuickSort
+'| Description      | Sort part of an array of any data type with an
+'|                  | existing index array with optimized QuickSort
 '|------------------+-------------------------------------------------------
 '| Parameter        | arrayToSort: Array to sort
-'|                  | indexArray : Index array with indices into the
-'|                  | array to sort (this array is created in this method)
+'|                  | indexArray : Existing array of indicices into the
+'|                  |              array to sort
 '|                  | idxFrom    : Start index into the array
 '|                  | idxTo      : End   index into the array
 '|------------------+-------------------------------------------------------
@@ -320,78 +501,130 @@ End Sub
 '|------------------+-------------------------------------------------------
 '| Author           | Frank Schwab
 '|------------------+-------------------------------------------------------
-'| Changes          | 2018-09-25  Created. fhs
+'| Changes          | 2018-09-27  Created. fhs
 '|------------------+-------------------------------------------------------
-'| Remarks          | The array that is supplied as the parameter is
-'|                  | not sorted. Instead an array of indices into the
-'|                  | array to sort is created and the array indices are
-'|                  | sorted according to the array to sort.
-'|                  |
-'|                  | If one wants the array elements in sorted order one
-'|                  | has to access them like this:
-'|                  |
-'|                  | For i = LBound(dataArray) To UBound(dataArray)
-'|                  |    Debug.Print dataArray(indexArray(i))
-'|                  | Next i
-'|                  |
-'|                  | This method is especially useful if the data to be
-'|                  | sorted is large and the cost of moving the data in
-'|                  | memory is high, like e.g. for strings.
-'|                  |
-'|                  | With this method the data is not moved at all and
-'|                  | one only needs to access the elements through the
-'|                  | index array to get them in sorted order.
+'| Remarks          | ./.
 '+--------------------------------------------------------------------------
 '
-Public Sub SortPartWithIndex(ByRef arrayToSort As Variant, ByRef indexArray() As Long, ByVal idxFrom As Long, ByVal idxTo As Long)
-   If IsArray(arrayToSort) Then
-      InitializeIndexArray arrayToSort, indexArray
+Public Sub SortPartWithExistingIndex(ByRef arrayToSort As Variant, ByRef indexArray() As Long, ByVal idxFrom As Long, ByVal idxTo As Long)
+   CheckIsArray arrayToSort
+
+   Dim arrayLength As Long
+   arrayLength = GetArrayLength(arrayToSort)
+
+   If arrayLength > 1 Then
+      CheckArrayBoundariesMatch arrayToSort, indexArray
+      CheckIndicesAgainstArrayBoundaries arrayToSort, idxFrom, idxTo
+
       QuickSortWithIndexArrayAndBoundaries arrayToSort, indexArray, idxFrom, idxTo
-   Else
-      Err.Raise ERR_NUM_NO_ARRAY, _
-                ERR_STR_CLASS_NAME, _
-                ERR_STR_NO_ARRAY
    End If
 End Sub
 
 '
 '+--------------------------------------------------------------------------
-'| Method           | SortWithIndex
+'| Method           | SortWithExistingIndex
 '|------------------+-------------------------------------------------------
-'| Description      | Sort an array of any data type with an index array
-'|                  | with optimized QuickSort
+'| Description      | Sort an array of any data type with an exisitng index
+'|                  | array with optimized QuickSort
 '|------------------+-------------------------------------------------------
 '| Parameter        | arrayToSort: Array to sort
-'|                  | indexArray : Index array with indices into the
-'|                  | array to sort (this array is created in this method)
+'|                  | indexArray : Existing array of indicices into the
+'|                  |              array to sort
 '|------------------+-------------------------------------------------------
 '| Return values    | ./.
 '|------------------+-------------------------------------------------------
 '| Author           | Frank Schwab
 '|------------------+-------------------------------------------------------
-'| Changes          | 2018-09-25  Created. fhs
+'| Changes          | 2018-09-27  Created. fhs
 '|------------------+-------------------------------------------------------
-'| Remarks          | The array that is supplied as the parameter is
-'|                  | not sorted. Instead an array of indices into the
-'|                  | array to sort is created and the array indices are
-'|                  | sorted according to the array to sort.
-'|                  |
-'|                  | If one wants the array elements in sorted order one
-'|                  | has to access them like this:
-'|                  |
-'|                  | For i = LBound(dataArray) To UBound(dataArray)
-'|                  |    Debug.Print dataArray(indexArray(i))
-'|                  | Next i
-'|                  |
-'|                  | This method is especially useful if the data to be
-'|                  | sorted is large and the cost of moving the data in
-'|                  | memory is high, like e.g. for strings.
-'|                  |
-'|                  | With this method the data is not moved at all and
-'|                  | one only needs to access the elements through the
-'|                  | index array to get them in sorted order.
+'| Remarks          | ./.
 '+--------------------------------------------------------------------------
 '
-Public Sub SortWithIndex(ByRef arrayToSort As Variant, ByRef indexArray() As Long)
-   SortPartWithIndex arrayToSort, indexArray, LBound(arrayToSort), UBound(arrayToSort)
+Public Sub SortWithExistingIndex(ByRef arrayToSort As Variant, ByRef indexArray() As Long)
+   CheckIsArray arrayToSort
+
+   Dim arrayLength As Long
+   arrayLength = GetArrayLength(arrayToSort)
+
+   If arrayLength > 1 Then
+      CheckArrayBoundariesMatch arrayToSort, indexArray
+
+      QuickSortWithIndexArrayAndBoundaries arrayToSort, indexArray, LBound(arrayToSort), UBound(arrayToSort)
+   End If
 End Sub
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | SortPartWithNewIndex
+'|------------------+-------------------------------------------------------
+'| Description      | Sort part of an array of any data type with an
+'|                  | index array with optimized QuickSort and return
+'|                  | the created index array
+'|------------------+-------------------------------------------------------
+'| Parameter        | arrayToSort: Array to sort
+'|                  | idxFrom    : Start index into the array
+'|                  | idxTo      : End   index into the array
+'|------------------+-------------------------------------------------------
+'| Return values    | Index array with indices into arrayToSort
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2018-09-25  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
+Public Function SortPartWithNewIndex(ByRef arrayToSort As Variant, ByVal idxFrom As Long, ByVal idxTo As Long) As Long()
+   CheckIsArray arrayToSort
+
+   Dim arrayLength As Long
+   arrayLength = GetArrayLength(arrayToSort)
+
+   Dim indexArray() As Long
+
+   If arrayLength > 0 Then
+      CheckIndicesAgainstArrayBoundaries arrayToSort, idxFrom, idxTo
+
+      indexArray = CreateIndexArray(arrayToSort)
+
+      QuickSortWithIndexArrayAndBoundaries arrayToSort, indexArray, idxFrom, idxTo
+   End If
+
+   SortPartWithNewIndex = indexArray
+End Function
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | SortWithNewIndex
+'|------------------+-------------------------------------------------------
+'| Description      | Sort an array of any data type with an
+'|                  | index array with optimized QuickSort and return
+'|                  | the created index array
+'|------------------+-------------------------------------------------------
+'| Parameter        | arrayToSort: Array to sort
+'|------------------+-------------------------------------------------------
+'| Return values    | Index array with indices into arrayToSort
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2018-09-27  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
+Public Function SortWithNewIndex(ByRef arrayToSort As Variant) As Long()
+   CheckIsArray arrayToSort
+
+   Dim arrayLength As Long
+   arrayLength = GetArrayLength(arrayToSort)
+
+   Dim indexArray() As Long
+
+   If arrayLength > 0 Then
+      indexArray = CreateIndexArray(arrayToSort)
+
+      QuickSortWithIndexArrayAndBoundaries arrayToSort, indexArray, LBound(arrayToSort), UBound(arrayToSort)
+   End If
+
+   SortWithNewIndex = indexArray
+End Function
