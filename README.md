@@ -178,7 +178,7 @@ Optimized quicksort implementation where not the data array is sorted but an ind
 
 ### Stack
 
-An implementation of a stack. Used by the Sorter class.
+An implementation of a stack. Used by the quicksort type sorter classes.
 
 ## StringHandling
 
