@@ -152,15 +152,29 @@ Get some system informations.
 
 ## Sorting
 
-### Sorter
+### InsertionSort
 
-An optimized sorter class. It can sort with three different methods:
+An implementation of the insertion sort algorithm.
 
-* Insertionsort
-* Pure Quicksort
-* Optimized Quicksort (a combination of Quicksort and Insertionsort)
+### InsertionSortWithIndex
 
-For string arrays there exist special sorting methods that make use of an index array. Instead of sorting the arrays of strings these methods sort an array of indices into the string array. This way strings do not need to be moved around which is a very expensive operation. 
+Implementation of the insertion sort algorithm where not the data array is sorted but an index into the data array. This is especially useful when moving data is an expensive operation like e.g. for strings. 
+
+### PureQuickSort
+
+A pure quicksort implementation.
+
+### PureQuickSortWithIndex
+
+Pure quicksort implementation where not the data array is sorted but an index into the data array. This is especially useful when moving data is an expensive operation like e.g. for strings. 
+
+### QuickSort
+
+An optimized quicksort implementation. Here quicksort is combined with insertion sort to make the implementation faster.
+
+### QuickSortWithIndex
+
+Optimized quicksort implementation where not the data array is sorted but an index into the data array. This is especially useful when moving data is an expensive operation like e.g. for strings. 
 
 ### Stack
 
