@@ -55,7 +55,7 @@ Option Explicit
 Private Const ERROR_BASE As Long = vbObjectError + 512
 Private Const MODULE_NAME As String = "SpecialFolder"
 
-Private Const ERROR_NUMBER_API_ERROR As Long = ERROR_BASE + 0
+Private Const ERROR_NUMBER_API_ERROR As Long = ERROR_BASE
 Private Const ERROR_TEXT_API_ERROR As String = "Error "
 
 '
@@ -68,9 +68,8 @@ Private Const CSIDL_COMMON_APPDATA As Long = &H23
 Private Const SHGFP_TYPE_CURRENT As Long = 0
 Private Const SHGFP_TYPE_DEFAULT As Long = 1
 
-Private Const S_OK         As Long = 0
-Private Const S_FALSE      As Long = 1
-Private Const E_INVALIDARG As Long = &H80070057
+Private Const S_OK    As Long = 0
+Private Const S_FALSE As Long = 1
 
 '
 ' Windows API declarations
@@ -93,7 +92,26 @@ Private m_Path As String
 '
 ' Private methods
 '
-Private Sub HandleAPIError(ByVal errorCode As Long, ByRef source As String, Optional ByRef additionalInformation As String = "")
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | HandleAPIError
+'|------------------+-------------------------------------------------------
+'| Description      | Handle Windows API errors
+'|------------------+-------------------------------------------------------
+'| Parameters       | errorCode: API error code
+'|                  | source   : Folder type
+'|------------------+-------------------------------------------------------
+'| Return values    | Parameter without terminating null byte
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-23  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
+Private Sub HandleAPIError(ByVal errorCode As Long, ByRef source As String)
    If errorCode = S_FALSE Then
       Err.Raise ERROR_NUMBER_API_ERROR, _
                 MODULE_NAME, _
@@ -105,6 +123,23 @@ Private Sub HandleAPIError(ByVal errorCode As Long, ByRef source As String, Opti
    End If
 End Sub
 
+'
+'+--------------------------------------------------------------------------
+'| Method           | MakeStringFromNullTerminatedString
+'|------------------+-------------------------------------------------------
+'| Description      | Remove trailing null byte from null terminated string
+'|------------------+-------------------------------------------------------
+'| Parameters       | aNullterminatedString: String with trailing null byte
+'|------------------+-------------------------------------------------------
+'| Return values    | Parameter without terminating null byte
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-23  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Private Function MakeStringFromNullTerminatedString(ByRef aNullTerminatedString As String) As String
    Dim pos As Long
    
@@ -120,6 +155,24 @@ End Function
 '
 ' Public methods
 '
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | GetDefaultAppDataPath
+'|------------------+-------------------------------------------------------
+'| Description      | Get default application data path
+'|------------------+-------------------------------------------------------
+'| Parameters       | ./.
+'|------------------+-------------------------------------------------------
+'| Return values    | Path of default application data directory
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-23  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Public Function GetDefaultAppDataPath() As String
    Dim result As Long
 
@@ -132,6 +185,23 @@ Public Function GetDefaultAppDataPath() As String
    End If
 End Function
 
+'
+'+--------------------------------------------------------------------------
+'| Method           | GetCurrentAppDataPath
+'|------------------+-------------------------------------------------------
+'| Description      | Get current application data path
+'|------------------+-------------------------------------------------------
+'| Parameters       | ./.
+'|------------------+-------------------------------------------------------
+'| Return values    | Path of current application data directory
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-23  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Public Function GetCurrentAppDataPath() As String
    Dim result As Long
 
@@ -144,6 +214,23 @@ Public Function GetCurrentAppDataPath() As String
    End If
 End Function
 
+'
+'+--------------------------------------------------------------------------
+'| Method           | GetDefaultCommonAppDataPath
+'|------------------+-------------------------------------------------------
+'| Description      | Get default common application data path
+'|------------------+-------------------------------------------------------
+'| Parameters       | ./.
+'|------------------+-------------------------------------------------------
+'| Return values    | Path of default common application data directory
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-23  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Public Function GetDefaultCommonAppDataPath() As String
    Dim result As Long
 
@@ -156,6 +243,23 @@ Public Function GetDefaultCommonAppDataPath() As String
    End If
 End Function
 
+'
+'+--------------------------------------------------------------------------
+'| Method           | GetCurrentCommonAppDataPath
+'|------------------+-------------------------------------------------------
+'| Description      | Get current common application data path
+'|------------------+-------------------------------------------------------
+'| Parameters       | ./.
+'|------------------+-------------------------------------------------------
+'| Return values    | Path of current common application data directory
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-23  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Public Function GetCurrentCommonAppDataPath() As String
    Dim result As Long
 
@@ -168,6 +272,23 @@ Public Function GetCurrentCommonAppDataPath() As String
    End If
 End Function
 
+'
+'+--------------------------------------------------------------------------
+'| Method           | GetDefaultPersonalPath
+'|------------------+-------------------------------------------------------
+'| Description      | Get default personal path
+'|------------------+-------------------------------------------------------
+'| Parameters       | ./.
+'|------------------+-------------------------------------------------------
+'| Return values    | Path of default personal directory
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-23  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Public Function GetDefaultPersonalPath() As String
    Dim result As Long
 
@@ -180,6 +301,23 @@ Public Function GetDefaultPersonalPath() As String
    End If
 End Function
 
+'
+'+--------------------------------------------------------------------------
+'| Method           | GetCurrentPersonalPath
+'|------------------+-------------------------------------------------------
+'| Description      | Get current personal path
+'|------------------+-------------------------------------------------------
+'| Parameters       | ./.
+'|------------------+-------------------------------------------------------
+'| Return values    | Path of current personal directory
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-23  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Public Function GetCurrentPersonalPath() As String
    Dim result As Long
 
