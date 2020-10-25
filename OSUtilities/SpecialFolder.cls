@@ -41,9 +41,10 @@ Attribute VB_Exposed = False
 '|---------------------+---------------------------------------------------
 '| Author              | Frank Schwab
 '|---------------------+---------------------------------------------------
-'| Version             | 1.0.0
+'| Version             | 1.0.1
 '|---------------------+---------------------------------------------------
 '| Changes             | 2020-07-23  Created. fhs
+'|                     | 2020-10-24  Made 64 bit compatible. fhs
 '|---------------------+---------------------------------------------------
 '
 Option Explicit
@@ -75,7 +76,7 @@ Private Const E_INVALIDARG As Long = &H80070057
 ' Windows API declarations
 '
 
-Private Declare Function SHGetFolderPath _
+Private Declare PtrSafe Function SHGetFolderPath _
 Lib "shell32.dll" _
 Alias "SHGetFolderPathA" ( _
   ByVal hwnd As Long, _
