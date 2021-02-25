@@ -42,7 +42,7 @@ Attribute VB_Exposed = False
 '|---------------------+---------------------------------------------------
 '| Author              | Frank Schwab
 '|---------------------+---------------------------------------------------
-'| Version             | 2.1.1
+'| Version             | 2.1.2
 '|---------------------+---------------------------------------------------
 '| Changes             | 2002-03-15  Created. fhs
 '|                     | 2006-03-06  Added formatting of general messages. fhs
@@ -51,7 +51,9 @@ Attribute VB_Exposed = False
 '|                     | 2014-04-01  Simplified Windows NT status code handling. fhs
 '|                     | 2015-01-06  Added module error handling. fhs
 '|                     | 2020-08-24  Implemented 64 bit compatibility. fhs
+'|                     | 2021-02-25  Added missing 64 bit compatibility. fhs
 '+-------------------------------------------------------------------------
+'
 
 Option Explicit
 
@@ -83,7 +85,7 @@ Private Declare PtrSafe Function FormatMessage _
   ByVal dwLanguageId As Long, _
   ByVal lpBuffer As LongPtr, _
   ByVal nSize As Long, _
-  ByRef Arguments As Long _
+  ByRef Arguments As LongPtr _
   ) As Long
 
 Private Declare PtrSafe Function RtlNtStatusToDosError _
