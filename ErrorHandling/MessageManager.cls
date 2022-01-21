@@ -14,7 +14,7 @@ Attribute VB_Exposed = False
 '|
 '| SPDX-License-Identifier: MIT
 '|
-'| Copyright 2020, Frank Schwab
+'| Copyright 2021, Frank Schwab
 '|
 '| Permission is hereby granted, free of charge, to any person obtaining a
 '| copy of this software and associated documentation files (the "Software"),
@@ -42,7 +42,7 @@ Attribute VB_Exposed = False
 '|---------------------+---------------------------------------------------
 '| Author              | Frank Schwab
 '|---------------------+---------------------------------------------------
-'| Version             | 2.1.2
+'| Version             | 2.2.0
 '|---------------------+---------------------------------------------------
 '| Changes             | 2002-03-15  Created. fhs
 '|                     | 2006-03-06  Added formatting of general messages. fhs
@@ -52,6 +52,9 @@ Attribute VB_Exposed = False
 '|                     | 2015-01-06  Added module error handling. fhs
 '|                     | 2020-08-24  Implemented 64 bit compatibility. fhs
 '|                     | 2021-02-25  Added missing 64 bit compatibility. fhs
+'|                     | 2022-01-19  Corrected length calculation in
+'|                     |             FormatMessageWithParameters. fhs
+'|                     | 2022-01-21  Corrected FormatMessageWithParameters. fhs
 '+-------------------------------------------------------------------------
 '
 
@@ -99,7 +102,133 @@ Private Declare PtrSafe Function GetModuleHandle _
    ByVal lpModuleName As String _
    ) As Long
    
-   
+
+'
+' Private methods
+'
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | UnwindParamArrays
+'|------------------+-------------------------------------------------------
+'| Description      | Unwind nested ParamArrays.
+'|------------------+-------------------------------------------------------
+'| Parameters       | parameterList : Parameter list
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2021-01-21  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | If a method has a ParamArray as a parameter and
+'|                  | calls another method that has a ParamArray with the
+'|                  | ParamArray it received, the called method has only
+'|                  | one element in the parameter that is a Variant array.
+'|                  | This method returns the original parameters.
+'+--------------------------------------------------------------------------
+'
+Private Function UnwindParamArrays(ByRef parameterList() As Variant) As Variant()
+   Dim actParamList() As Variant
+   actParamList = parameterList
+
+  '
+   ' Only unwind if there is only one parameter and it is a Variant array
+   '
+   Do While (UBound(actParamList) = 0)
+      If (VarType(actParamList(0)) = (vbArray Or vbVariant)) Then
+         Dim temp() As Variant
+         
+         '
+         ' VBA crashes if one uses actParamList = actParamList(0)
+         '
+         temp = actParamList(0)
+         actParamList = temp
+      Else
+         Exit Do
+      End If
+   Loop
+
+   UnwindParamArrays = actParamList
+End Function
+
+'+--------------------------------------------------------------------------
+'| Method           | UnsafeFormatMessageWithParameters
+'|------------------+-------------------------------------------------------
+'| Purpose          | Create a message from a format string and parameters
+'|                  | that are to substituted for the placeholders.
+'|------------------+-------------------------------------------------------
+'| Parameters       | formatText:    Formattierungs-Zeichenkette
+'|                  | parameterList: Parameter, die eingefügt werden
+'|                  | parameterListLowerBound: Lower bound of parameterList
+'|                  | parameterListUpperBound: Lower bound of parameterList
+'|------------------+-------------------------------------------------------
+'| Returns          | Formatted string
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2006-03-06  Created. fhs
+'|                  | 2021-01-19  Corrected length calculation. fhs
+'|                  | 2021-01-21  Unwound parameterList and added null chars
+'|                  |             at the end of parameter strings. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | Parameters begin are marked by a "%" followed by one
+'|                  | digit. The digit indicates which element of the
+'|                  | parameter list should be substituted.
+'|                  |
+'|                  | This function does not check the parameters.
+'|                  |
+'|                  | Found in the microsoft.public.vb.winapi message group
+'|                  | Original author: Tom Esh
+'|                  | Clarified and simplified by Frank Schwab
+'+--------------------------------------------------------------------------
+Private Function UnsafeFormatMessageWithParameters(ByRef formatText As String, _
+                                                   ByRef parameterList() As Variant, _
+                                                   ByVal parameterListLowerBound As Integer, _
+                                                   ByVal parameterListUpperBound As Integer) As String
+   Dim messageBuffer As String
+   Dim parameterAsString() As String
+   Dim parameterPointer() As LongPtr
+   Dim i As Integer
+   Dim bufferSize As Long
+   Dim messageLength As Long
+
+   bufferSize = Len(formatText) + 1 ' Accomodate for the trailing '\0' byte
+
+   '
+   ' Copy all parameter strings into two parameter arrays
+   ' One gets the parameter values as strings and the other
+   ' gets the addresses of these strings
+   '
+   ReDim parameterPointer(parameterListLowerBound To parameterListUpperBound)
+   ReDim parameterAsString(parameterListLowerBound To parameterListUpperBound)
+
+   For i = parameterListLowerBound To parameterListUpperBound
+      parameterAsString(i) = CStr(parameterList(i)) & vbNullChar  ' Don't forget the trailing '\0' character needed for the API call
+      parameterPointer(i) = StrPtr(parameterAsString(i))
+      bufferSize = bufferSize + Len(parameterAsString(i)) - 1     ' Correct for trailing null character
+   Next i
+
+   '
+   ' Get the formatted message
+   '
+   messageBuffer = String$(bufferSize, vbNullChar)
+
+   messageLength = FormatMessage(FORMAT_MESSAGE_FROM_STRING Or _
+                                 FORMAT_MESSAGE_ARGUMENT_ARRAY, _
+                                 StrPtr(formatText), _
+                                 0&, _
+                                 0&, _
+                                 StrPtr(messageBuffer), _
+                                 bufferSize, _
+                                 parameterPointer(parameterListLowerBound))
+
+   '
+   ' Return with the correct length
+   '
+   UnsafeFormatMessageWithParameters = Left$(messageBuffer, messageLength)
+End Function
+
 '
 ' Public methods
 '
@@ -318,7 +447,7 @@ End Function
 '|------------------+-------------------------------------------------------
 '| Author           | Frank Schwab
 '|------------------+-------------------------------------------------------
-'| Changes          | 2006-03-06  Created. fhs
+'| Changes          | 2021-01-21  Created. fhs
 '|------------------+-------------------------------------------------------
 '| Typical call     | aMessage = mm.formatMessageWithParameters("Calling %1 returned
 '|                  |              error code %2", "CryptContextCreate", rc)
@@ -327,56 +456,27 @@ End Function
 '|                  | digit. The digit indicates which element of the
 '|                  | parameter list should be substituted.
 '|                  |
-'|                  | Found in the microsoft.public.vb.winapi message group
-'|                  | Original author: Tom Esh
-'|                  | Clarified and simplified by Frank Schwab
+'|                  | This is just a wrapper around the real formatter
+'|                  | UnsafeFormatMessageWithParameters that sanitizes
+'|                  | the parameters.
 '+--------------------------------------------------------------------------
 Public Function FormatMessageWithParameters(ByRef formatText As String, _
                                             ParamArray parameterList() As Variant) As String
-   Dim messageBuffer As String
-   Dim parameterAsString() As String
-   Dim parameterPointer() As LongPtr
-   Dim i As Integer
+   Dim actParamList() As Variant
+   actParamList = parameterList  ' We need to convert the type of the parameter list from "ParamArray" to "Variant()"
+   actParamList = UnwindParamArrays(actParamList)
+
    Dim parameterListLowerBound As Integer
    Dim parameterListUpperBound As Integer
-   Dim bufferSize As Long
-   Dim messageLength As Long
 
-   bufferSize = Len(formatText) + 1 ' Accomodate for the trailing '\0' byte
+   parameterListLowerBound = LBound(actParamList)
+   parameterListUpperBound = UBound(actParamList)
 
-   parameterListLowerBound = LBound(parameterList)
-   parameterListUpperBound = UBound(parameterList)
-
-   '
-   ' Copy all parameter strings into two parameter arrays
-   ' One gets the parameter values as strings and the other
-   ' gets the addresses of these strings
-   '
-   ReDim parameterPointer(parameterListLowerBound To parameterListUpperBound)
-   ReDim parameterAsString(parameterListLowerBound To parameterListUpperBound)
-
-   For i = parameterListLowerBound To parameterListUpperBound
-       parameterAsString(i) = CStr(parameterList(i))
-       parameterPointer(i) = StrPtr(parameterAsString(i))
-       bufferSize = bufferSize + Len(parameterList(i))
-   Next i
-
-   '
-   ' Get the formatted message
-   '
-   messageBuffer = String$(bufferSize, vbNullChar)
-
-   messageLength = FormatMessage(FORMAT_MESSAGE_FROM_STRING Or _
-                                 FORMAT_MESSAGE_ARGUMENT_ARRAY, _
-                                 StrPtr(formatText), _
-                                 0&, _
-                                 0&, _
-                                 StrPtr(messageBuffer), _
-                                 bufferSize, _
-                                 parameterPointer(parameterListLowerBound))
-
-   '
-   ' Return with the correct length
-   '
-   FormatMessageWithParameters = Left$(messageBuffer, messageLength)
+   If parameterListUpperBound >= parameterListLowerBound Then
+      ' There are parameters
+      FormatMessageWithParameters = UnsafeFormatMessageWithParameters(formatText, actParamList, parameterListLowerBound, parameterListUpperBound)
+   Else
+      ' There are no parameters
+      FormatMessageWithParameters = formatText
+   End If
 End Function
