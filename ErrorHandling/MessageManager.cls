@@ -169,8 +169,7 @@ End Function
 '|------------------+-------------------------------------------------------
 '| Changes          | 2006-03-06  Created. fhs
 '|                  | 2021-01-19  Corrected length calculation. fhs
-'|                  | 2021-01-21  Unwound parameterList and added null chars
-'|                  |             at the end of parameter strings. fhs
+'|                  | 2021-01-21  Unwound parameterList. fhs
 '|------------------+-------------------------------------------------------
 '| Remarks          | Parameters begin are marked by a "%" followed by one
 '|                  | digit. The digit indicates which element of the
@@ -203,10 +202,14 @@ Private Function UnsafeFormatMessageWithParameters(ByRef formatText As String, _
    ReDim parameterPointer(parameterListLowerBound To parameterListUpperBound)
    ReDim parameterAsString(parameterListLowerBound To parameterListUpperBound)
 
+   '
+   ' For a definition of a BSTR see https://docs.microsoft.com/en-us/previous-versions/windows/desktop/automat/bstr
+   ' BSTR: |Length (4 bytes)|Data|0x0000|
+   '
    For i = parameterListLowerBound To parameterListUpperBound
-      parameterAsString(i) = CStr(parameterList(i)) & vbNullChar  ' Don't forget the trailing '\0' character needed for the API call
+      parameterAsString(i) = CStr(parameterList(i))             ' No need to add a '\0' char as a BSTR always has one!
       parameterPointer(i) = StrPtr(parameterAsString(i))
-      bufferSize = bufferSize + Len(parameterAsString(i)) - 1     ' Correct for trailing null character
+      bufferSize = bufferSize + Len(parameterAsString(i))
    Next i
 
    '
