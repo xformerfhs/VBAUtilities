@@ -14,7 +14,7 @@ Attribute VB_Exposed = False
 '|
 '| SPDX-License-Identifier: MIT
 '|
-'| Copyright 2020, Frank Schwab
+'| Copyright 2021, Frank Schwab
 '|
 '| Permission is hereby granted, free of charge, to any person obtaining a
 '| copy of this software and associated documentation files (the "Software"),
@@ -42,7 +42,7 @@ Attribute VB_Exposed = False
 '|---------------------+---------------------------------------------------
 '| Author              | Frank Schwab
 '|---------------------+---------------------------------------------------
-'| Version             | 1.0.4
+'| Version             | 1.0.5
 '|---------------------+---------------------------------------------------
 '| Changes             | 2020-07-18  Created. fhs
 '|                     | 2020-08-03  Correct array length calculation
@@ -50,6 +50,8 @@ Attribute VB_Exposed = False
 '|                     | 2020-09-01  Made 64 bit compatible. fhs
 '|                     | 2020-09-09  Simplified. fhs
 '|                     | 2020-09-10  Removed unnecessary constant. fhs
+'|                     | 2021-01-22  Removed unnecessary terminating
+'|                     |             null characters. fhs
 '|---------------------+---------------------------------------------------
 '| Typical usage       | ' For getting a hash value
 '|                     | Dim hc As New HashCng
@@ -96,15 +98,19 @@ Private Const ERR_NUM_KEY_TOO_SHORT As Long = ERR_NUM_BASE + 2
 ' CNG constants
 '
 
+'
+' No need for terminating vbNullChars as BSTRs always have a terminating null character.
+'
+
 ' CNG Algorithm Identifiers
-Private Const BCRYPT_SHA1_ALGORITHM   As String = "SHA1" & vbNullChar
-Private Const BCRYPT_SHA256_ALGORITHM As String = "SHA256" & vbNullChar
-Private Const BCRYPT_SHA384_ALGORITHM As String = "SHA384" & vbNullChar
-Private Const BCRYPT_SHA512_ALGORITHM As String = "SHA512" & vbNullChar
+Private Const BCRYPT_SHA1_ALGORITHM   As String = "SHA1"
+Private Const BCRYPT_SHA256_ALGORITHM As String = "SHA256"
+Private Const BCRYPT_SHA384_ALGORITHM As String = "SHA384"
+Private Const BCRYPT_SHA512_ALGORITHM As String = "SHA512"
 
 ' Cryptography Primitive Property Identifiers
-Private Const BCRYPT_OBJECT_LENGTH As String = "ObjectLength" & vbNullChar
-Private Const BCRYPT_HASH_LENGTH As String = "HashDigestLength" & vbNullChar
+Private Const BCRYPT_OBJECT_LENGTH As String = "ObjectLength"
+Private Const BCRYPT_HASH_LENGTH As String = "HashDigestLength"
 
 ' Algorithm flags
 Private Const BCRYPT_NO_FLAG              As Long = 0&
