@@ -10,11 +10,11 @@ Attribute VB_Exposed = False
 '
 '+-------------------------------------------------------------------------
 '|
-'| SPDX-FileCopyrightText: 2020 Frank Schwab
+'| SPDX-FileCopyrightText: 2022 Frank Schwab
 '|
 '| SPDX-License-Identifier: MIT
 '|
-'| Copyright 2020, Frank Schwab
+'| Copyright 2022, Frank Schwab
 '|
 '| Permission is hereby granted, free of charge, to any person obtaining a
 '| copy of this software and associated documentation files (the "Software"),
@@ -41,16 +41,18 @@ Attribute VB_Exposed = False
 '|---------------------+---------------------------------------------------
 '| Author              | Frank Schwab
 '|---------------------+---------------------------------------------------
-'| Version             | 1.0.0
+'| Version             | 1.0.1
 '|---------------------+---------------------------------------------------
 '| Changes             | 2020-07-23  Created. fhs
+'|                     | 2022-01-22  Removed unnecessary terminating
+'|                     |             null character. fhs
 '|---------------------+---------------------------------------------------
 '
 
 Option Explicit
 
 ' Algorithm ids
-Private Const BCRYPT_RNG_ALGORITHM As String = "RNG" & vbNullChar
+Private Const BCRYPT_RNG_ALGORITHM As String = "RNG"
 
 ' Failed/Succeeded
 Private Const STATUS_SUCCESS As Long = 0
