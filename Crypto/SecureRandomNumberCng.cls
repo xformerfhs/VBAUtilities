@@ -41,11 +41,12 @@ Attribute VB_Exposed = False
 '|---------------------+---------------------------------------------------
 '| Author              | Frank Schwab
 '|---------------------+---------------------------------------------------
-'| Version             | 1.0.1
+'| Version             | 1.1.0
 '|---------------------+---------------------------------------------------
 '| Changes             | 2020-07-23  Created. fhs
 '|                     | 2022-01-22  Removed unnecessary terminating
 '|                     |             null character. fhs
+'|                     | 2022-01-22  Made 64 bit compatible. fhs
 '|---------------------+---------------------------------------------------
 '
 
@@ -72,30 +73,31 @@ Private Const ERR_CRYPTO_API As Long = ERR_BASE
 '
 ' API declarations
 '
-Private Declare Function BCryptOpenAlgorithmProvider Lib "bcrypt" ( _
-   ByRef phAlgorithm As Long, _
-   ByVal pszAlgId As Long, _
-   ByVal pszImplementation As Long, _
+Private Declare PtrSafe Function BCryptOpenAlgorithmProvider Lib "bcrypt" ( _
+   ByRef phAlgorithm As LongPtr, _
+   ByVal pszAlgId As LongPtr, _
+   ByVal pszImplementation As LongPtr, _
    ByVal dwFlags As Long) As Long
 
-Private Declare Function BCryptCloseAlgorithmProvider Lib "bcrypt" ( _
-   ByVal hAlgorithm As Long, _
+Private Declare PtrSafe Function BCryptCloseAlgorithmProvider Lib "bcrypt" ( _
+   ByVal hAlgorithm As LongPtr, _
    ByVal dwFlags As Long) As Long
 
-Private Declare Function BCryptGenRandom Lib "bcrypt" ( _
-   ByVal hAlgorithm As Long, _
+Private Declare PtrSafe Function BCryptGenRandom Lib "bcrypt" ( _
+   ByVal hAlgorithm As LongPtr, _
    ByRef pbBuffer As Byte, _
    ByVal cbBuffer As Long, _
    ByVal dwFlags As Long) As Long
 
-
+'
+' Private constants
 '
 Private Const BUFFER_SIZE As Integer = 500
 
 '
 ' Instance variables
 '
-Private m_AlgorithmHandle As Long
+Private m_AlgorithmHandle As LongPtr
 Private m_NumberBuffer(1 To BUFFER_SIZE) As Byte
 Private m_ActIndex As Integer
 
@@ -171,15 +173,16 @@ End Function
 '| Remarks          | ./.
 '+--------------------------------------------------------------------------
 '
-Private Function OpenRNGAlgorithm() As Long
+Private Function OpenRNGAlgorithm() As LongPtr
    Dim rc As Long
 
-   Dim result As Long
+   Dim result As LongPtr
 
    rc = BCryptOpenAlgorithmProvider(result, _
                                     StrPtr(BCRYPT_RNG_ALGORITHM), _
                                     0&, _
                                     0&)
+
    If rc <> STATUS_SUCCESS Then _
       HandleError "BCryptOpenAlgorithmProvider", rc
 
@@ -240,6 +243,7 @@ Private Sub RefreshNumberBuffer()
                         m_NumberBuffer(LBound(m_NumberBuffer)), _
                         bufferLength, _
                         0&)
+
    If rc <> STATUS_SUCCESS Then _
       HandleError "BCryptGenRandom", rc
 End Sub
@@ -279,7 +283,6 @@ Private Sub PutRandomBytesInBuffer(ByRef aBuffer() As Byte, ByVal requestedNoOfB
       m_ActIndex = m_ActIndex + 1
       actDestinationIndex = actDestinationIndex + 1
    Loop
-
 End Sub
 
 '
