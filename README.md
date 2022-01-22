@@ -46,6 +46,10 @@ Show and clear an Access status line. The status line is automatically cleared w
 
 A universal hashing class. It calculates [SHA-1](https://en.wikipedia.org/wiki/SHA-1) and [SHA-2](https://en.wikipedia.org/wiki/SHA-2) hashes (with 256, 384 and 512 bits length) and also [HMAC](https://en.wikipedia.org/wiki/HMAC) values with these hashes. It uses  the Windows CNG (Crypto Next Generation) API, so all calculations are done by Windows.
 
+### PBKDF2
+
+Calculates PBKDF2 hashes from passwords. The algorithm "Password based key derivation function No. 2" is defined in [RFC 2898](https://www.ietf.org/rfc/rfc2898.txt). It can be used with several hash algorithms. This implementation provides [MD4](https://en.wikipedia.org/wiki/MD4), [MD5](https://en.wikipedia.org/wiki/MD5), [SHA-1](https://en.wikipedia.org/wiki/SHA-1), SHA-2-256, SHA-2-384 and SHA-2-512 ([SHA-2](https://en.wikipedia.org/wiki/SHA-2)). Recommended is the method `Pbkdf2WithSHA256`. The iteration count should be chosen so that calculating a PBKDF2 hash takes 0.5 to 0.8 seconds. The salt should be unique for every user and should have a length of at least 8 bytes.
+
 ### SecureRandomNumberCng
 
 Secure CNG random number generator which is a wrapper around the Windows CNG (Crypto Next Generation) RNG API and uses the [BCryptGenRandom](https://docs.microsoft.com/en-us/windows/win32/api/bcrypt/nf-bcrypt-bcryptgenrandom) function.
