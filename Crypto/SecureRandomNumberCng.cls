@@ -41,12 +41,15 @@ Attribute VB_Exposed = False
 '|---------------------+---------------------------------------------------
 '| Author              | Frank Schwab
 '|---------------------+---------------------------------------------------
-'| Version             | 1.1.0
+'| Version             | 2.0.0
 '|---------------------+---------------------------------------------------
 '| Changes             | 2020-07-23  Created. fhs
 '|                     | 2022-01-22  Removed unnecessary terminating
 '|                     |             null character. fhs
 '|                     | 2022-01-22  Made 64 bit compatible. fhs
+'|                     | 2022-01-22  V2.0.0: Use a hasher to protect against
+'|                     |             weaknesses in the CTR_DRBG PRNG of
+'|                     |             BCryptGenRandom. fhs
 '|---------------------+---------------------------------------------------
 '
 
@@ -92,7 +95,8 @@ Private Declare PtrSafe Function BCryptGenRandom Lib "bcrypt" ( _
 '
 ' Private constants
 '
-Private Const BUFFER_SIZE As Integer = 500
+Private Const BUFFER_SIZE       As Integer = 256
+Private Const RANDOM_BLOCK_SIZE As Integer = 16
 
 '
 ' Instance variables
@@ -100,6 +104,10 @@ Private Const BUFFER_SIZE As Integer = 500
 Private m_AlgorithmHandle As LongPtr
 Private m_NumberBuffer(1 To BUFFER_SIZE) As Byte
 Private m_ActIndex As Integer
+Private m_Hasher As HashCng
+Private m_RandomBlock(1 To RANDOM_BLOCK_SIZE) As Byte
+Private m_BlockCounter(1 To 4) As Byte
+Private m_IsBlockCounterInitialized As Boolean
 
 '
 ' Private methods
@@ -155,6 +163,130 @@ End Sub
 Private Function GetLengthOfByteArray(ByRef aByteArray() As Byte) As Long
    GetLengthOfByteArray = UBound(aByteArray) - LBound(aByteArray) + 1
 End Function
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | GetHasher
+'|------------------+-------------------------------------------------------
+'| Description      | Get a hasher
+'|------------------+-------------------------------------------------------
+'| Parameter        | ./.
+'|------------------+-------------------------------------------------------
+'| Return values    | A hasher
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2021-01-22  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
+Private Function GetHasher() As HashCng
+   If m_Hasher Is Nothing Then
+      Set m_Hasher = New HashCng
+      m_Hasher.InitializeSHA256Hash
+   End If
+
+   Set GetHasher = m_Hasher
+End Function
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | IncrementBlockCounter
+'|------------------+-------------------------------------------------------
+'| Description      | Increment the block counter
+'|------------------+-------------------------------------------------------
+'| Parameter        | ./.
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2019-02-20  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | This method increments the block counter.
+'+--------------------------------------------------------------------------
+'
+Private Sub IncrementBlockCounter()
+   Dim i As Long
+   For i = UBound(m_BlockCounter) To LBound(m_BlockCounter) Step -1
+      Dim actValue As Byte
+      
+      actValue = m_BlockCounter(i)
+      
+      If actValue < &HFF Then
+         m_BlockCounter(i) = actValue + 1
+         Exit For
+      Else
+         m_BlockCounter(i) = 0
+      End If
+   Next i
+End Sub
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | CopyBytes
+'|------------------+-------------------------------------------------------
+'| Description      | Copy bytes from one array to another
+'|------------------+-------------------------------------------------------
+'| Parameter        | fromArray:      Source array
+'|                  | fromStartIndex: First index in source array
+'|                  | toArray:        Destination array
+'|                  | toStartIndex:   First index in destination array
+'|                  | count:          Number of bytes to copy
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2019-02-20  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | This method increments the block counter.
+'+--------------------------------------------------------------------------
+'
+Private Sub CopyBytes(ByRef fromArray() As Byte, ByVal fromStartIndex As Long, ByRef toArray() As Byte, ByVal toStartIndex As Long, ByVal count As Long)
+   Dim toIndex As Long
+   toIndex = toStartIndex
+   
+   Dim doneCount As Long
+   
+   Dim i As Long
+   For i = fromStartIndex To UBound(fromArray)
+      If doneCount < count Then
+         toArray(toIndex) = fromArray(i)
+         
+         toIndex = toIndex + 1
+         doneCount = doneCount + 1
+      Else
+         Exit For
+      End If
+   Next i
+End Sub
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | ClearArray
+'|------------------+-------------------------------------------------------
+'| Description      | Clear a byte array
+'|------------------+-------------------------------------------------------
+'| Parameter        | anArray: Byte array to clear
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2019-02-20  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
+Private Sub ClearArray(ByRef anArray() As Byte)
+   Dim i As Long
+   
+   For i = LBound(anArray) To UBound(anArray)
+      anArray(i) = 0
+   Next i
+End Sub
 
 '
 '+--------------------------------------------------------------------------
@@ -214,6 +346,36 @@ End Sub
 
 '
 '+--------------------------------------------------------------------------
+'| Method           | GetRandomData
+'|------------------+-------------------------------------------------------
+'| Description      | Copies PRNG data from the generator into an array.
+'|------------------+-------------------------------------------------------
+'| Parameter        | destinationArray: Array where to put the data.
+'|                  | count:            Number of bytes to get.
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2019-02-20  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
+Private Sub GetRandomData(ByRef destinationArray() As Byte, ByVal count As Long)
+   Dim rc As Long
+
+   rc = BCryptGenRandom(m_AlgorithmHandle, _
+                        destinationArray(LBound(destinationArray)), _
+                        count, _
+                        0&)
+
+   If rc <> STATUS_SUCCESS Then _
+      HandleError "BCryptGenRandom", rc
+End Sub
+
+'
+'+--------------------------------------------------------------------------
 '| Method           | RefreshNumberBuffer
 '|------------------+-------------------------------------------------------
 '| Description      | Fetch a new buffer of pseudo random numbers.
@@ -227,25 +389,54 @@ End Sub
 '| Changes          | 2019-02-20  Created. fhs
 '|------------------+-------------------------------------------------------
 '| Remarks          | This method set the private instance variable
-'|                  | m_NumberBuffer.
+'|                  | m_NumberBuffer. It hashes the result of the
+'|                  | CNG PRNG to protected against weaknesses of this
+'|                  | implementation.
 '+--------------------------------------------------------------------------
 '
 Private Sub RefreshNumberBuffer()
-   Dim bufferLength As Long
-   
-   bufferLength = GetLengthOfByteArray(m_NumberBuffer)
+   Dim hasher As HashCng
+   Set hasher = GetHasher
+
+   Dim sourceOffset As Long
+   sourceOffset = 0
+
+   Dim maxSourceOffset As Long
+   maxSourceOffset = hasher.HashSize - 16
+
+   Dim destinationIndex As Long
+   destinationIndex = LBound(m_NumberBuffer)
 
    EnsureAlgorithmHandle
 
-   Dim rc As Long
+   If Not m_IsBlockCounterInitialized Then
+      GetRandomData m_BlockCounter, 4
 
-   rc = BCryptGenRandom(m_AlgorithmHandle, _
-                        m_NumberBuffer(LBound(m_NumberBuffer)), _
-                        bufferLength, _
-                        0&)
+      m_IsBlockCounterInitialized = True
+   End If
 
-   If rc <> STATUS_SUCCESS Then _
-      HandleError "BCryptGenRandom", rc
+   Do While destinationIndex <= UBound(m_NumberBuffer)
+      GetRandomData m_RandomBlock, RANDOM_BLOCK_SIZE
+
+      hasher.DigestBytes m_RandomBlock
+      IncrementBlockCounter
+      hasher.DigestBytes m_BlockCounter
+
+      Dim hashResult() As Byte
+
+      hashResult = hasher.GetHash
+
+      CopyBytes hashResult, sourceOffset + LBound(hashResult), m_NumberBuffer, destinationIndex, RANDOM_BLOCK_SIZE
+      ClearArray hashResult
+
+      sourceOffset = sourceOffset + 1
+      If sourceOffset > maxSourceOffset Then _
+         sourceOffset = 0
+
+      destinationIndex = destinationIndex + RANDOM_BLOCK_SIZE
+   Loop
+
+   ClearArray m_RandomBlock
 End Sub
 
 '
@@ -369,4 +560,9 @@ End Sub
 Private Sub Class_Terminate()
    If m_AlgorithmHandle <> 0 Then _
       BCryptCloseAlgorithmProvider m_AlgorithmHandle, 0&
+   
+   m_ActIndex = 0
+   
+   ClearArray m_BlockCounter
+   ClearArray m_NumberBuffer
 End Sub
