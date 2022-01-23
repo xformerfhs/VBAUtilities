@@ -47,7 +47,7 @@ Attribute VB_Exposed = False
 '|                     | 2022-01-22  Removed unnecessary terminating
 '|                     |             null character. fhs
 '|                     | 2022-01-22  Made 64 bit compatible. fhs
-'|                     | 2022-01-22  V2.0.0: Use a hasher to protect against
+'|                     | 2022-01-23  V2.0.0: Use a hasher to protect against
 '|                     |             weaknesses in the CTR_DRBG PRNG of
 '|                     |             BCryptGenRandom. fhs
 '|---------------------+---------------------------------------------------
@@ -91,6 +91,9 @@ Private Declare PtrSafe Function BCryptGenRandom Lib "bcrypt" ( _
    ByRef pbBuffer As Byte, _
    ByVal cbBuffer As Long, _
    ByVal dwFlags As Long) As Long
+
+Private Declare PtrSafe Function QueryPerformanceCounter Lib "kernel32" ( _
+   ByRef lpPerformanceCount As Byte) As Long
 
 '
 ' Private constants
@@ -376,6 +379,38 @@ End Sub
 
 '
 '+--------------------------------------------------------------------------
+'| Method           | WhitenBlockCounter
+'|------------------+-------------------------------------------------------
+'| Description      | Add additional randomness to the block counter.
+'|------------------+-------------------------------------------------------
+'| Parameter        | ./.
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2022-01-23  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
+Private Sub WhitenBlockCounter()
+      Dim performanceArray(1 To 8) As Byte
+      
+      QueryPerformanceCounter performanceArray(1)
+
+      Dim fromIndex As Integer
+      fromIndex = 1
+      
+      Dim i As Integer
+      For i = LBound(m_BlockCounter) To UBound(m_BlockCounter)
+         m_BlockCounter(i) = m_BlockCounter(i) Xor performanceArray(fromIndex)
+         fromIndex = fromIndex + 1
+      Next i
+End Sub
+
+'
+'+--------------------------------------------------------------------------
 '| Method           | RefreshNumberBuffer
 '|------------------+-------------------------------------------------------
 '| Description      | Fetch a new buffer of pseudo random numbers.
@@ -411,7 +446,9 @@ Private Sub RefreshNumberBuffer()
 
    If Not m_IsBlockCounterInitialized Then
       GetRandomData m_BlockCounter, 4
-
+      
+      WhitenBlockCounter
+      
       m_IsBlockCounterInitialized = True
    End If
 
