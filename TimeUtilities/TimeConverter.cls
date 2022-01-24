@@ -1,11 +1,20 @@
+VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1  'True
+END
+Attribute VB_Name = "TimeConverter"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = False
+Attribute VB_Exposed = False
 '
 '+-------------------------------------------------------------------------
 '|
-'| SPDX-FileCopyrightText: 2020 Frank Schwab
+'| SPDX-FileCopyrightText: 2022 Frank Schwab
 '|
 '| SPDX-License-Identifier: MIT
 '|
-'| Copyright 2020, Frank Schwab
+'| Copyright 2022, Frank Schwab
 '|
 '| Permission is hereby granted, free of charge, to any person obtaining a
 '| copy of this software and associated documentation files (the "Software"),
@@ -33,12 +42,39 @@
 '|---------------------+---------------------------------------------------
 '| Author              | Frank Schwab
 '|---------------------+---------------------------------------------------
-'| Version             | 1.0.0
+'| Version             | 2.0.0
 '|---------------------+---------------------------------------------------
 '| Changes             | 2020-08-24  Created. fhs
+'|                     | 2022-01-24  Completely rewritten. fhs
 '+-------------------------------------------------------------------------
 
 Option Explicit
+
+'
+' Constants for error messages
+'
+
+Private Const STR_ERROR_SOURCE   As String = "TimeConverter"
+Private Const ERR_BASE As Long = vbObjectError + 22617
+
+' Crypto API error
+Private Const STR_ERR_WINDOWS_API As String = "API function %1 returned code 0x%2: %3"
+Private Const NUM_ERR_WINDOWS_API As Long = ERR_BASE
+
+Private Const STR_API_TIME_ZONE_INFORMATION As String = "GetTimeZoneInformation"
+
+'
+' Private constants
+'
+
+Private Const UNIX_TIME_START As Double = 25569# ' DateSerial(1970, 1, 1)
+
+Private Const MINUTES_PER_DAY As Double = 24# * 60#
+Private Const SECONDS_PER_DAY As Double = MINUTES_PER_DAY * 60#
+
+Private Const MINUTES_PER_HOUR As Long = 60&
+
+Private Const RC_ERROR As Long = 0
 
 '
 ' System data types
@@ -65,6 +101,7 @@ Private Type TIME_ZONE_INFORMATION
 End Type
 
 Private Enum TIME_ZONE_ID
+   TIME_ZONE_ID_INVALID = -1
    TIME_ZONE_ID_UNKNOWN = 0
    TIME_ZONE_ID_STANDARD = 1
    TIME_ZONE_ID_DAYLIGHT = 2
@@ -86,21 +123,82 @@ Private Declare PtrSafe Function TzSpecificLocalTimeToSystemTime Lib "kernel32" 
         ByRef lpLocalTime As SYSTEMTIME, _
         ByRef lpUniversalTime As SYSTEMTIME) As Long
 
-Private Const UNIX_TIME_START As Double = 25569# ' DateSerial(1970, 1, 1)
-
-Private Const SECONDS_PER_DAY As Double = 24# * 60# * 60#
-
 '
 ' Private methods
 '
-Private Function GetDateFromSystemTime(ByRef forSystemTime As SYSTEMTIME) As Date
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | HandleError
+'|------------------+-------------------------------------------------------
+'| Description      | Handle Windows API errors by throwing an exception
+'|------------------+-------------------------------------------------------
+'| Parameter        | apiFunctionName: Name of the failing API function
+'|                  | rc: Status code of the failing API function
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2022-01-24  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | This methods always throws an exception.
+'+--------------------------------------------------------------------------
+'
+Private Sub HandleError(ByRef apiFunctionName As String, _
+                        ByVal rc As Long)
+   Dim mm As New MessageManager
+   
+   Err.Raise NUM_ERR_WINDOWS_API, _
+             STR_ERROR_SOURCE, _
+             mm.FormatMessageWithParameters(STR_ERR_WINDOWS_API, _
+                                            apiFunctionName, _
+                                            Hex$(rc), _
+                                            mm.GetMessageForNTStatusCode(rc))
+End Sub
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | ConvertSystemTimeToDate
+'|------------------+-------------------------------------------------------
+'| Description      | Convert a SYSTEMTIME to VBA Date.
+'|------------------+-------------------------------------------------------
+'| Parameter        | forSystemTime: The SYSTEMTIME to convert.
+'|------------------+-------------------------------------------------------
+'| Return values    | VBA Date value of the supplied SYSTEMTIME.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-08-24  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
+Private Function ConvertSystemTimeToDate(ByRef forSystemTime As SYSTEMTIME) As Date
    With forSystemTime
-      GetDateFromSystemTime = DateSerial(.wYear, .wMonth, .wDay) + _
+      ConvertSystemTimeToDate = DateSerial(.wYear, .wMonth, .wDay) + _
                               TimeSerial(.wHour, .wMinute, .wSecond)
    End With
 End Function
 
-Private Function GetSystemTimeFromDate(ByVal forDate As Date) As SYSTEMTIME
+'
+'+--------------------------------------------------------------------------
+'| Method           | ConvertDateToSystemTime
+'|------------------+-------------------------------------------------------
+'| Description      | Convert a VBA Date to a SYSTEMTIME.
+'|------------------+-------------------------------------------------------
+'| Parameter        | forDate: The Date to convert.
+'|------------------+-------------------------------------------------------
+'| Return values    | SYSTEMTIME value of the supplied VBA Date.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-08-24  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
+Private Function ConvertDateToSystemTime(ByVal forDate As Date) As SYSTEMTIME
    Dim result As SYSTEMTIME
 
    With result
@@ -114,13 +212,32 @@ Private Function GetSystemTimeFromDate(ByVal forDate As Date) As SYSTEMTIME
       .wDayOfWeek = Weekday(forDate, vbSunday) - 1
    End With
 
-   GetSystemTimeFromDate = result
+   ConvertDateToSystemTime = result
 End Function
+
 
 '
 ' Public methods
 '
-Public Function GetLocalTimeFromUTC(ByVal utcTime As Date) As Date
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | ConvertUTCToLocalTime
+'|------------------+-------------------------------------------------------
+'| Description      | Convert an UTC to local time.
+'|------------------+-------------------------------------------------------
+'| Parameter        | utcTime: UTC time to convert.
+'|------------------+-------------------------------------------------------
+'| Return values    | Local time for the supplied UTC.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-08-24  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
+Public Function ConvertUTCToLocalTime(ByVal utcTime As Date) As Date
    Dim TZI As TIME_ZONE_INFORMATION
    Dim DST As TIME_ZONE_ID
 
@@ -129,15 +246,45 @@ Public Function GetLocalTimeFromUTC(ByVal utcTime As Date) As Date
    
    Dim rc As Long
    
-   utcSystemTime = GetSystemTimeFromDate(utcTime)
+   utcSystemTime = ConvertDateToSystemTime(utcTime)
 
    DST = GetTimeZoneInformation(TZI)
-   rc = SystemTimeToTzSpecificLocalTime(TZI, utcSystemTime, localSystemTime)
 
-   GetLocalTimeFromUTC = GetDateFromSystemTime(localSystemTime)
+   If DST = TIME_ZONE_ID_INVALID Then
+          HandleError STR_API_TIME_ZONE_INFORMATION, Err.LastDllError
+   Else
+      If DST <> TIME_ZONE_ID_UNKNOWN Then
+         rc = SystemTimeToTzSpecificLocalTime(TZI, utcSystemTime, localSystemTime)
+
+                 If rc <> RC_ERROR Then
+            ConvertUTCToLocalTime = ConvertSystemTimeToDate(localSystemTime)
+                 Else
+            HandleError "SystemTimeToTzSpecificLocalTime", Err.LastDllError
+         End If
+      Else
+             ConvertUTCToLocalTime = utcTime
+      End If
+   End If
 End Function
 
-Public Function GetUTCFromLocalTime(ByVal localTime As Date) As Date
+'
+'+--------------------------------------------------------------------------
+'| Method           | ConvertLocalTimeToUTC
+'|------------------+-------------------------------------------------------
+'| Description      | Convert a local time to UTC.
+'|------------------+-------------------------------------------------------
+'| Parameter        | localTime: Local time to convert.
+'|------------------+-------------------------------------------------------
+'| Return values    | UTC for the supplied local time.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-08-24  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
+Public Function ConvertLocalTimeToUTC(ByVal localTime As Date) As Date
    Dim TZI As TIME_ZONE_INFORMATION
    Dim DST As TIME_ZONE_ID
 
@@ -146,18 +293,127 @@ Public Function GetUTCFromLocalTime(ByVal localTime As Date) As Date
    
    Dim rc As Long
    
-   localSystemTime = GetSystemTimeFromDate(localTime)
+   localSystemTime = ConvertDateToSystemTime(localTime)
 
    DST = GetTimeZoneInformation(TZI)
-   rc = TzSpecificLocalTimeToSystemTime(TZI, localSystemTime, utcSystemTime)
 
-   GetUTCFromLocalTime = GetDateFromSystemTime(utcSystemTime)
+   If DST = TIME_ZONE_ID_INVALID Then
+          HandleError STR_API_TIME_ZONE_INFORMATION, Err.LastDllError
+   Else
+      If DST <> TIME_ZONE_ID_UNKNOWN Then
+         rc = TzSpecificLocalTimeToSystemTime(TZI, localSystemTime, utcSystemTime)
+
+                 If rc <> RC_ERROR Then
+            ConvertLocalTimeToUTC = ConvertSystemTimeToDate(utcSystemTime)
+                 Else
+            HandleError "TzSpecificLocalTimeToSystemTime", Err.LastDllError
+         End If
+      Else
+         ConvertLocalTimeToUTC = localTime
+      End If
+   End If
 End Function
 
-Public Function GetUnixTimeFromVBATime(ByVal vbaTime As Date) As Long
-   GetUnixTimeFromVBATime = (vbaTime - UNIX_TIME_START) * SECONDS_PER_DAY
+'
+'+--------------------------------------------------------------------------
+'| Method           | ConvertDateToUnixTime
+'|------------------+-------------------------------------------------------
+'| Description      | Convert a VBA Date to Unix time.
+'|------------------+-------------------------------------------------------
+'| Parameter        | vbaTime: VBA Date to convert.
+'|------------------+-------------------------------------------------------
+'| Return values    | UNIX timestamp for the supplied VBA Date.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-08-24  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
+Public Function ConvertDateToUnixTime(ByVal vbaTime As Date) As Long
+   ConvertDateToUnixTime = (vbaTime - UNIX_TIME_START) * SECONDS_PER_DAY
 End Function
 
-Public Function GetVBATimeFromUnixTime(ByVal unixTime As Long) As Date
-   GetVBATimeFromUnixTime = (unixTime / SECONDS_PER_DAY) + UNIX_TIME_START
+'
+'+--------------------------------------------------------------------------
+'| Method           | ConvertUnixTimeToDate
+'|------------------+-------------------------------------------------------
+'| Description      | Convert an Unix time to VBA Date.
+'|------------------+-------------------------------------------------------
+'| Parameter        | unixTime: UNIX timestamp to convert.
+'|------------------+-------------------------------------------------------
+'| Return values    | VBA Date for the supplied UNIX timestamp.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-08-24  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
+Public Function ConvertUnixTimeToDate(ByVal unixTime As Long) As Date
+   ConvertUnixTimeToDate = (unixTime / SECONDS_PER_DAY) + UNIX_TIME_START
+End Function
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | GetLocalTimeOffsetMinutes
+'|------------------+-------------------------------------------------------
+'| Description      | Gets the offset of a local time from UTC in minutes.
+'|------------------+-------------------------------------------------------
+'| Parameter        | localTime: Local time to check.
+'|------------------+-------------------------------------------------------
+'| Return values    | Offset of the supplied local time from UTC in minutes.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2022-01-24  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | This method calculates LocalTime - UTCTime.
+'+--------------------------------------------------------------------------
+'
+Public Function GetLocalTimeOffsetMinutes(ByVal localTime As Date) As Long
+   Dim utcTime As Date
+
+   utcTime = ConvertLocalTimeToUTC(localTime)
+
+   GetLocalTimeOffsetMinutes = CLng(Round((localTime - utcTime) * MINUTES_PER_DAY))
+End Function
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | MinutesAsOffset
+'|------------------+-------------------------------------------------------
+'| Description      | Converts offset minutes to an offset expression.
+'|------------------+-------------------------------------------------------
+'| Parameter        | minutes: Offset in minutes.
+'|------------------+-------------------------------------------------------
+'| Return values    | A string of the form "+HH:MM" for the supplied minutes.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2022-01-24  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
+Public Function MinutesAsOffset(ByVal minutes As Long) As String
+   Dim prefix As String * 1
+
+   If minutes >= 0 Then
+      prefix = "+"
+   Else
+      prefix = "-"
+   End If
+
+   Dim absMinutes As Long
+
+   absMinutes = Abs(minutes)
+
+   Dim hours As Long
+
+   hours = absMinutes \ MINUTES_PER_HOUR
+
+   MinutesAsOffset = prefix & Format$(hours, "00") & ":" & Format$(minutes - (hours * MINUTES_PER_HOUR), "00")
 End Function
