@@ -41,7 +41,7 @@ Attribute VB_Exposed = False
 '|---------------------+---------------------------------------------------
 '| Author              | Frank Schwab
 '|---------------------+---------------------------------------------------
-'| Version             | 2.0.0
+'| Version             | 2.0.1
 '|---------------------+---------------------------------------------------
 '| Changes             | 2020-07-23  Created. fhs
 '|                     | 2022-01-22  Removed unnecessary terminating
@@ -50,6 +50,7 @@ Attribute VB_Exposed = False
 '|                     | 2022-01-23  V2.0.0: Use a hasher to protect against
 '|                     |             weaknesses in the CTR_DRBG PRNG of
 '|                     |             BCryptGenRandom. fhs
+'|                     | 2022-01-24  Slight randomness improvement. fhs
 '|---------------------+---------------------------------------------------
 '
 
@@ -434,7 +435,7 @@ Private Sub RefreshNumberBuffer()
    Set hasher = GetHasher
 
    Dim sourceOffset As Long
-   sourceOffset = 0
+   sourceOffset = 2
 
    Dim maxSourceOffset As Long
    maxSourceOffset = hasher.HashSize - 16
@@ -466,9 +467,7 @@ Private Sub RefreshNumberBuffer()
       CopyBytes hashResult, sourceOffset + LBound(hashResult), m_NumberBuffer, destinationIndex, RANDOM_BLOCK_SIZE
       ClearArray hashResult
 
-      sourceOffset = sourceOffset + 1
-      If sourceOffset > maxSourceOffset Then _
-         sourceOffset = 0
+      sourceOffset = (sourceOffset + 11) And 15
 
       destinationIndex = destinationIndex + RANDOM_BLOCK_SIZE
    Loop
