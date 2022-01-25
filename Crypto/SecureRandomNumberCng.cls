@@ -41,7 +41,7 @@ Attribute VB_Exposed = False
 '|---------------------+---------------------------------------------------
 '| Author              | Frank Schwab
 '|---------------------+---------------------------------------------------
-'| Version             | 2.0.1
+'| Version             | 2.0.2
 '|---------------------+---------------------------------------------------
 '| Changes             | 2020-07-23  Created. fhs
 '|                     | 2022-01-22  Removed unnecessary terminating
@@ -51,6 +51,7 @@ Attribute VB_Exposed = False
 '|                     |             weaknesses in the CTR_DRBG PRNG of
 '|                     |             BCryptGenRandom. fhs
 '|                     | 2022-01-24  Slight randomness improvement. fhs
+'|                     | 2022-01-25  Fixed RefreshNumberBuffer. fhs
 '|---------------------+---------------------------------------------------
 '
 
@@ -434,15 +435,6 @@ Private Sub RefreshNumberBuffer()
    Dim hasher As HashCng
    Set hasher = GetHasher
 
-   Dim sourceOffset As Long
-   sourceOffset = 2
-
-   Dim maxSourceOffset As Long
-   maxSourceOffset = hasher.HashSize - 16
-
-   Dim destinationIndex As Long
-   destinationIndex = LBound(m_NumberBuffer)
-
    EnsureAlgorithmHandle
 
    If Not m_IsBlockCounterInitialized Then
@@ -452,6 +444,12 @@ Private Sub RefreshNumberBuffer()
       
       m_IsBlockCounterInitialized = True
    End If
+
+   Dim sourceOffset As Long
+   sourceOffset = 2
+
+   Dim destinationIndex As Long
+   destinationIndex = LBound(m_NumberBuffer)
 
    Do While destinationIndex <= UBound(m_NumberBuffer)
       GetRandomData m_RandomBlock, RANDOM_BLOCK_SIZE
