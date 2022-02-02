@@ -42,7 +42,7 @@ Attribute VB_Exposed = False
 '|---------------------+---------------------------------------------------
 '| Author              | Frank Schwab
 '|---------------------+---------------------------------------------------
-'| Version             | 2.2.0
+'| Version             | 2.3.0
 '|---------------------+---------------------------------------------------
 '| Changes             | 2002-03-15  Created. fhs
 '|                     | 2006-03-06  Added formatting of general messages. fhs
@@ -55,10 +55,26 @@ Attribute VB_Exposed = False
 '|                     | 2022-01-19  Corrected length calculation in
 '|                     |             FormatMessageWithParameters. fhs
 '|                     | 2022-01-21  Corrected FormatMessageWithParameters. fhs
+'|                     | 2022-01-27  Error handling in FormatMessageWithParameters. fhs
+'|                     | 2022-02-01  Check parameter count. fhs
 '+-------------------------------------------------------------------------
 '
 
 Option Explicit
+
+'
+' Constants for error messages
+'
+Private Const STR_ERROR_SOURCE   As String = "MessageManager"
+Private Const ERR_BASE As Long = vbObjectError + 36902
+
+' Crypto API error
+Private Const ERR_STR_WINDOWS_API As String = "Windows API function %1 returned code 0x%2: %3"
+Private Const ERR_NUM_WINDOWS_API As Long = ERR_BASE
+
+' Not enough parameters
+Private Const ERR_STR_NOT_ENOUGH_PARAMETERS As String = "Not enough parameters for format string"
+Private Const ERR_NUM_NOT_ENOUGH_PARAMETERS As Long = ERR_BASE + 1
 
 '
 ' Private constants
@@ -109,6 +125,38 @@ Private Declare PtrSafe Function GetModuleHandle _
 
 '
 '+--------------------------------------------------------------------------
+'| Method           | HandleAPIError
+'|------------------+-------------------------------------------------------
+'| Description      | Handle Windows API errors by throwing an exception
+'|------------------+-------------------------------------------------------
+'| Parameter        | apiFunctionName: Name of the failing API function
+'|                  | rc: Status code of the failing API function
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2019-02-19  Created. fhs
+'|                  | 2022-02-01  Corrected order of raise arguments. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | This methods always throws an exception
+'+--------------------------------------------------------------------------
+'
+Private Sub HandleAPIError(ByRef apiFunctionName As String)
+   Dim mm As New MessageManager
+   Dim rc As Long
+  
+   rc = Err.LastDllError
+   Err.Raise ERR_NUM_WINDOWS_API, _
+             STR_ERROR_SOURCE, _
+             mm.FormatMessageWithParameters(ERR_STR_WINDOWS_API, _
+                                            apiFunctionName, _
+                                            Hex$(rc), _
+                                            mm.GetMessageForNTStatusCode(rc))
+End Sub
+
+'
+'+--------------------------------------------------------------------------
 '| Method           | UnwindParamArrays
 '|------------------+-------------------------------------------------------
 '| Description      | Unwind nested ParamArrays.
@@ -132,7 +180,7 @@ Private Function UnwindParamArrays(ByRef parameterList() As Variant) As Variant(
    Dim actParamList() As Variant
    actParamList = parameterList
 
-  '
+   '
    ' Only unwind if there is only one parameter and it is a Variant array
    '
    Do While (UBound(actParamList) = 0)
@@ -152,14 +200,98 @@ Private Function UnwindParamArrays(ByRef parameterList() As Variant) As Variant(
    UnwindParamArrays = actParamList
 End Function
 
+'
+'+--------------------------------------------------------------------------
+'| Method           | IsNextCharNumeric
+'|------------------+-------------------------------------------------------
+'| Purpose          | Check if the *next* character in a string is numeric.
+'|------------------+-------------------------------------------------------
+'| Parameters       | aText:      Text to look at
+'|                  | pos:        Current position
+'|                  | textLength: Total text length
+'|------------------+-------------------------------------------------------
+'| Returns          | True:  Next character is numeric
+'|                  | False: Next character is not numeric
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2022-02-01  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
+Private Function IsNextCharNumeric(ByRef aText As String, ByVal pos As Long, ByVal textLength As Long) As Boolean
+   IsNextCharNumeric = False
+   
+   pos = pos + 1
+   
+   If pos < textLength Then _
+      IsNextCharNumeric = IsNumeric(Mid$(aText, pos, 1))
+End Function
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | CheckParameterCount
+'|------------------+-------------------------------------------------------
+'| Purpose          | Check if format text matches parameter count.
+'|------------------+-------------------------------------------------------
+'| Parameters       | formatText:     Format text
+'|                  | parameterCount: Number of supplied parameters
+'|------------------+-------------------------------------------------------
+'| Returns          | True:  There are enough parameters for the format string
+'|                  | False: There are not enough parameter for the format string
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2022-02-01  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
+Public Function CheckParameterCount(ByRef formatText As String, ByVal parameterCount As Integer) As Boolean
+   Dim textLength As Long
+   textLength = Len(formatText)
+   
+   Dim maxParameter As Integer
+   Dim actParameter As Integer
+   
+   Dim pos As Long
+
+   pos = InStr(1, formatText, "%")
+
+   Do While pos > 0
+      If IsNextCharNumeric(formatText, pos, textLength) Then
+         pos = pos + 1
+         If IsNextCharNumeric(formatText, pos, textLength) Then
+            actParameter = CInt(Mid$(formatText, pos, 2))
+         Else
+            actParameter = CInt(Mid$(formatText, pos, 1))
+         End If
+         
+         If actParameter > maxParameter Then _
+            maxParameter = actParameter
+      End If
+   
+      pos = pos + 1
+      If pos <= textLength Then
+         pos = InStr(pos, formatText, "%")
+      Else
+         pos = 0
+      End If
+   Loop
+   
+   CheckParameterCount = (parameterCount >= maxParameter)
+End Function
+
+'
 '+--------------------------------------------------------------------------
 '| Method           | UnsafeFormatMessageWithParameters
 '|------------------+-------------------------------------------------------
 '| Purpose          | Create a message from a format string and parameters
 '|                  | that are to substituted for the placeholders.
 '|------------------+-------------------------------------------------------
-'| Parameters       | formatText:    Formattierungs-Zeichenkette
-'|                  | parameterList: Parameter, die eingefügt werden
+'| Parameters       | formatText:    Format text
+'|                  | parameterList: Parameter to be used
 '|                  | parameterListLowerBound: Lower bound of parameterList
 '|                  | parameterListUpperBound: Lower bound of parameterList
 '|------------------+-------------------------------------------------------
@@ -180,7 +312,12 @@ End Function
 '|                  | Found in the microsoft.public.vb.winapi message group
 '|                  | Original author: Tom Esh
 '|                  | Clarified and simplified by Frank Schwab
+'|                  |
+'|                  | The FormatMessage API call will crash the program
+'|                  | if there are not enough parameters supplied in the
+'|                  | parameter list.
 '+--------------------------------------------------------------------------
+'
 Private Function UnsafeFormatMessageWithParameters(ByRef formatText As String, _
                                                    ByRef parameterList() As Variant, _
                                                    ByVal parameterListLowerBound As Integer, _
@@ -226,6 +363,9 @@ Private Function UnsafeFormatMessageWithParameters(ByRef formatText As String, _
                                  bufferSize, _
                                  parameterPointer(parameterListLowerBound))
 
+   If messageLength = 0 Then _
+      HandleAPIError "FormatMessage"
+
    '
    ' Return with the correct length
    '
@@ -266,6 +406,7 @@ End Function
 '|                  |    ' Everything worked fine
 '|                  | End If
 '+--------------------------------------------------------------------------
+'
 Public Function GetMessageForWindowsErrorCode(ByVal windowsErrorCode As Long) As String
    Dim messageBuffer As String  ' Buffer for error message
    Dim bufferLength  As Long    ' Size of error message
@@ -326,6 +467,7 @@ End Function
 '|                  |    ' Everything worked fine
 '|                  | End If
 '+--------------------------------------------------------------------------
+'
 Public Function GetMessageForModuleErrorCode(ByVal moduleErrorCode As Long, _
                                              ByRef moduleName As String) As String
    Dim messageBuffer As String  ' Buffer for error message
@@ -401,6 +543,7 @@ End Function
 '|                  |    ' Everything worked fine
 '|                  | End If
 '+--------------------------------------------------------------------------
+'
 Public Function GetWindowsErrorCodeFromNTStatusCode(ByVal ntStatusCode As Long) As Long
    GetWindowsErrorCodeFromNTStatusCode = RtlNtStatusToDosError(ntStatusCode)
 End Function
@@ -432,25 +575,28 @@ End Function
 '|                  |    ' Everything worked fine
 '|                  | End If
 '+--------------------------------------------------------------------------
+'
 Public Function GetMessageForNTStatusCode(ByVal ntStatusCode As Long) As String
    GetMessageForNTStatusCode = Me.GetMessageForWindowsErrorCode( _
                                   Me.GetWindowsErrorCodeFromNTStatusCode(ntStatusCode))
 End Function
 
+'
 '+--------------------------------------------------------------------------
 '| Method           | FormatMessageWithParameters
 '|------------------+-------------------------------------------------------
 '| Purpose          | Create a message from a format string and parameters
 '|                  | that are to substituted for the placeholders.
 '|------------------+-------------------------------------------------------
-'| Parameters       | formatText:    Formattierungs-Zeichenkette
-'|                  | parameterList: Parameter, die eingefügt werden
+'| Parameters       | formatText:    Format text
+'|                  | parameterList: Parameter to be used
 '|------------------+-------------------------------------------------------
 '| Returns          | Formatted string
 '|------------------+-------------------------------------------------------
 '| Author           | Frank Schwab
 '|------------------+-------------------------------------------------------
 '| Changes          | 2021-01-21  Created. fhs
+'|                  | 2022-02-01  Added parameter count check. fhs
 '|------------------+-------------------------------------------------------
 '| Typical call     | aMessage = mm.formatMessageWithParameters("Calling %1 returned
 '|                  |              error code %2", "CryptContextCreate", rc)
@@ -463,6 +609,7 @@ End Function
 '|                  | UnsafeFormatMessageWithParameters that sanitizes
 '|                  | the parameters.
 '+--------------------------------------------------------------------------
+'
 Public Function FormatMessageWithParameters(ByRef formatText As String, _
                                             ParamArray parameterList() As Variant) As String
    Dim actParamList() As Variant
@@ -477,7 +624,13 @@ Public Function FormatMessageWithParameters(ByRef formatText As String, _
 
    If parameterListUpperBound >= parameterListLowerBound Then
       ' There are parameters
-      FormatMessageWithParameters = UnsafeFormatMessageWithParameters(formatText, actParamList, parameterListLowerBound, parameterListUpperBound)
+      If CheckParameterCount(formatText, parameterListUpperBound - parameterListLowerBound + 1) Then
+         FormatMessageWithParameters = UnsafeFormatMessageWithParameters(formatText, actParamList, parameterListLowerBound, parameterListUpperBound)
+      Else
+         Err.Raise ERR_NUM_NOT_ENOUGH_PARAMETERS, _
+                   STR_ERROR_SOURCE, _
+                   ERR_STR_NOT_ENOUGH_PARAMETERS
+      End If
    Else
       ' There are no parameters
       FormatMessageWithParameters = formatText
