@@ -41,7 +41,7 @@ Attribute VB_Exposed = False
 '|---------------------+---------------------------------------------------
 '| Author              | Frank Schwab
 '|---------------------+---------------------------------------------------
-'| Version             | 1.0.5
+'| Version             | 1.0.6
 '|---------------------+---------------------------------------------------
 '| Changes             | 2020-07-18  Created. fhs
 '|                     | 2020-08-03  Correct array length calculation
@@ -51,6 +51,7 @@ Attribute VB_Exposed = False
 '|                     | 2020-09-10  Removed unnecessary constant. fhs
 '|                     | 2021-01-22  Removed unnecessary terminating
 '|                     |             null characters. fhs
+'|                     | 2021-02-04  Corrected handling of hash result. fhs
 '|---------------------+---------------------------------------------------
 '| Typical usage       | ' For getting a hash value
 '|                     | Dim hc As New HashCng
@@ -325,13 +326,13 @@ End Function
 '+--------------------------------------------------------------------------
 '
 Private Sub DestroyHash()
-   If m_HashHandle <> 0 Then
+   If m_HashHandle <> 0& Then
       Dim rc As Long
 
       rc = BCryptDestroyHash(m_HashHandle)
 
       If IsNTSuccess(rc) Then
-         m_HashHandle = 0
+         m_HashHandle = 0&
       Else
          HandleNTAPIError "destroy hash", "BCryptDestroyHash", rc
       End If
@@ -358,13 +359,13 @@ End Sub
 Private Sub DestroyProvider()
    DestroyHash
 
-   If m_AlgorithmProviderHandle <> 0 Then
+   If m_AlgorithmProviderHandle <> 0& Then
       Dim rc As Long
 
       rc = BCryptCloseAlgorithmProvider(m_AlgorithmProviderHandle, 0&)
 
       If IsNTSuccess(rc) Then
-         m_AlgorithmProviderHandle = 0
+         m_AlgorithmProviderHandle = 0&
       Else
          HandleNTAPIError "close algorithm provider", "BCryptCloseAlgorithmProvider", rc
       End If
@@ -427,7 +428,7 @@ Private Sub SetHashSize()
 
    Dim hashSizeSize As Long
 
-   hashSizeSize = 4   ' Need to specify a magic constant here. A long has 4 bytes.
+   hashSizeSize = 4&   ' Need to use a magic constant here. A long has 4 bytes.
 
    Dim newHashSize As Long
 
@@ -867,14 +868,16 @@ End Sub
 '|------------------+-------------------------------------------------------
 '| Author           | Frank Schwab
 '|------------------+-------------------------------------------------------
-'| Changes          | 2020-07-18  Created. fhs
+'| Changes          | 2020-07-19  Created. fhs
+'|                  | 2022-02-04  Destroy hash after call to BCryptFinishHash. fhs
 '|------------------+-------------------------------------------------------
-'| Remarks          | After a call to this method the hash is reset to
-'|                  | start again from the beginning
+'| Remarks          | After a call to this method the hash is destroyed
+'|                  | and no longer usable. This is a restriction of the
+'|                  | BCrypt API.
 '+--------------------------------------------------------------------------
 '
 Public Function GetHash() As Byte()
-   CheckState
+   CheckHashCngState
 
    Dim rc As Long
 
@@ -882,11 +885,17 @@ Public Function GetHash() As Byte()
    ReDim result(1 To m_HashSize)
    
    rc = BCryptFinishHash(m_HashHandle, result(1), m_HashSize, 0&)
-   
+
    If IsNTSuccess(rc) Then
       GetHash = result
+
+      DestroyHash()
    Else
-      HandleNTAPIError "get hash value", "BCryptFinishHash", rc
+      HandleAPINTStatusError ERR_STR_HASH_CLASS_NAME, _
+	                         ERR_NUM_HASH_BCRYPT_API, _
+							 "get hash data", _
+							 "BCryptFinishHash", _
+							 rc
    End If
 End Function
 
