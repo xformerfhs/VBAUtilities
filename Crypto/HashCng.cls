@@ -868,7 +868,7 @@ End Sub
 '|------------------+-------------------------------------------------------
 '| Author           | Frank Schwab
 '|------------------+-------------------------------------------------------
-'| Changes          | 2020-07-19  Created. fhs
+'| Changes          | 2020-07-18  Created. fhs
 '|                  | 2022-02-04  Destroy hash after call to BCryptFinishHash. fhs
 '|------------------+-------------------------------------------------------
 '| Remarks          | After a call to this method the hash is destroyed
@@ -877,7 +877,7 @@ End Sub
 '+--------------------------------------------------------------------------
 '
 Public Function GetHash() As Byte()
-   CheckHashCngState
+   CheckState
 
    Dim rc As Long
 
