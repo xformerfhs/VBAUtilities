@@ -2,7 +2,7 @@ VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
-Attribute VB_Name = "HighPrecisionTimer"
+Attribute VB_Name = "HighPrecisionStopwatch"
 Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
@@ -35,10 +35,11 @@ Attribute VB_Exposed = False
 '| IN THE SOFTWARE.
 '|
 '|-------------------------------------------------------------------------
-'| Class               | HighPrecisionTimer
+'| Class               | HighPrecisionStopwatch
 '|---------------------+---------------------------------------------------
-'| Description         | A timer that uses the high precision
-'|                     | QueryPerformanceCounter Windows API
+'| Description         | A stopwatch that uses the high precision
+'|                     | QueryPerformanceCounter Windows API with above
+'|                     | resolution better than 1 µs.
 '|---------------------+---------------------------------------------------
 '| Author              | Frank Schwab
 '|---------------------+---------------------------------------------------
@@ -78,12 +79,12 @@ Attribute VB_Exposed = False
 '|                     | So, using "Currency" is a convenient way to store
 '|                     | 8 byte integers and calculate divisions.
 '|---------------------+---------------------------------------------------
-'| Typical usage       | Dim hpc As New HighPrecisionTimer
+'| Typical usage       | Dim hps As New HighPrecisionStopwatch
 '|                     | Dim elapsedTime As Double
 '|                     | ..
-'|                     | hpc.Start
+'|                     | hps.Start
 '|                     | ' Do some work here
-'|                     | elapsedTime = hpc.GetElapsedTime
+'|                     | elapsedTime = hps.GetElapsedTime
 '+-------------------------------------------------------------------------
 
 Option Compare Binary
@@ -109,10 +110,45 @@ Private m_StartCounter As Currency
 '
 ' Public methods
 '
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | Start
+'|------------------+-------------------------------------------------------
+'| Description      | Starts the stopwatch.
+'|------------------+-------------------------------------------------------
+'| Parameters       | ./.
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2006-04-03  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Public Sub Start()
    QueryPerformanceCounter m_StartCounter
 End Sub
 
+'
+'+--------------------------------------------------------------------------
+'| Method           | GetElapsedTime
+'|------------------+-------------------------------------------------------
+'| Description      | Get the time elapsed since start in seconds.
+'|------------------+-------------------------------------------------------
+'| Parameters       | ./.
+'|------------------+-------------------------------------------------------
+'| Return values    | Elapsed time since start in seconds.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2006-04-03  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Public Function GetElapsedTime() As Double
    Dim currentCounter As Currency
    
@@ -124,9 +160,30 @@ End Function
 '
 ' Class methods
 '
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | Class_Initialize
+'|------------------+-------------------------------------------------------
+'| Description      | Initialize the class upon instantiation.
+'|------------------+-------------------------------------------------------
+'| Parameters       | ./.
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2006-04-03  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Private Sub Class_Initialize()
    Dim theFrequency As Currency
 
+   '
+   ' Query the performance counter resolution
+   '
    QueryPerformanceFrequency theFrequency
    
    m_TimePerTick = 1# / theFrequency
