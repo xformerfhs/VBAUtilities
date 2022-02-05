@@ -202,9 +202,9 @@ Converts VBA timestamps from and to Unix timestamps or local time from and to UT
 
 ## Timing
 
-### HighPrecisionTimer
+### HighPrecisionStopwatch
 
-A high precision timer that uses the Windows Performance Counter which has a resolution better than 0.000001 seconds (1µs). 
+A high precision stopwatch that uses the Windows Performance Counter which has a resolution better than 0.000001 seconds (1µs). 
 
 ### Waiter
 
