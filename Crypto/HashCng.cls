@@ -41,7 +41,7 @@ Attribute VB_Exposed = False
 '|---------------------+---------------------------------------------------
 '| Author              | Frank Schwab
 '|---------------------+---------------------------------------------------
-'| Version             | 1.0.6
+'| Version             | 1.0.7
 '|---------------------+---------------------------------------------------
 '| Changes             | 2020-07-18  Created. fhs
 '|                     | 2020-08-03  Correct array length calculation
@@ -51,7 +51,8 @@ Attribute VB_Exposed = False
 '|                     | 2020-09-10  Removed unnecessary constant. fhs
 '|                     | 2021-01-22  Removed unnecessary terminating
 '|                     |             null characters. fhs
-'|                     | 2021-02-04  Corrected handling of hash result. fhs
+'|                     | 2022-02-04  Corrected handling of hash result. fhs
+'|                     | 2022-02-04  Reverted last change, fixed bugs. fhs
 '|---------------------+---------------------------------------------------
 '| Typical usage       | ' For getting a hash value
 '|                     | Dim hc As New HashCng
@@ -270,7 +271,7 @@ Private Sub HandleNTAPIError(ByRef actionText As String, ByRef apiFunctionName A
    Err.Raise ERR_NUM_BCRYPT_API, _
              ERR_STR_CLASS_NAME, _
              m_MM.FormatMessageWithParameters(ERR_STR_BCRYPT_API, _
-                                              actionDescription, _
+                                              actionText, _
                                               apiFunctionName, _
                                               Hex$(ntStatusCode), _
                                               m_MM.GetMessageForNTStatusCode(ntStatusCode))
@@ -397,6 +398,7 @@ Private Sub InitializeProvider(ByRef hashAlgorithm As String, ByVal algorithmFla
 
    Dim rc As Long
 
+   ' Note that we use the "reusable" flag here so the hash can be reused
    rc = BCryptOpenAlgorithmProvider(m_AlgorithmProviderHandle, _
                                     StrPtr(hashAlgorithm), _
                                     0&, _
@@ -870,10 +872,10 @@ End Sub
 '|------------------+-------------------------------------------------------
 '| Changes          | 2020-07-18  Created. fhs
 '|                  | 2022-02-04  Destroy hash after call to BCryptFinishHash. fhs
+'|                  | 2022-03-04  Reverted last change. fhs
 '|------------------+-------------------------------------------------------
-'| Remarks          | After a call to this method the hash is destroyed
-'|                  | and no longer usable. This is a restriction of the
-'|                  | BCrypt API.
+'| Remarks          | After a call to this method the hash is reset, so it
+'|                  | can be used again from the start.
 '+--------------------------------------------------------------------------
 '
 Public Function GetHash() As Byte()
@@ -888,14 +890,10 @@ Public Function GetHash() As Byte()
 
    If IsNTSuccess(rc) Then
       GetHash = result
-
-      DestroyHash()
    Else
-      HandleAPINTStatusError ERR_STR_HASH_CLASS_NAME, _
-	                         ERR_NUM_HASH_BCRYPT_API, _
-							 "get hash data", _
-							 "BCryptFinishHash", _
-							 rc
+      HandleNTAPIError "get hash data", _
+                       "BCryptFinishHash", _
+                       rc
    End If
 End Function
 
