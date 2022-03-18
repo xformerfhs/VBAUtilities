@@ -41,7 +41,7 @@ Attribute VB_Exposed = False
 '|---------------------+---------------------------------------------------
 '| Author              | Frank Schwab
 '|---------------------+---------------------------------------------------
-'| Version             | 1.0.7
+'| Version             | 1.1.0
 '|---------------------+---------------------------------------------------
 '| Changes             | 2020-07-18  Created. fhs
 '|                     | 2020-08-03  Correct array length calculation
@@ -53,6 +53,8 @@ Attribute VB_Exposed = False
 '|                     |             null characters. fhs
 '|                     | 2022-02-04  Corrected handling of hash result. fhs
 '|                     | 2022-02-04  Reverted last change, fixed bugs. fhs
+'|                     | 2022-03-18  Added hash of a part of a byte array 
+'|                     |             and file content. fhs
 '|---------------------+---------------------------------------------------
 '| Typical usage       | ' For getting a hash value
 '|                     | Dim hc As New HashCng
@@ -94,6 +96,10 @@ Private Const ERR_NUM_INVALID_USAGE As Long = ERR_NUM_BASE + 1
 ' Error message when key is too short
 Private Const ERR_STR_KEY_TOO_SHORT As String = "Key is too short (minimum length: %1)"
 Private Const ERR_NUM_KEY_TOO_SHORT As Long = ERR_NUM_BASE + 2
+
+' Error message when key is too short
+Private Const ERR_STR_OFFSET_COUNT_EXCEED_UPPER_BOUND As String = "Offset %1 and count %2 exceed upper array boundary %3"
+Private Const ERR_NUM_OFFSET_COUNT_EXCEED_UPPER_BOUND As Long = ERR_NUM_BASE + 3
 
 '
 ' CNG constants
@@ -181,6 +187,11 @@ Private Declare PtrSafe Function BCryptCloseAlgorithmProvider _
 ' Private check constants
 '
 Private Const MINIMUM_KEY_LENGTH As Long = 20
+
+'
+' Private file handling constants
+'
+Private Const BUFFER_SIZE As Long = 32768
 
 '
 ' Instance variables
@@ -276,6 +287,43 @@ Private Sub HandleNTAPIError(ByRef actionText As String, ByRef apiFunctionName A
                                               Hex$(ntStatusCode), _
                                               m_MM.GetMessageForNTStatusCode(ntStatusCode))
 End Sub
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | ReadFileBlock
+'|------------------+-------------------------------------------------------
+'| Description      | Read a block of bytes from a file
+'|------------------+-------------------------------------------------------
+'| Parameters       | fn:           File number
+'|                  | buffer:       buffer that receives the data
+'|                  | bufferLength: Length of the buffer
+'|                  | fileLength:   Length of the file
+'|------------------+-------------------------------------------------------
+'| Return values    | Number of bytes read. 0 means EOF.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2022-03-18  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
+Private Function ReadFileBlock(ByVal fn As Integer, ByRef buffer() As Byte, ByVal bufferLength As Long, ByVal fileLength As Long) As Long
+   If Not EOF(fn) Then
+      Dim lastPosition As Long
+      lastPosition = Seek(fn)
+      
+      Get #fn, , buffer
+      
+      If lastPosition > (fileLength - bufferLength) Then
+         ReadFileBlock = fileLength - lastPosition + 1
+      Else
+         ReadFileBlock = bufferLength
+      End If
+   Else
+      ReadFileBlock = 0
+   End If
+End Function
 
 '
 '+--------------------------------------------------------------------------
@@ -770,6 +818,47 @@ End Sub
 
 '
 '+--------------------------------------------------------------------------
+'| Method           | DigestPartOfByteArray
+'|------------------+-------------------------------------------------------
+'| Description      | Hashes part of a byte array
+'|------------------+-------------------------------------------------------
+'| Parameter        | sourceByteArray: Source bytes to hash
+'|                  | offset         : Offset in byte array
+'|                  | count          : Number of bytes to process
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2022-03-18  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
+Public Sub DigestPartOfByteArray(ByRef sourceByteArray() As Byte, ByVal offset As Long, ByVal count As Long)
+   CheckState
+   
+   Dim startIndex As Long
+   startIndex = LBound(sourceByteArray) + offset
+
+   If count > 0 Then
+      If startIndex + count - 1 <= UBound(sourceByteArray) Then
+         Dim rc As Long
+
+         rc = BCryptHashData(m_HashHandle, sourceByteArray(startIndex), count, 0&)
+
+         If Not IsNTSuccess(rc) Then _
+            HandleNTAPIError "hash bytes", "BCryptHashData", rc
+      Else
+         Err.Raise ERR_NUM_OFFSET_COUNT_EXCEED_UPPER_BOUND, _
+                   ERR_STR_CLASS_NAME, _
+                   m_MM.FormatMessageWithParameters(ERR_STR_OFFSET_COUNT_EXCEED_UPPER_BOUND, offset, count, UBound(sourceByteArray))
+      End If
+   End If
+End Sub
+
+'
+'+--------------------------------------------------------------------------
 '| Method           | DigestBytes
 '|------------------+-------------------------------------------------------
 '| Description      | Hashes a byte array
@@ -854,6 +943,58 @@ Public Sub DigestStringAsUTF8(ByRef sourceString As String)
       utf8BytesOfString = m_U8C.FromVBToUTF8(sourceString)
       Me.DigestBytes utf8BytesOfString
    End If
+End Sub
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | DigestFile
+'|------------------+-------------------------------------------------------
+'| Description      | Hashes the contents of a file
+'|------------------+-------------------------------------------------------
+'| Parameter        | filePath: Path of file
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2022-03-18  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
+Public Sub DigestFile(ByRef filePath As String)
+   CheckState
+   
+   Dim buffer(1 To BUFFER_SIZE) As Byte
+
+   Dim bufferLength As Long
+   bufferLength = BUFFER_SIZE
+
+   Dim fn As Integer
+   fn = FreeFile
+
+   Open filePath For Binary Access Read Lock Write As #fn
+
+   Dim fileLength As Long
+   fileLength = LOF(fn)
+
+   Dim rc As Long
+
+   Dim readCount As Long
+   Do
+      readCount = ReadFileBlock(fn, buffer, bufferLength, fileLength)
+
+      If readCount > 0 Then
+         rc = BCryptHashData(m_HashHandle, buffer(LBound(buffer)), readCount, 0&)
+
+         If Not IsNTSuccess(rc) Then _
+            HandleNTAPIError "hash bytes", "BCryptHashData", rc
+      Else
+         Exit Do
+      End If
+   Loop
+
+   Close #fn
 End Sub
 
 ' Get method
