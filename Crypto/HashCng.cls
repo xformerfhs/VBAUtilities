@@ -41,7 +41,7 @@ Attribute VB_Exposed = False
 '|---------------------+---------------------------------------------------
 '| Author              | Frank Schwab
 '|---------------------+---------------------------------------------------
-'| Version             | 1.1.0
+'| Version             | 1.2.0
 '|---------------------+---------------------------------------------------
 '| Changes             | 2020-07-18  Created. fhs
 '|                     | 2020-08-03  Correct array length calculation
@@ -53,8 +53,9 @@ Attribute VB_Exposed = False
 '|                     |             null characters. fhs
 '|                     | 2022-02-04  Corrected handling of hash result. fhs
 '|                     | 2022-02-04  Reverted last change, fixed bugs. fhs
-'|                     | 2022-03-18  Added hash of a part of a byte array 
+'|                     | 2022-03-18  Added hash of a part of a byte array
 '|                     |             and file content. fhs
+'|                     | 2022-03-19  Use BinaryFileInputStream. fhs
 '|---------------------+---------------------------------------------------
 '| Typical usage       | ' For getting a hash value
 '|                     | Dim hc As New HashCng
@@ -74,7 +75,7 @@ Attribute VB_Exposed = False
 '|                     | hc.DigestBytes aByteArray
 '|                     | hc.DigestStringAsUTF8 someText
 '|                     | hashValue = hc.GetHash
-'|---------------------+---------------------------------------------------
+'+---------------------+---------------------------------------------------
 '
 
 Option Explicit
@@ -287,43 +288,6 @@ Private Sub HandleNTAPIError(ByRef actionText As String, ByRef apiFunctionName A
                                               Hex$(ntStatusCode), _
                                               m_MM.GetMessageForNTStatusCode(ntStatusCode))
 End Sub
-
-'
-'+--------------------------------------------------------------------------
-'| Method           | ReadFileBlock
-'|------------------+-------------------------------------------------------
-'| Description      | Read a block of bytes from a file
-'|------------------+-------------------------------------------------------
-'| Parameters       | fn:           File number
-'|                  | buffer:       buffer that receives the data
-'|                  | bufferLength: Length of the buffer
-'|                  | fileLength:   Length of the file
-'|------------------+-------------------------------------------------------
-'| Return values    | Number of bytes read. 0 means EOF.
-'|------------------+-------------------------------------------------------
-'| Author           | Frank Schwab
-'|------------------+-------------------------------------------------------
-'| Changes          | 2022-03-18  Created. fhs
-'|------------------+-------------------------------------------------------
-'| Remarks          | ./.
-'+--------------------------------------------------------------------------
-'
-Private Function ReadFileBlock(ByVal fn As Integer, ByRef buffer() As Byte, ByVal bufferLength As Long, ByVal fileLength As Long) As Long
-   If Not EOF(fn) Then
-      Dim lastPosition As Long
-      lastPosition = Seek(fn)
-      
-      Get #fn, , buffer
-      
-      If lastPosition > (fileLength - bufferLength) Then
-         ReadFileBlock = fileLength - lastPosition + 1
-      Else
-         ReadFileBlock = bufferLength
-      End If
-   Else
-      ReadFileBlock = 0
-   End If
-End Function
 
 '
 '+--------------------------------------------------------------------------
@@ -965,24 +929,16 @@ End Sub
 Public Sub DigestFile(ByRef filePath As String)
    CheckState
    
+   Dim bfis As New BinaryFileInputStream
+   bfis.ForFile filePath
+   
    Dim buffer(1 To BUFFER_SIZE) As Byte
-
-   Dim bufferLength As Long
-   bufferLength = BUFFER_SIZE
-
-   Dim fn As Integer
-   fn = FreeFile
-
-   Open filePath For Binary Access Read Lock Write As #fn
-
-   Dim fileLength As Long
-   fileLength = LOF(fn)
 
    Dim rc As Long
 
    Dim readCount As Long
    Do
-      readCount = ReadFileBlock(fn, buffer, bufferLength, fileLength)
+      readCount = bfis.Read(buffer)
 
       If readCount > 0 Then
          rc = BCryptHashData(m_HashHandle, buffer(LBound(buffer)), readCount, 0&)
@@ -994,7 +950,9 @@ Public Sub DigestFile(ByRef filePath As String)
       End If
    Loop
 
-   Close #fn
+   bfis.CloseStream
+
+   Set bfis = Nothing
 End Sub
 
 ' Get method
