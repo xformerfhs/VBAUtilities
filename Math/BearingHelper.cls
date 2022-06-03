@@ -59,7 +59,6 @@ Private Const TWO_PI As Double = PI + PI
 
 Private Const FULL_DEGREES As Double = 360#
 Private Const HALF_DEGREES As Double = 180#
-Private Const NEGATIVE_HALF_DEGREES As Double = -180#
 
 Private Const DEGREE_TO_RADIANS As Double = PI / HALF_DEGREES
 Private Const RADIANS_TO_DEGREE As Double = 1 / DEGREE_TO_RADIANS
@@ -173,7 +172,7 @@ Public Function InBetweenBearingInDegrees(ByVal startBearing As Double, ByVal en
    If diffBearing > HALF_DEGREES Then
       diffBearing = diffBearing - FULL_DEGREES
    Else
-      If diffBearing < NEGATIVE_HALF_DEGREES Then
+      If diffBearing < -HALF_DEGREES Then
          diffBearing = diffBearing + FULL_DEGREES
       End If
    End If
