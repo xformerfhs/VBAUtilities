@@ -42,7 +42,7 @@ Attribute VB_Exposed = False
 '|---------------------+---------------------------------------------------
 '| Author              | Frank Schwab
 '|---------------------+---------------------------------------------------
-'| Version             | 2.3.0
+'| Version             | 2.4.0
 '|---------------------+---------------------------------------------------
 '| Changes             | 2002-03-15  Created. fhs
 '|                     | 2006-03-06  Added formatting of general messages. fhs
@@ -57,6 +57,8 @@ Attribute VB_Exposed = False
 '|                     | 2022-01-21  Corrected FormatMessageWithParameters. fhs
 '|                     | 2022-01-27  Error handling in FormatMessageWithParameters. fhs
 '|                     | 2022-02-01  Check parameter count. fhs
+'|                     | 2024-01-01  Fixed module error message,
+'|                     |             Fixed NT status code handling . fhs
 '+-------------------------------------------------------------------------
 '
 
@@ -107,16 +109,11 @@ Private Declare PtrSafe Function FormatMessage _
   ByRef Arguments As LongPtr _
   ) As Long
 
-Private Declare PtrSafe Function RtlNtStatusToDosError _
-   Lib "ntdll.dll" ( _
-   ByVal dwStatus As Long _
-   ) As Long
-
 Private Declare PtrSafe Function GetModuleHandle _
    Lib "kernel32.dll" _
    Alias "GetModuleHandleA" ( _
    ByVal lpModuleName As String _
-   ) As Long
+   ) As LongPtr
    
 
 '
@@ -422,7 +419,7 @@ Public Function GetMessageForWindowsErrorCode(ByVal windowsErrorCode As Long) As
                                 windowsErrorCode, _
                                 0&, _
                                 StrPtr(messageBuffer), _
-                                Len(messageBuffer), _
+                                MESSAGE_BUFFER_SIZE, _
                                 0&)
 
    If bufferLength > 0 Then
@@ -472,7 +469,7 @@ Public Function GetMessageForModuleErrorCode(ByVal moduleErrorCode As Long, _
                                              ByRef moduleName As String) As String
    Dim messageBuffer As String  ' Buffer for error message
    Dim bufferLength  As Long    ' Size of error message
-   Dim moduleHandle  As Long    ' Handle for module
+   Dim moduleHandle  As LongPtr ' Handle for module
    Dim loadError     As Long    ' Module load error code
 
    moduleHandle = GetModuleHandle(moduleName)
@@ -489,7 +486,7 @@ Public Function GetMessageForModuleErrorCode(ByVal moduleErrorCode As Long, _
                                    moduleErrorCode, _
                                    0&, _
                                    StrPtr(messageBuffer), _
-                                   Len(messageBuffer), _
+                                   MESSAGE_BUFFER_SIZE, _
                                    0&)
    
       If bufferLength > 0 Then
@@ -518,38 +515,6 @@ End Function
 
 '
 '+--------------------------------------------------------------------------
-'| Method           | GetWindowsErrorCodeFromNTStatusCode
-'|------------------+-------------------------------------------------------
-'| Purpose          | Get error error code that correpsonds to an NT
-'|                  | status code returned by a Windows API call
-'|------------------+-------------------------------------------------------
-'| Parameter        | windowsErrorCode: Error code returned from API call
-'|                  |                   returning an NT status code.
-'|------------------+-------------------------------------------------------
-'| Return value     | Windows error code corresponding to the NT status code.
-'|------------------+-------------------------------------------------------
-'| Author           | Frank Schwab
-'|------------------+-------------------------------------------------------
-'| Changes          | 2014-04-01  Created. fhs
-'|------------------+-------------------------------------------------------
-'| Remarks          | ./.
-'|------------------+-------------------------------------------------------
-'| Typical call     | rc = SomeNTSCReturningFunction(...)
-'|                  | If rc <> STATUS_SUCCESS Then
-'|                  |    Err.Raise M_N_ERROR_NUM, M_STR_ERROR_SOURCE , _
-'|                  |              "SomeNTSCReturningFunction returned error code  0x" & Hex$(rc) & ": " & _
-'|                  |              mm.GetMessageForWindowsErrorCode(mm.GetWindowsErrorCodeFromNTStatusCode(rc)))
-'|                  | Else
-'|                  |    ' Everything worked fine
-'|                  | End If
-'+--------------------------------------------------------------------------
-'
-Public Function GetWindowsErrorCodeFromNTStatusCode(ByVal ntStatusCode As Long) As Long
-   GetWindowsErrorCodeFromNTStatusCode = RtlNtStatusToDosError(ntStatusCode)
-End Function
-
-'
-'+--------------------------------------------------------------------------
 '| Method           | GetMessageForNTStatusCode
 '|------------------+-------------------------------------------------------
 '| Purpose          | Get error text that belongs to an NT status code
@@ -562,7 +527,7 @@ End Function
 '|------------------+-------------------------------------------------------
 '| Author           | Frank Schwab
 '|------------------+-------------------------------------------------------
-'| Changes          | 2014-03-31  Created. fhs
+'| Changes          | 2024-01-01  Created. fhs
 '|------------------+-------------------------------------------------------
 '| Remarks          | ./.
 '|------------------+-------------------------------------------------------
@@ -577,8 +542,10 @@ End Function
 '+--------------------------------------------------------------------------
 '
 Public Function GetMessageForNTStatusCode(ByVal ntStatusCode As Long) As String
-   GetMessageForNTStatusCode = Me.GetMessageForWindowsErrorCode( _
-                                  Me.GetWindowsErrorCodeFromNTStatusCode(ntStatusCode))
+   ' All NT status codes are declared in ntdll.dll.
+   GetMessageForNTStatusCode = Me.GetMessageForModuleErrorCode( _
+                                  ntStatusCode, _
+                                  "ntdll.dll")
 End Function
 
 '
