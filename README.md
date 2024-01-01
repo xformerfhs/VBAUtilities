@@ -208,4 +208,4 @@ A high precision stopwatch that uses the Windows Performance Counter which has a
 
 ### Waiter
 
-Suspend program execution for a specified amount of time or for a random amount of time while keeping Access responsive.
+Suspend program execution for a specified amount of time or for a random amount of time while keeping the application responsive.
