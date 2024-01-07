@@ -10,11 +10,11 @@ Attribute VB_Exposed = False
 '
 '+-------------------------------------------------------------------------
 '|
-'| SPDX-FileCopyrightText: 2022 Frank Schwab
+'| SPDX-FileCopyrightText: 2024 Frank Schwab
 '|
 '| SPDX-License-Identifier: MIT
 '|
-'| Copyright 2022, Frank Schwab
+'| Copyright 2024, Frank Schwab
 '|
 '| Permission is hereby granted, free of charge, to any person obtaining a
 '| copy of this software and associated documentation files (the "Software"),
