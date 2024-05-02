@@ -10,11 +10,11 @@ Attribute VB_Exposed = False
 '
 '+-------------------------------------------------------------------------
 '|
-'| SPDX-FileCopyrightText: 2020 Frank Schwab
+'| SPDX-FileCopyrightText: 2024 Frank Schwab
 '|
 '| SPDX-License-Identifier: MIT
 '|
-'| Copyright 2020, Frank Schwab
+'| Copyright 2024, Frank Schwab
 '|
 '| Permission is hereby granted, free of charge, to any person obtaining a
 '| copy of this software and associated documentation files (the "Software"),
@@ -42,9 +42,10 @@ Attribute VB_Exposed = False
 '|---------------------+---------------------------------------------------
 '| Author              | Frank Schwab
 '|---------------------+---------------------------------------------------
-'| Version             | 1.0.0
+'| Version             | 1.1.0
 '|---------------------+---------------------------------------------------
 '| Changes             | 2020-08-24  Created. fhs
+'|                     | 2024-05-02  Wait for 1/4 seconds. fhs
 '+-------------------------------------------------------------------------
 
 Option Explicit
@@ -75,19 +76,23 @@ Private Declare PtrSafe Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As Long)
 '|------------------+-------------------------------------------------------
 '| Remarks          | This implementation combines two wait methods:
 '|                  |
-'|                  |    1. There is a loop for every second that should be waited (VBA wait)
-'|                  |    2. 1 second is waited for by calling the sleep API function (OS wait)
+'|                  |    1. There is a loop for every 1/4 second that should be
+'|                  |       waited (VBA wait)
+'|                  |    2. 1/4 second is waited for by calling the sleep API
+'|                  |       function (OS wait)
 '|                  |
 '|                  | Why is this?
 '|                  |
-'|                  | If the wait is done purely in VBA Access has an extremely high CPU usage
-'|                  | as it constantly polls for the current time. This is not desirable.
+'|                  | If the wait is done purely in VBA the Office application
+'|                  | has an extremely high CPU usage as it constantly polls
+'|                  | for the current time. This is not desirable.
 '|                  |
-'|                  | If the wait is done purely in the OS the whole Access application hangs while waiting
-'|                  | and does not respond to anything.
+'|                  | If the wait is done purely in the OS the whole Office
+'|                  | application hangs while waiting and does not respond.
 '|                  |
-'|                  | Combining these two wait mechanisms lowers the CPU usage and leaves Access responsive
-'|                  | with a maximum delay of 1 second.
+'|                  | Combining these two wait mechanisms lowers the CPU usage
+'|                  | and keeps the Office application responsive with a 
+'|                  | maximum delay of 1/4 second.
 '|------------------+-------------------------------------------------------
 '| Typical call     | Dim wtr As New Waiter
 '|                  | ...
@@ -100,10 +105,14 @@ Public Sub WaitFor(ByVal waitTimeInSeconds As Integer)
    secondsAlreadyWaited = 0
 
    Do While secondsAlreadyWaited < waitTimeInSeconds
-      Sleep 1000  ' Wait 1 second
+      ' Wait 4 1/4 seconds so the Office application is responsive
+	  Dim i As Byte
+	  For i = 1 To 4
+		 Sleep 250  ' Wait 1/4 second
 
-      DoEvents ' Process events so Access is responsive
-
+         DoEvents ' Process events so the Office application is responsive
+      Next i
+	  
       secondsAlreadyWaited = secondsAlreadyWaited + 1
    Loop
 End Sub
