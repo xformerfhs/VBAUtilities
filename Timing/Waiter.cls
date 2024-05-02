@@ -108,7 +108,7 @@ Public Sub WaitFor(ByVal waitTimeInSeconds As Integer)
       ' Wait 4 1/4 seconds so the Office application is responsive
 	  Dim i As Byte
 	  For i = 1 To 4
-		 Sleep 250  ' Wait 1/4 second
+         Sleep 250  ' Wait 1/4 second
 
          DoEvents ' Process events so the Office application is responsive
       Next i
