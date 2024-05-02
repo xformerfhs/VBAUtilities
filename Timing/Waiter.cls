@@ -91,7 +91,7 @@ Private Declare PtrSafe Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As Long)
 '|                  | application hangs while waiting and does not respond.
 '|                  |
 '|                  | Combining these two wait mechanisms lowers the CPU usage
-'|                  | and keeps the Office application responsive with a 
+'|                  | and keeps the Office application responsive with a
 '|                  | maximum delay of 1/4 second.
 '|------------------+-------------------------------------------------------
 '| Typical call     | Dim wtr As New Waiter
@@ -106,13 +106,13 @@ Public Sub WaitFor(ByVal waitTimeInSeconds As Integer)
 
    Do While secondsAlreadyWaited < waitTimeInSeconds
       ' Wait 4 1/4 seconds so the Office application is responsive
-	  Dim i As Byte
-	  For i = 1 To 4
+      Dim i As Byte
+      For i = 1 To 4
          Sleep 250  ' Wait 1/4 second
 
          DoEvents ' Process events so the Office application is responsive
       Next i
-	  
+          
       secondsAlreadyWaited = secondsAlreadyWaited + 1
    Loop
 End Sub
