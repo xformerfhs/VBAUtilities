@@ -87,9 +87,13 @@ Helper class to generate a unique random file name.
 
 ## Internet
 
+### DirectoryEntry
+
+A simple record class used in the FTPClient.
+
 ### FTPClient
 
-A simple FTP client for VBA programs. It has the following public methods
+A simple FTP client for VBA programs. It has the following public methods.
 
 * Connect
 * Disconnect

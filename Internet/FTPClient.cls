@@ -10,11 +10,11 @@ Attribute VB_Exposed = False
 '
 '+-------------------------------------------------------------------------
 '|
-'| SPDX-FileCopyrightText: 2020 Frank Schwab
+'| SPDX-FileCopyrightText: 2020-2024 Frank Schwab
 '|
 '| SPDX-License-Identifier: MIT
 '|
-'| Copyright 2020, Frank Schwab
+'| Copyright 2020-2024, Frank Schwab
 '|
 '| Permission is hereby granted, free of charge, to any person obtaining a
 '| copy of this software and associated documentation files (the "Software"),
@@ -38,13 +38,14 @@ Attribute VB_Exposed = False
 '|-------------------------------------------------------------------------
 '| Class               | FTPClient
 '|---------------------+---------------------------------------------------
-'| Description         | Simple FTP client for VBA
+'| Description         | Simple FTP client for VBA.
 '|---------------------+---------------------------------------------------
 '| Author              | Frank Schwab
 '|---------------------+---------------------------------------------------
-'| Version             | 1.0.0
+'| Version             | 2.0.0
 '|---------------------+---------------------------------------------------
 '| Changes             | 2020-07-20  Created. fhs
+'|                     | 2024-09-01  Made working and 64 bit compatible. fhs
 '|---------------------+---------------------------------------------------
 '
 
@@ -94,6 +95,7 @@ Private Const DEFAULT_USER_NAME As String = "anonymous"
 
 Private Const MAX_PATH = 260
 
+
 '
 ' Windows API data structures
 '
@@ -129,57 +131,32 @@ End Type
 '
 ' Windows API declarations
 '
-Private Declare Function FileTimeToSystemTime Lib "kernel32.dll" ( _
+Private Declare PtrSafe Function FileTimeToSystemTime Lib "kernel32.dll" ( _
    ByRef lpFileTime As FILETIME, _
    ByRef lpSystemTime As SYSTEMTIME) As Long
-
-Private Declare Function InternetCloseHandle Lib "wininet.dll" (ByVal hInet As Long) As Long
-
-Private Declare Function InternetConnect Lib "wininet.dll" Alias "InternetConnectA" ( _
-   ByVal hInternetSession As Long, _
-   ByVal sServerName As String, _
-   ByVal nServerPort As Integer, _
-   ByVal sUserName As String, _
-   ByVal sPassword As String, _
-   ByVal lService As Long, _
-   ByVal lFlags As Long, _
-   ByVal lContext As Long) As Long
    
-Private Declare Function InternetOpen Lib "wininet.dll" Alias "InternetOpenA" ( _
-   ByVal sAgent As String, _
-   ByVal lAccessType As Long, _
-   ByVal sProxyName As String, _
-   ByVal sProxyBypass As String, _
-   ByVal lFlags As Long) As Long
-   
-Private Declare Function FtpSetCurrentDirectory Lib "wininet.dll" Alias "FtpSetCurrentDirectoryA" ( _
-   ByVal hFtpSession As Long, _
+Private Declare PtrSafe Function FtpCreateDirectory Lib "wininet.dll" Alias "FtpCreateDirectoryA" ( _
+   ByVal hConnect As LongPtr, _
    ByVal lpszDirectory As String) As Long
+  
+Private Declare PtrSafe Function FtpDeleteFile Lib "wininet.dll" Alias "FtpDeleteFileA" ( _
+   ByVal hConnect As LongPtr, _
+   ByVal lpszFileName As String) As Long
    
-Private Declare Function FtpGetCurrentDirectory Lib "wininet.dll" Alias "FtpGetCurrentDirectoryA" ( _
-   ByVal hFtpSession As Long, _
+Private Declare PtrSafe Function FtpFindFirstFile Lib "wininet.dll" Alias "FtpFindFirstFileA" ( _
+   ByVal hConnect As LongPtr, _
+   ByVal lpszSearchFile As String, _
+   ByRef lpFindFileData As WIN32_FIND_DATA, _
+   ByVal m_Flags As Long, _
+   ByVal dwContent As Long) As Long
+
+Private Declare PtrSafe Function FtpGetCurrentDirectory Lib "wininet.dll" Alias "FtpGetCurrentDirectoryA" ( _
+   ByVal hConnect As LongPtr, _
    ByVal lpszCurrentDirectory As String, _
    ByRef lpdwCurrentDirectory As Long) As Long
    
-Private Declare Function FtpCreateDirectory Lib "wininet.dll" Alias "FtpCreateDirectoryA" ( _
-   ByVal hFtpSession As Long, _
-   ByVal lpszDirectory As String) As Long
-   
-Private Declare Function FtpRemoveDirectory Lib "wininet.dll" Alias "FtpRemoveDirectoryA" ( _
-   ByVal hFtpSession As Long, _
-   ByVal lpszDirectory As String) As Long
-   
-Private Declare Function FtpDeleteFile Lib "wininet.dll" Alias "FtpDeleteFileA" ( _
-   ByVal hFtpSession As Long, _
-   ByVal lpszFileName As String) As Long
-   
-Private Declare Function FtpRenameFile Lib "wininet.dll" Alias "FtpRenameFileA" ( _
-   ByVal hFtpSession As Long, _
-   ByVal lpszExisting As String, _
-   ByVal lpszNew As String) As Long
-   
-Private Declare Function FtpGetFile Lib "wininet.dll" Alias "FtpGetFileA" ( _
-   ByVal hConnect As Long, _
+Private Declare PtrSafe Function FtpGetFile Lib "wininet.dll" Alias "FtpGetFileA" ( _
+   ByVal hConnect As LongPtr, _
    ByVal lpszRemoteFile As String, _
    ByVal lpszNewFile As String, _
    ByVal fFailIfExists As Integer, _
@@ -187,36 +164,61 @@ Private Declare Function FtpGetFile Lib "wininet.dll" Alias "FtpGetFileA" ( _
    ByVal m_Flags As Long, _
    ByRef dwContext As Long) As Long
 
-Private Declare Function FtpPutFile Lib "wininet.dll" Alias "FtpPutFileA" ( _
-   ByVal hConnect As Long, _
+Private Declare PtrSafe Function FtpPutFile Lib "wininet.dll" Alias "FtpPutFileA" ( _
+   ByVal hConnect As LongPtr, _
    ByVal lpszLocalFile As String, _
    ByVal lpszNewRemoteFile As String, _
    ByVal m_Flags As Long, _
    ByVal dwContext As Long) As Long
+   
+Private Declare PtrSafe Function FtpRemoveDirectory Lib "wininet.dll" Alias "FtpRemoveDirectoryA" ( _
+   ByVal hConnect As LongPtr, _
+   ByVal lpszDirectory As String) As Long
+   
+Private Declare PtrSafe Function FtpRenameFile Lib "wininet.dll" Alias "FtpRenameFileA" ( _
+   ByVal hConnect As LongPtr, _
+   ByVal lpszExisting As String, _
+   ByVal lpszNew As String) As Long
 
-Private Declare Function InternetGetLastResponseInfo Lib "wininet.dll" Alias "InternetGetLastResponseInfoA" ( _
+Private Declare PtrSafe Function FtpSetCurrentDirectory Lib "wininet.dll" Alias "FtpSetCurrentDirectoryA" ( _
+   ByVal hConnect As LongPtr, _
+   ByVal lpszDirectory As String) As Long
+
+Private Declare PtrSafe Function InternetCloseHandle Lib "wininet.dll" (ByVal hInet As LongPtr) As Long
+
+Private Declare PtrSafe Function InternetConnect Lib "wininet.dll" Alias "InternetConnectA" ( _
+   ByVal hInternetSession As LongPtr, _
+   ByVal sServerName As String, _
+   ByVal nServerPort As Integer, _
+   ByVal sUserName As String, _
+   ByVal sPassword As String, _
+   ByVal lService As Long, _
+   ByVal lFlags As Long, _
+   ByVal lContext As Long) As LongPtr
+   
+Private Declare PtrSafe Function InternetFindNextFile Lib "wininet.dll" Alias "InternetFindNextFileA" ( _
+   ByVal hFind As Long, _
+   ByRef lpvFindData As WIN32_FIND_DATA) As Long
+
+Private Declare PtrSafe Function InternetGetLastResponseInfo Lib "wininet.dll" Alias "InternetGetLastResponseInfoA" ( _
    ByRef lpdwError As Long, _
    ByVal lpszBuffer As String, _
    ByRef lpdwBufferLength As Long) As Long
    
-Private Declare Function FtpFindFirstFile Lib "wininet.dll" Alias "FtpFindFirstFileA" ( _
-   ByVal hFtpSession As Long, _
-   ByVal lpszSearchFile As String, _
-   ByRef lpFindFileData As WIN32_FIND_DATA, _
-   ByVal m_Flags As Long, _
-   ByVal dwContent As Long) As Long
-   
-Private Declare Function InternetFindNextFile Lib "wininet.dll" Alias "InternetFindNextFileA" ( _
-   ByVal hFind As Long, _
-   ByRef lpvFindData As WIN32_FIND_DATA) As Long
+Private Declare PtrSafe Function InternetOpen Lib "wininet.dll" Alias "InternetOpenA" ( _
+   ByVal sAgent As String, _
+   ByVal lAccessType As Long, _
+   ByVal sProxyName As String, _
+   ByVal sProxyBypass As String, _
+   ByVal lFlags As Long) As LongPtr
 
 '
 ' Instance variables
 '
 Private m_UserAgent As String
 
-Private m_Session As Long
-Private m_InternetHandle As Long
+Private m_Session As LongPtr
+Private m_InternetHandle As LongPtr
 
 Private m_ErrorCode As Long
 Private m_ErrorText As String
@@ -227,9 +229,8 @@ Private m_MM As MessageManager
 ' Private methods
 '
 Private Function GetMessageManager() As MessageManager
-   If m_MM Is Nothing Then
+   If m_MM Is Nothing Then _
       Set m_MM = New MessageManager
-   End If
 
    Set GetMessageManager = m_MM
 End Function
@@ -242,15 +243,15 @@ Private Sub RaiseInvalidValueException(ByRef errorDescription As String)
 End Sub
 
 Private Function GetInternetErrorMessage() As String
-   Dim errorCode As Long
+   Dim ErrorCode As Long
    Dim ErrorMessage As String
    Dim bufferLength As Long
 
    bufferLength = 0
-   InternetGetLastResponseInfo errorCode, vbNullString, bufferLength
+   InternetGetLastResponseInfo ErrorCode, vbNullString, bufferLength
 
    ErrorMessage = Space$(bufferLength)
-   InternetGetLastResponseInfo errorCode, ErrorMessage, bufferLength
+   InternetGetLastResponseInfo ErrorCode, ErrorMessage, bufferLength
 
    GetInternetErrorMessage = ErrorMessage
 End Function
@@ -285,14 +286,14 @@ ErrorHandler:
    Resume ExitFunction
 End Function
 
-Private Function GetAPIErrorMessage(ByRef functionName As String, ByVal errorCode As Long) As String
-   GetAPIErrorMessage = GetMessageManager.GetMessageForModuleErrorCode(errorCode, "wininet.dll")
+Private Function GetAPIErrorMessage(ByRef functionName As String, ByVal ErrorCode As Long) As String
+   GetAPIErrorMessage = GetMessageManager.GetMessageForModuleErrorCode(ErrorCode, "wininet.dll")
 End Function
 
-Private Sub HandleAPIError(ByRef functionName As String, ByVal errorCode As Long)
-   If errorCode <> ERROR_INTERNET_EXTENDED_ERROR Then
-      m_ErrorCode = errorCode
-      m_ErrorText = GetAPIErrorMessage(functionName, errorCode)
+Private Sub HandleAPIError(ByRef functionName As String, ByVal ErrorCode As Long)
+   If ErrorCode <> ERROR_INTERNET_EXTENDED_ERROR Then
+      m_ErrorCode = ErrorCode
+      m_ErrorText = GetAPIErrorMessage(functionName, ErrorCode)
    Else
       m_ErrorText = GetInternetErrorMessage
       m_ErrorCode = GetErrorCodeFromFTPMessage(m_ErrorText)
@@ -332,7 +333,7 @@ Private Function ConvertFileTimeToDateTime(ByRef aFileTime As FILETIME) As Date
 End Function
 
 
-Private Function GetInternetHandle() As Long
+Private Function GetInternetHandle() As LongPtr
    If m_InternetHandle = 0 Then
       m_InternetHandle = InternetOpen(m_UserAgent, INTERNET_OPEN_TYPE_PRECONFIG, vbNullString, vbNullString, 0&)
 
@@ -361,8 +362,8 @@ Public Property Get HadError() As Boolean
    HadError = (Len(m_ErrorText) > 0)
 End Property
 
-Public Property Get errorCode() As Long
-   errorCode = m_ErrorCode
+Public Property Get ErrorCode() As Long
+   ErrorCode = m_ErrorCode
 End Property
 
 Public Property Get ErrorMessage() As String
@@ -531,8 +532,7 @@ Public Function DirFiles(Optional ByRef fileFilter As String = "*.*") As Scripti
    Dim findHandle As Long
    Dim result As New Scripting.Dictionary
    Dim rc As Long
-   Dim directoryEntry As DirectoryInformation
-   Dim systemTimeEntry As SYSTEMTIME
+   Dim anEntry As DirectoryEntry
 
    EnsureEnvironment
 
@@ -540,9 +540,9 @@ Public Function DirFiles(Optional ByRef fileFilter As String = "*.*") As Scripti
 
    If findHandle <> 0& Then
       Do
-         Set directoryEntry = New DirectoryInformation
+         Set anEntry = New DirectoryEntry
 
-         With directoryEntry
+         With anEntry
             .Name = Left$(findData.cFileName, InStr(1, findData.cFileName, vbNullChar, vbBinaryCompare) - 1)
             .IsDirectory = ((findData.dwFileAttributes And FILE_ATTRIBUTE_DIRECTORY) <> 0)
             .CreationTime = ConvertFileTimeToDateTime(findData.ftCreationTime)
@@ -552,7 +552,7 @@ Public Function DirFiles(Optional ByRef fileFilter As String = "*.*") As Scripti
             .FileSizeLow = findData.nFileSizeLow
          End With
          
-         result.Add Key:=directoryEntry.Name, Item:=directoryEntry
+         result.Add Key:=anEntry.Name, Item:=anEntry
 
          rc = InternetFindNextFile(findHandle, findData)
       Loop While rc <> 0
@@ -561,9 +561,8 @@ Public Function DirFiles(Optional ByRef fileFilter As String = "*.*") As Scripti
    Else
       HandleAPIError "FtpFindFirstFile", Err.LastDllError
 
-      If Me.errorCode = 450 Then
+      If Me.ErrorCode = 450 Then _
          ClearError
-      End If
    End If
 
    Set DirFiles = result
