@@ -134,7 +134,7 @@ End Type
 Private Declare PtrSafe Function FileTimeToSystemTime Lib "kernel32.dll" ( _
    ByRef lpFileTime As FILETIME, _
    ByRef lpSystemTime As SYSTEMTIME) As Long
-   
+
 Private Declare PtrSafe Function FtpCreateDirectory Lib "wininet.dll" Alias "FtpCreateDirectoryA" ( _
    ByVal hConnect As LongPtr, _
    ByVal lpszDirectory As String) As Long
@@ -142,7 +142,7 @@ Private Declare PtrSafe Function FtpCreateDirectory Lib "wininet.dll" Alias "Ftp
 Private Declare PtrSafe Function FtpDeleteFile Lib "wininet.dll" Alias "FtpDeleteFileA" ( _
    ByVal hConnect As LongPtr, _
    ByVal lpszFileName As String) As Long
-   
+
 Private Declare PtrSafe Function FtpFindFirstFile Lib "wininet.dll" Alias "FtpFindFirstFileA" ( _
    ByVal hConnect As LongPtr, _
    ByVal lpszSearchFile As String, _
@@ -154,7 +154,7 @@ Private Declare PtrSafe Function FtpGetCurrentDirectory Lib "wininet.dll" Alias 
    ByVal hConnect As LongPtr, _
    ByVal lpszCurrentDirectory As String, _
    ByRef lpdwCurrentDirectory As Long) As Long
-   
+
 Private Declare PtrSafe Function FtpGetFile Lib "wininet.dll" Alias "FtpGetFileA" ( _
    ByVal hConnect As LongPtr, _
    ByVal lpszRemoteFile As String, _
@@ -170,11 +170,11 @@ Private Declare PtrSafe Function FtpPutFile Lib "wininet.dll" Alias "FtpPutFileA
    ByVal lpszNewRemoteFile As String, _
    ByVal m_Flags As Long, _
    ByVal dwContext As Long) As Long
-   
+
 Private Declare PtrSafe Function FtpRemoveDirectory Lib "wininet.dll" Alias "FtpRemoveDirectoryA" ( _
    ByVal hConnect As LongPtr, _
    ByVal lpszDirectory As String) As Long
-   
+
 Private Declare PtrSafe Function FtpRenameFile Lib "wininet.dll" Alias "FtpRenameFileA" ( _
    ByVal hConnect As LongPtr, _
    ByVal lpszExisting As String, _
@@ -195,7 +195,7 @@ Private Declare PtrSafe Function InternetConnect Lib "wininet.dll" Alias "Intern
    ByVal lService As Long, _
    ByVal lFlags As Long, _
    ByVal lContext As Long) As LongPtr
-   
+
 Private Declare PtrSafe Function InternetFindNextFile Lib "wininet.dll" Alias "InternetFindNextFileA" ( _
    ByVal hFind As Long, _
    ByRef lpvFindData As WIN32_FIND_DATA) As Long
@@ -204,7 +204,7 @@ Private Declare PtrSafe Function InternetGetLastResponseInfo Lib "wininet.dll" A
    ByRef lpdwError As Long, _
    ByVal lpszBuffer As String, _
    ByRef lpdwBufferLength As Long) As Long
-   
+
 Private Declare PtrSafe Function InternetOpen Lib "wininet.dll" Alias "InternetOpenA" ( _
    ByVal sAgent As String, _
    ByVal lAccessType As Long, _
@@ -267,7 +267,7 @@ Private Function GetErrorCodeFromFTPMessage(ByRef ftpMessage As String) As Long
    lines = Split(ftpMessage, vbCrLf)
 
    On Error GoTo ErrorHandler
-   
+
    For i = LBound(lines) To UBound(lines)
       pos = InStr(1, lines(i), " ")
 
@@ -322,7 +322,7 @@ Private Function ConvertFileTimeToDateTime(ByRef aFileTime As FILETIME) As Date
 
    If (aFileTime.dwLowDateTime Or aFileTime.dwHighDateTime) <> 0 Then
       FileTimeToSystemTime aFileTime, systemTimeEntry
-   
+
       With systemTimeEntry
          ConvertFileTimeToDateTime = DateSerial(.wYear, .wMonth, .wDay) + _
                                      TimeSerial(.wHour, .wMinute, .wSecond)
@@ -551,7 +551,7 @@ Public Function DirFiles(Optional ByRef fileFilter As String = "*.*") As Scripti
             .FileSizeHigh = findData.nFileSizeHigh
             .FileSizeLow = findData.nFileSizeLow
          End With
-         
+
          result.Add Key:=anEntry.Name, Item:=anEntry
 
          rc = InternetFindNextFile(findHandle, findData)
@@ -573,7 +573,7 @@ End Function
 '
 Private Sub Class_Initialize()
    m_UserAgent = DEFAULT_USER_AGENT
-   
+
    m_InternetHandle = 0
    m_Session = 0
 
