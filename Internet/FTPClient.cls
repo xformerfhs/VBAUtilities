@@ -243,17 +243,17 @@ Private Sub RaiseInvalidValueException(ByRef errorDescription As String)
 End Sub
 
 Private Function GetInternetErrorMessage() As String
-   Dim ErrorCode As Long
-   Dim ErrorMessage As String
+   Dim ec As Long
+   Dim msg As String
    Dim bufferLength As Long
 
    bufferLength = 0
-   InternetGetLastResponseInfo ErrorCode, vbNullString, bufferLength
+   InternetGetLastResponseInfo ec, vbNullString, bufferLength
 
    ErrorMessage = Space$(bufferLength)
-   InternetGetLastResponseInfo ErrorCode, ErrorMessage, bufferLength
+   InternetGetLastResponseInfo ec, msg, bufferLength
 
-   GetInternetErrorMessage = ErrorMessage
+   GetInternetErrorMessage = msg
 End Function
 
 Private Function GetErrorCodeFromFTPMessage(ByRef ftpMessage As String) As Long
@@ -286,14 +286,14 @@ ErrorHandler:
    Resume ExitFunction
 End Function
 
-Private Function GetAPIErrorMessage(ByRef functionName As String, ByVal ErrorCode As Long) As String
-   GetAPIErrorMessage = GetMessageManager.GetMessageForModuleErrorCode(ErrorCode, "wininet.dll")
+Private Function GetAPIErrorMessage(ByRef functionName As String, ByVal ec As Long) As String
+   GetAPIErrorMessage = GetMessageManager.GetMessageForModuleErrorCode(ec, "wininet.dll")
 End Function
 
-Private Sub HandleAPIError(ByRef functionName As String, ByVal ErrorCode As Long)
-   If ErrorCode <> ERROR_INTERNET_EXTENDED_ERROR Then
-      m_ErrorCode = ErrorCode
-      m_ErrorText = GetAPIErrorMessage(functionName, ErrorCode)
+Private Sub HandleAPIError(ByRef functionName As String, ByVal ec As Long)
+   If ec <> ERROR_INTERNET_EXTENDED_ERROR Then
+      m_ErrorCode = ec
+      m_ErrorText = GetAPIErrorMessage(functionName, ec)
    Else
       m_ErrorText = GetInternetErrorMessage
       m_ErrorCode = GetErrorCodeFromFTPMessage(m_ErrorText)
