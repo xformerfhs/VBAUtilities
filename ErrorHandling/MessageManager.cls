@@ -124,7 +124,7 @@ Private Declare PtrSafe Function GetModuleHandle _
 '+--------------------------------------------------------------------------
 '| Method           | HandleAPIError
 '|------------------+-------------------------------------------------------
-'| Description      | Handle Windows API errors by throwing an exception
+'| Description      | Handle Windows API errors by throwing an exception.
 '|------------------+-------------------------------------------------------
 '| Parameter        | apiFunctionName: Name of the failing API function
 '|                  | rc: Status code of the failing API function
@@ -136,7 +136,7 @@ Private Declare PtrSafe Function GetModuleHandle _
 '| Changes          | 2019-02-19  Created. fhs
 '|                  | 2022-02-01  Corrected order of raise arguments. fhs
 '|------------------+-------------------------------------------------------
-'| Remarks          | This methods always throws an exception
+'| Remarks          | This methods always throws an exception.
 '+--------------------------------------------------------------------------
 '
 Private Sub HandleAPIError(ByRef apiFunctionName As String)

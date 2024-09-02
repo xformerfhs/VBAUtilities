@@ -228,6 +228,24 @@ Private m_MM As MessageManager
 '
 ' Private methods
 '
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | GetMessageManager
+'|------------------+-------------------------------------------------------
+'| Description      | Get the MessageManager singleton.
+'|------------------+-------------------------------------------------------
+'| Parameter        | ./.
+'|------------------+-------------------------------------------------------
+'| Return values    | MessageManager singleton.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-20  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Private Function GetMessageManager() As MessageManager
    If m_MM Is Nothing Then _
       Set m_MM = New MessageManager
@@ -235,6 +253,23 @@ Private Function GetMessageManager() As MessageManager
    Set GetMessageManager = m_MM
 End Function
 
+'
+'+--------------------------------------------------------------------------
+'| Method           | RaiseInvalidValueException
+'|------------------+-------------------------------------------------------
+'| Description      | Raise an "invalid value" exception.
+'|------------------+-------------------------------------------------------
+'| Parameter        | errorDescription: Description of the value error.
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-20  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | This method always raises an exception.
+'+--------------------------------------------------------------------------
+'
 Private Sub RaiseInvalidValueException(ByRef errorDescription As String)
    Err.Raise ERROR_NUMBER_INVALID_VALUE, _
              MODULE_NAME, _
@@ -242,6 +277,24 @@ Private Sub RaiseInvalidValueException(ByRef errorDescription As String)
                 errorDescription
 End Sub
 
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | GetInternetErrorMessage
+'|------------------+-------------------------------------------------------
+'| Description      | Get the last extended error.
+'|------------------+-------------------------------------------------------
+'| Parameter        | ./.
+'|------------------+-------------------------------------------------------
+'| Return values    | Extended error description
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-20  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Private Function GetInternetErrorMessage() As String
    Dim ec As Long
    Dim msg As String
@@ -256,6 +309,23 @@ Private Function GetInternetErrorMessage() As String
    GetInternetErrorMessage = msg
 End Function
 
+'
+'+--------------------------------------------------------------------------
+'| Method           | GetErrorCodeFromFTPMessage
+'|------------------+-------------------------------------------------------
+'| Description      | Get the error code from an FTP message.
+'|------------------+-------------------------------------------------------
+'| Parameter        | ftpMessage: FTP message.
+'|------------------+-------------------------------------------------------
+'| Return values    | Error code as long.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-20  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Private Function GetErrorCodeFromFTPMessage(ByRef ftpMessage As String) As Long
    Dim lines() As String
    Dim i As Integer
@@ -286,10 +356,45 @@ ErrorHandler:
    Resume ExitFunction
 End Function
 
+'
+'+--------------------------------------------------------------------------
+'| Method           | GetAPIErrorMessage
+'|------------------+-------------------------------------------------------
+'| Description      | Get the error message for "WinInet" API calls.
+'|------------------+-------------------------------------------------------
+'| Parameter        | functionName: Name of called API function.
+'|                  | ec:           Error code.
+'|------------------+-------------------------------------------------------
+'| Return values    | Error message.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-20  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Private Function GetAPIErrorMessage(ByRef functionName As String, ByVal ec As Long) As String
    GetAPIErrorMessage = GetMessageManager.GetMessageForModuleErrorCode(ec, "wininet.dll")
 End Function
 
+'
+'+--------------------------------------------------------------------------
+'| Method           | HandleAPIError
+'|------------------+-------------------------------------------------------
+'| Description      | Handle an API error.
+'|------------------+-------------------------------------------------------
+'| Parameter        | functionName: Name of called API function.
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-20  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Private Sub HandleAPIError(ByRef functionName As String, ByVal ec As Long)
    If ec <> ERROR_INTERNET_EXTENDED_ERROR Then
       m_ErrorCode = ec
@@ -300,11 +405,46 @@ Private Sub HandleAPIError(ByRef functionName As String, ByVal ec As Long)
    End If
 End Sub
 
+'
+'+--------------------------------------------------------------------------
+'| Method           | ClearError
+'|------------------+-------------------------------------------------------
+'| Description      | Clear error variables.
+'|------------------+-------------------------------------------------------
+'| Parameter        | ./.
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-20  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Private Sub ClearError()
    m_ErrorCode = 0
    m_ErrorText = ""
 End Sub
 
+'
+'+--------------------------------------------------------------------------
+'| Method           | CheckSession
+'|------------------+-------------------------------------------------------
+'| Description      | Check, if there is an FTP session.
+'|------------------+-------------------------------------------------------
+'| Parameter        | ./.
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-20  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | This function raises an exception, if there is no
+'|                  | session.
+'+--------------------------------------------------------------------------
+'
 Private Sub CheckSession()
    If Not Me.IsSessionEstablished Then _
       Err.Raise ERROR_NUMBER_NO_SESSION, _
@@ -312,11 +452,47 @@ Private Sub CheckSession()
                 ERROR_TEXT_NO_SESSION
 End Sub
 
+'
+'+--------------------------------------------------------------------------
+'| Method           | EnsureEnvironment
+'|------------------+-------------------------------------------------------
+'| Description      | Ensure a clean and working environment.
+'|------------------+-------------------------------------------------------
+'| Parameter        | ./.
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-20  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | This function raises an exception, if there is no
+'|                  | session.
+'+--------------------------------------------------------------------------
+'
 Private Sub EnsureEnvironment()
    CheckSession
    ClearError
 End Sub
 
+'
+'+--------------------------------------------------------------------------
+'| Method           | ConvertFileTimeToDateTime
+'|------------------+-------------------------------------------------------
+'| Description      | Convert the contents of a Windows FILETIME structure
+'|                  | into a VBA Date.
+'|------------------+-------------------------------------------------------
+'| Parameter        | aFileTime: FILETIME structure to convert.
+'|------------------+-------------------------------------------------------
+'| Return values    | Date value of the FILETIME content.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-20  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Private Function ConvertFileTimeToDateTime(ByRef aFileTime As FILETIME) As Date
    Dim systemTimeEntry As SYSTEMTIME
 
@@ -332,7 +508,24 @@ Private Function ConvertFileTimeToDateTime(ByRef aFileTime As FILETIME) As Date
    End If
 End Function
 
-
+'
+'+--------------------------------------------------------------------------
+'| Method           | GetInternetHandle
+'|------------------+-------------------------------------------------------
+'| Description      | Initialize the application's use of the WinINet
+'|                  | functions.
+'|------------------+-------------------------------------------------------
+'| Parameter        | ./.
+'|------------------+-------------------------------------------------------
+'| Return values    | Date value of the FILETIME content.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-20  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | The internet handle is stored in m_InternetHandle.
+'+--------------------------------------------------------------------------
+'
 Private Function GetInternetHandle() As LongPtr
    If m_InternetHandle = 0 Then
       m_InternetHandle = InternetOpen(m_UserAgent, INTERNET_OPEN_TYPE_PRECONFIG, vbNullString, vbNullString, 0&)
@@ -344,6 +537,23 @@ Private Function GetInternetHandle() As LongPtr
    GetInternetHandle = m_InternetHandle
 End Function
 
+'
+'+--------------------------------------------------------------------------
+'| Method           | CloseInternetHandle
+'|------------------+-------------------------------------------------------
+'| Description      | Close the internet handle.
+'|------------------+-------------------------------------------------------
+'| Parameter        | ./.
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-20  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | The internet handle in m_InternetHandle is closed.
+'+--------------------------------------------------------------------------
+'
 Private Sub CloseInternetHandle()
    If m_InternetHandle <> 0 Then
       InternetCloseHandle m_InternetHandle
@@ -354,24 +564,119 @@ End Sub
 '
 ' Public properties
 '
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | IsSessionEstablished
+'|------------------+-------------------------------------------------------
+'| Description      | Is a session established?
+'|------------------+-------------------------------------------------------
+'| Parameter        | ./.
+'|------------------+-------------------------------------------------------
+'| Return values    | True:  An internet session is established.
+'|                  | False: There is no internet session.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-20  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Public Property Get IsSessionEstablished() As Boolean
    IsSessionEstablished = (m_Session <> 0)
 End Property
 
+'
+'+--------------------------------------------------------------------------
+'| Method           | HadError
+'|------------------+-------------------------------------------------------
+'| Description      | Was there an error in the last function?
+'|------------------+-------------------------------------------------------
+'| Parameter        | ./.
+'|------------------+-------------------------------------------------------
+'| Return values    | True:  There was an error.
+'|                  | False: There was no error.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-20  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Public Property Get HadError() As Boolean
    HadError = (Len(m_ErrorText) > 0)
 End Property
 
+'
+'+--------------------------------------------------------------------------
+'| Method           | ErrorCode
+'|------------------+-------------------------------------------------------
+'| Description      | Get last internet error code.
+'|------------------+-------------------------------------------------------
+'| Parameter        | ./.
+'|------------------+-------------------------------------------------------
+'| Return values    | Last internet error code. 0, if there was none.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-20  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Public Property Get ErrorCode() As Long
    ErrorCode = m_ErrorCode
 End Property
 
+'
+'+--------------------------------------------------------------------------
+'| Method           | ErrorMessage
+'|------------------+-------------------------------------------------------
+'| Description      | Get last internet error message.
+'|------------------+-------------------------------------------------------
+'| Parameter        | ./.
+'|------------------+-------------------------------------------------------
+'| Return values    | Last internet error error message.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-20  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Public Property Get ErrorMessage() As String
    ErrorMessage = m_ErrorText
 End Property
 
 '
 ' Public methods
+'
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | Connect
+'|------------------+-------------------------------------------------------
+'| Description      | Connect to a remote FTP server.
+'|------------------+-------------------------------------------------------
+'| Parameter        | serverName:    Server name.
+'|                  | portNumber:    Port number (optional, default: 21).
+'|                  | usePassiveFTP: Use passive FTP (optional, default: true).
+'|                  | userName:      User name (optional, default: anynymous).
+'|                  | password:      Password(optional, default: anynymous).
+'|------------------+-------------------------------------------------------
+'| Return values    | True:  Connect was successful.
+'|                  | False: Connect failed.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-20  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | Consult ErrorCode and ErrorMessage for the reason a
+'|                  | Connect failed.
+'+--------------------------------------------------------------------------
 '
 Public Function Connect(ByRef serverName As String, _
                         Optional ByVal portNumber As Integer = INTERNET_DEFAULT_FTP_PORT, _
@@ -400,13 +705,52 @@ Public Function Connect(ByRef serverName As String, _
    End If
 End Function
    
+'
+'+--------------------------------------------------------------------------
+'| Method           | Disconnect
+'|------------------+-------------------------------------------------------
+'| Description      | Disconnect from remote FTP server.
+'|------------------+-------------------------------------------------------
+'| Parameter        | ./.
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-20  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Public Sub Disconnect()
    If IsSessionEstablished Then
       InternetCloseHandle m_Session
       m_Session = 0
    End If
 End Sub
-   
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | GetFile
+'|------------------+-------------------------------------------------------
+'| Description      | Get a file from the remote FTP server.
+'|------------------+-------------------------------------------------------
+'| Parameter        | remoteFileName:   Remote file name.
+'|                  | localFileName:    Name the file should get on the local
+'|                  |                   file system.
+'|                  | isBinaryTransfer: True:  Use binary data transfer.
+'|                  |                   False: Use character data transfer.
+'|------------------+-------------------------------------------------------
+'| Return values    | True:  Get was successful.
+'|                  | False: Get failed.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-20  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Public Function GetFile(ByRef remoteFileName As String, _
                         ByRef localFileName As String, _
                         Optional ByVal isBinaryTransfer As Boolean = True) As Boolean
@@ -427,6 +771,28 @@ Public Function GetFile(ByRef remoteFileName As String, _
    End If
 End Function
 
+'
+'+--------------------------------------------------------------------------
+'| Method           | PutFile
+'|------------------+-------------------------------------------------------
+'| Description      | Put a file on the remote FTP server.
+'|------------------+-------------------------------------------------------
+'| Parameter        | localFileName:    Local file name.
+'|                  | remoteFileName:   Name the file should get on the remote
+'|                  |                   file system.
+'|                  | isBinaryTransfer: True:  Use binary data transfer.
+'|                  |                   False: Use character data transfer.
+'|------------------+-------------------------------------------------------
+'| Return values    | True:  Put was successful.
+'|                  | False: Put failed.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-20  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Public Function PutFile(ByRef localFileName As String, _
                         ByRef remoteFileName As String, _
                         Optional ByVal isBinaryTransfer As Boolean = True) As Boolean
@@ -445,6 +811,24 @@ Public Function PutFile(ByRef localFileName As String, _
    End If
 End Function
 
+'
+'+--------------------------------------------------------------------------
+'| Method           | CreateDirectory
+'|------------------+-------------------------------------------------------
+'| Description      | Create a directory on the remote FTP server.
+'|------------------+-------------------------------------------------------
+'| Parameter        | directoryName: Name of the directory to create.
+'|------------------+-------------------------------------------------------
+'| Return values    | True:  Create was successful.
+'|                  | False: Create failed.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-20  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Public Function CreateDirectory(ByRef directoryName As String) As Boolean
    EnsureEnvironment
 
@@ -457,6 +841,24 @@ Public Function CreateDirectory(ByRef directoryName As String) As Boolean
    End If
 End Function
 
+'
+'+--------------------------------------------------------------------------
+'| Method           | RemoveDirectory
+'|------------------+-------------------------------------------------------
+'| Description      | Remove a directory from the remote FTP server.
+'|------------------+-------------------------------------------------------
+'| Parameter        | directoryName: Name of the directory to remove.
+'|------------------+-------------------------------------------------------
+'| Return values    | True:  Remove was successful.
+'|                  | False: Remove failed.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-20  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Public Function RemoveDirectory(ByRef directoryName As String) As Boolean
    EnsureEnvironment
 
@@ -469,6 +871,25 @@ Public Function RemoveDirectory(ByRef directoryName As String) As Boolean
    End If
 End Function
 
+'
+'+--------------------------------------------------------------------------
+'| Method           | RenameFile
+'|------------------+-------------------------------------------------------
+'| Description      | Rename a file on the remote FTP server.
+'|------------------+-------------------------------------------------------
+'| Parameter        | oldName: Old file name.
+'|                  | newName: New file name.
+'|------------------+-------------------------------------------------------
+'| Return values    | True:  Rename was successful.
+'|                  | False: Rename failed.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-20  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Public Function RenameFile(ByRef oldName As String, ByRef newName As String) As Boolean
    EnsureEnvironment
 
@@ -481,6 +902,24 @@ Public Function RenameFile(ByRef oldName As String, ByRef newName As String) As 
    End If
 End Function
 
+'
+'+--------------------------------------------------------------------------
+'| Method           | DeleteFile
+'|------------------+-------------------------------------------------------
+'| Description      | Delete a file on the remote FTP server.
+'|------------------+-------------------------------------------------------
+'| Parameter        | fileName: Name of file to delete.
+'|------------------+-------------------------------------------------------
+'| Return values    | True:  Delete was successful.
+'|                  | False: Delete failed.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-20  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Public Function DeleteFile(ByRef filename As String) As Boolean
    EnsureEnvironment
 
@@ -493,6 +932,24 @@ Public Function DeleteFile(ByRef filename As String) As Boolean
    End If
 End Function
 
+'
+'+--------------------------------------------------------------------------
+'| Method           | GetCurrentDirectory
+'|------------------+-------------------------------------------------------
+'| Description      | Get the name of the current directory on the
+'|                  | remote FTP server.
+'|------------------+-------------------------------------------------------
+'| Parameter        | ./.
+'|------------------+-------------------------------------------------------
+'| Return values    | Directory name.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-20  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Public Function GetCurrentDirectory() As String
    Dim currentDirectory As String
    Dim directoryNameLength As Long
@@ -515,6 +972,25 @@ Public Function GetCurrentDirectory() As String
    GetCurrentDirectory = Left$(currentDirectory, directoryNameLength)
 End Function
 
+'
+'+--------------------------------------------------------------------------
+'| Method           | SetCurrentDirectory
+'|------------------+-------------------------------------------------------
+'| Description      | Set the current directory on the remote FTP server
+'|                  | to the specified name.
+'|------------------+-------------------------------------------------------
+'| Parameter        | directoryName: Name of new current directory.
+'|------------------+-------------------------------------------------------
+'| Return values    | True:  Set directory was successful.
+'|                  | False: Set directory failed.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-20  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Public Function SetCurrentDirectory(ByRef directoryName As String) As Boolean
    EnsureEnvironment
 
@@ -527,6 +1003,26 @@ Public Function SetCurrentDirectory(ByRef directoryName As String) As Boolean
    End If
 End Function
 
+'
+'+--------------------------------------------------------------------------
+'| Method           | DirFiles
+'|------------------+-------------------------------------------------------
+'| Description      | Get a list of files in the current directory on the
+'|                  | FTP server.
+'|------------------+-------------------------------------------------------
+'| Parameter        | fileFilter: Filter for files on the FTP server
+'|                  |             (optional, default: "*.*").
+'|------------------+-------------------------------------------------------
+'| Return values    | Dictionary of all found files. Key is the file name,
+'|                  | value is a DirectoryEntry record object.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-20  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Public Function DirFiles(Optional ByRef fileFilter As String = "*.*") As Scripting.Dictionary
    Dim findData As WIN32_FIND_DATA
    Dim findHandle As Long
@@ -571,6 +1067,24 @@ End Function
 '
 ' Class methods
 '
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | Initialize
+'|------------------+-------------------------------------------------------
+'| Description      | Initialize the instance.
+'|------------------+-------------------------------------------------------
+'| Parameter        | ./.
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-20  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Private Sub Class_Initialize()
    m_UserAgent = DEFAULT_USER_AGENT
 
@@ -581,6 +1095,23 @@ Private Sub Class_Initialize()
    m_ErrorText = ""
 End Sub
 
+'
+'+--------------------------------------------------------------------------
+'| Method           | Terminate
+'|------------------+-------------------------------------------------------
+'| Description      | Finalize the instance.
+'|------------------+-------------------------------------------------------
+'| Parameter        | ./.
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-20  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
 Private Sub Class_Terminate()
    Disconnect
    CloseInternetHandle
