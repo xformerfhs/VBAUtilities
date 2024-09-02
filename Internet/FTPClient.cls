@@ -215,8 +215,6 @@ Private Declare PtrSafe Function InternetOpen Lib "wininet.dll" Alias "InternetO
 '
 ' Instance variables
 '
-Private m_UserAgent As String
-
 Private m_Session As LongPtr
 Private m_InternetHandle As LongPtr
 
@@ -515,9 +513,9 @@ End Function
 '| Description      | Initialize the application's use of the WinINet
 '|                  | functions.
 '|------------------+-------------------------------------------------------
-'| Parameter        | ./.
+'| Parameter        | userAgent: User agent string.
 '|------------------+-------------------------------------------------------
-'| Return values    | Date value of the FILETIME content.
+'| Return values    | Internet connection handle.
 '|------------------+-------------------------------------------------------
 '| Author           | Frank Schwab
 '|------------------+-------------------------------------------------------
@@ -526,9 +524,9 @@ End Function
 '| Remarks          | The internet handle is stored in m_InternetHandle.
 '+--------------------------------------------------------------------------
 '
-Private Function GetInternetHandle() As LongPtr
+Private Function GetInternetHandle(ByRef userAgent As String) As LongPtr
    If m_InternetHandle = 0 Then
-      m_InternetHandle = InternetOpen(m_UserAgent, INTERNET_OPEN_TYPE_PRECONFIG, vbNullString, vbNullString, 0&)
+      m_InternetHandle = InternetOpen(userAgent, INTERNET_OPEN_TYPE_PRECONFIG, vbNullString, vbNullString, 0&)
 
       If m_InternetHandle = 0 Then _
          HandleAPIError "InternetOpen", Err.LastDllError
@@ -665,7 +663,8 @@ End Property
 '|                  | portNumber:    Port number (optional, default: 21).
 '|                  | usePassiveFTP: Use passive FTP (optional, default: true).
 '|                  | userName:      User name (optional, default: anynymous).
-'|                  | password:      Password(optional, default: anynymous).
+'|                  | password:      Password (optional, default: anynymous).
+'|                  | userAgent:     User agent string (optional, default: FTPClient).
 '|------------------+-------------------------------------------------------
 '| Return values    | True:  Connect was successful.
 '|                  | False: Connect failed.
@@ -682,14 +681,15 @@ Public Function Connect(ByRef serverName As String, _
                         Optional ByVal portNumber As Integer = INTERNET_DEFAULT_FTP_PORT, _
                         Optional ByVal usePassiveFTP As Boolean = True, _
                         Optional ByRef userName As String = DEFAULT_USER_NAME, _
-                        Optional ByRef password As String = DEFAULT_USER_NAME) As Boolean
+                        Optional ByRef password As String = DEFAULT_USER_NAME, _
+                        Optional ByRef userAgent As String = DEFAULT_USER_AGENT) As Boolean
    ClearError
 
    Me.Disconnect
 
    Connect = False
 
-   m_Session = InternetConnect(GetInternetHandle(), _
+   m_Session = InternetConnect(GetInternetHandle(userAgent), _
                                serverName, _
                                portNumber, _
                                userName, _
@@ -1086,8 +1086,6 @@ End Function
 '+--------------------------------------------------------------------------
 '
 Private Sub Class_Initialize()
-   m_UserAgent = DEFAULT_USER_AGENT
-
    m_InternetHandle = 0
    m_Session = 0
 
