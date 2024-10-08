@@ -10,11 +10,11 @@ Attribute VB_Exposed = False
 '
 '+-------------------------------------------------------------------------
 '|
-'| SPDX-FileCopyrightText: 2020 Frank Schwab
+'| SPDX-FileCopyrightText: 2020-2024 Frank Schwab
 '|
 '| SPDX-License-Identifier: MIT
 '|
-'| Copyright 2020, Frank Schwab
+'| Copyright 2020-2024, Frank Schwab
 '|
 '| Permission is hereby granted, free of charge, to any person obtaining a
 '| copy of this software and associated documentation files (the "Software"),
@@ -41,10 +41,11 @@ Attribute VB_Exposed = False
 '|---------------------+---------------------------------------------------
 '| Author              | Frank Schwab
 '|---------------------+---------------------------------------------------
-'| Version             | 1.0.1
+'| Version             | 1.0.2
 '|---------------------+---------------------------------------------------
 '| Changes             | 2020-07-20  Created. fhs
 '|                     | 2020-08-24  Made 64 bit compatible. fhs
+'|                     | 2024-10-08  Correct 64 bit compatibility. fhs
 '|---------------------+---------------------------------------------------
 '
 
@@ -129,18 +130,18 @@ Public Enum TPriorityClassValue
 End Enum
 
 ' The return value is a pseudo handle to the current process.
-Private Declare PtrSafe Function GetCurrentProcess Lib "kernel32" () As Long
+Private Declare PtrSafe Function GetCurrentProcess Lib "kernel32" () As LongPtr
 
 ' Function returns the priority class for the specified process.
 Private Declare PtrSafe Function GetPriorityClass Lib "kernel32" ( _
-       ByVal hProcess As Long) _
+       ByVal hProcess As LongPtr) _
        As Long
 
 ' Function sets the priority class for the specified process.
 ' This value together with the priority value of each thread
 ' of the process determines each thread's base priority level.
 Private Declare PtrSafe Function SetPriorityClass Lib "kernel32" ( _
-        ByVal hProcess As Long, _
+        ByVal hProcess As LongPtr, _
         ByVal dwPriorityClass As Long) _
         As Long
 
@@ -171,7 +172,7 @@ End Sub
 ' Public methods
 '
 Public Sub ChangeThisProcessPriority(ByVal newPriorityClassValue As TPriorityClassValue)
-   Dim hProcess As Long
+   Dim hProcess As LongPtr
    Dim rc As Long
    Dim callError As Long
 

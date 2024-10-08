@@ -10,11 +10,11 @@ Attribute VB_Exposed = False
 '
 '+-------------------------------------------------------------------------
 '|
-'| SPDX-FileCopyrightText: 2022 Frank Schwab
+'| SPDX-FileCopyrightText: 2022-2024 Frank Schwab
 '|
 '| SPDX-License-Identifier: MIT
 '|
-'| Copyright 2022, Frank Schwab
+'| Copyright 2022-2024, Frank Schwab
 '|
 '| Permission is hereby granted, free of charge, to any person obtaining a
 '| copy of this software and associated documentation files (the "Software"),
@@ -41,7 +41,7 @@ Attribute VB_Exposed = False
 '|---------------------+---------------------------------------------------
 '| Author              | Frank Schwab
 '|---------------------+---------------------------------------------------
-'| Version             | 1.2.0
+'| Version             | 1.2.1
 '|---------------------+---------------------------------------------------
 '| Changes             | 2020-07-18  Created. fhs
 '|                     | 2020-08-03  Correct array length calculation
@@ -56,6 +56,7 @@ Attribute VB_Exposed = False
 '|                     | 2022-03-18  Added hash of a part of a byte array
 '|                     |             and file content. fhs
 '|                     | 2022-03-19  Use BinaryFileInputStream. fhs
+'|                     | 2024-08-10  Better 64 bit compatibility. fhs
 '|---------------------+---------------------------------------------------
 '| Typical usage       | ' For getting a hash value
 '|                     | Dim hc As New HashCng
@@ -483,7 +484,7 @@ Private Sub InitializeHash(ByRef hashAlgorithm As String)
    If IsNTSuccess(rc) Then
       SetHashSize
    Else
-      HandleNTAPIError "create hash hash", "BCryptCreateHash", rc
+      HandleNTAPIError "create hash", "BCryptCreateHash", rc
    End If
 
    m_IsHMAC = False

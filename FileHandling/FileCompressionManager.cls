@@ -10,11 +10,11 @@ Attribute VB_Exposed = False
 '
 '+-------------------------------------------------------------------------
 '|
-'| SPDX-FileCopyrightText: 2020 Frank Schwab
+'| SPDX-FileCopyrightText: 2020-2024 Frank Schwab
 '|
 '| SPDX-License-Identifier: MIT
 '|
-'| Copyright 2020, Frank Schwab
+'| Copyright 2020-2024, Frank Schwab
 '|
 '| Permission is hereby granted, free of charge, to any person obtaining a
 '| copy of this software and associated documentation files (the "Software"),
@@ -42,10 +42,11 @@ Attribute VB_Exposed = False
 '|---------------------+---------------------------------------------------
 '| Author              | Frank Schwab
 '|---------------------+---------------------------------------------------
-'| Version             | 1.0.1
+'| Version             | 1.0.2
 '|---------------------+---------------------------------------------------
 '| Changes             | 2020-07-20  Created. fhs
 '|                     | 2020-08-30  Made 64 bit compatible. fhs
+'|                     | 2024-10-08  Corrected 64 bit compatibility. fhs
 '|---------------------+---------------------------------------------------
 '
 
@@ -134,13 +135,13 @@ Private Declare PtrSafe Function CreateFile Lib "kernel32.dll" Alias "CreateFile
    ByVal lpSecurityAttributes As LongPtr, _
    ByVal dwCreationDisposition As Long, _
    ByVal dwFlagsAndAttributes As Long, _
-   ByVal hTemplateFile As Long) As Long
+   ByVal hTemplateFile As LongPtr) As Long
 
 Private Declare PtrSafe Function CloseHandle Lib "kernel32.dll" ( _
-   ByVal hObject As Long) As Long
+   ByVal hObject As LongPtr) As Long
 
 Private Declare PtrSafe Function DeviceIoControl Lib "kernel32.dll" ( _
-   ByVal hDevice As Long, _
+   ByVal hDevice As LongPtr, _
    ByVal dwIoControlCode As Long, _
    ByVal lpInBuffer As LongPtr, _
    ByVal nInBufferSize As Long, _
@@ -200,18 +201,18 @@ End Function
 '+--------------------------------------------------------------------------
 '
 Private Sub HandleAPIError(ByRef winApiFunctionName As String, Optional ByRef additionalInformation As String = "")
-   Dim ErrorCode As Long
+   Dim errorCode As Long
 
-   ErrorCode = Err.LastDllError
+   errorCode = Err.LastDllError
 
    Dim mm As New MessageManager
 
    Dim errorText As String
    
    errorText = ERROR_TEXT_API_ERROR & _
-               Format$(ErrorCode) & _
+               Format$(errorCode) & _
                " (0x" & _
-               Hex$(ErrorCode) & _
+               Hex$(errorCode) & _
                ") on call to '" & _
                source & _
                "'"
@@ -223,7 +224,7 @@ Private Sub HandleAPIError(ByRef winApiFunctionName As String, Optional ByRef ad
              MODULE_NAME, _
              errorText & _
                 ": " & _
-                mm.GetMessageForWindowsErrorCode(ErrorCode)
+                mm.GetMessageForWindowsErrorCode(errorCode)
 End Sub
 
 '
@@ -269,12 +270,13 @@ End Function
 '| Author           | Frank Schwab
 '|------------------+-------------------------------------------------------
 '| Changes          | 2020-07-20  Created. fhs
+'|                  | 2024-10-08  Corrected fso call. fhs
 '|------------------+-------------------------------------------------------
 '| Remarks          | ./.
 '+--------------------------------------------------------------------------
 '
 Private Function GetDrivePath(ByRef filePath As String) As String
-   GetDrivePath = m_FSO.GetDrivePath(m_FSO.GetAbsolutePathName(filePath)) & "\"
+   GetDrivePath = m_FSO.GetDriveName(m_FSO.GetAbsolutePathName(filePath)) & "\"
 End Function
 
 '

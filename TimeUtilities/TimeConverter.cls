@@ -10,11 +10,11 @@ Attribute VB_Exposed = False
 '
 '+-------------------------------------------------------------------------
 '|
-'| SPDX-FileCopyrightText: 2022 Frank Schwab
+'| SPDX-FileCopyrightText: 2022-2024 Frank Schwab
 '|
 '| SPDX-License-Identifier: MIT
 '|
-'| Copyright 2022, Frank Schwab
+'| Copyright 2022-2024, Frank Schwab
 '|
 '| Permission is hereby granted, free of charge, to any person obtaining a
 '| copy of this software and associated documentation files (the "Software"),
@@ -111,7 +111,7 @@ End Enum
 ' System API declarations
 '
 Private Declare PtrSafe Function GetTimeZoneInformation Lib "kernel32" _
-       (lpTimeZoneInformation As TIME_ZONE_INFORMATION) As Long
+       (ByRef lpTimeZoneInformation As TIME_ZONE_INFORMATION) As Long
 
 Private Declare PtrSafe Function SystemTimeToTzSpecificLocalTime Lib "kernel32" _
        (ByRef lpTimeZoneInformation As TIME_ZONE_INFORMATION, _
@@ -251,18 +251,18 @@ Public Function ConvertUTCToLocalTime(ByVal utcTime As Date) As Date
    DST = GetTimeZoneInformation(TZI)
 
    If DST = TIME_ZONE_ID_INVALID Then
-          HandleError STR_API_TIME_ZONE_INFORMATION, Err.LastDllError
+      HandleError STR_API_TIME_ZONE_INFORMATION, Err.LastDllError
    Else
       If DST <> TIME_ZONE_ID_UNKNOWN Then
          rc = SystemTimeToTzSpecificLocalTime(TZI, utcSystemTime, localSystemTime)
 
-                 If rc <> RC_ERROR Then
+         If rc <> RC_ERROR Then
             ConvertUTCToLocalTime = ConvertSystemTimeToDate(localSystemTime)
-                 Else
+         Else
             HandleError "SystemTimeToTzSpecificLocalTime", Err.LastDllError
          End If
       Else
-             ConvertUTCToLocalTime = utcTime
+         ConvertUTCToLocalTime = utcTime
       End If
    End If
 End Function
@@ -298,14 +298,14 @@ Public Function ConvertLocalTimeToUTC(ByVal localTime As Date) As Date
    DST = GetTimeZoneInformation(TZI)
 
    If DST = TIME_ZONE_ID_INVALID Then
-          HandleError STR_API_TIME_ZONE_INFORMATION, Err.LastDllError
+      HandleError STR_API_TIME_ZONE_INFORMATION, Err.LastDllError
    Else
       If DST <> TIME_ZONE_ID_UNKNOWN Then
          rc = TzSpecificLocalTimeToSystemTime(TZI, localSystemTime, utcSystemTime)
 
-                 If rc <> RC_ERROR Then
+         If rc <> RC_ERROR Then
             ConvertLocalTimeToUTC = ConvertSystemTimeToDate(utcSystemTime)
-                 Else
+         Else
             HandleError "TzSpecificLocalTimeToSystemTime", Err.LastDllError
          End If
       Else

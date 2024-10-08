@@ -10,11 +10,11 @@ Attribute VB_Exposed = False
 '
 '+-------------------------------------------------------------------------
 '|
-'| SPDX-FileCopyrightText: 2020 Frank Schwab
+'| SPDX-FileCopyrightText: 2020-2024 Frank Schwab
 '|
 '| SPDX-License-Identifier: MIT
 '|
-'| Copyright 2020, Frank Schwab
+'| Copyright 2020-2024, Frank Schwab
 '|
 '| Permission is hereby granted, free of charge, to any person obtaining a
 '| copy of this software and associated documentation files (the "Software"),
@@ -41,10 +41,11 @@ Attribute VB_Exposed = False
 '|---------------------+---------------------------------------------------
 '| Author              | Frank Schwab
 '|---------------------+---------------------------------------------------
-'| Version             | 1.0.1
+'| Version             | 1.0.2
 '|---------------------+---------------------------------------------------
 '| Changes             | 2020-07-23  Created. fhs
 '|                     | 2020-10-24  Made 64 bit compatible. fhs
+'|                     | 2022-10-08  Correct 64 bit compatibility. fhs
 '|---------------------+---------------------------------------------------
 '
 Option Explicit
@@ -78,9 +79,9 @@ Private Const S_FALSE As Long = 1
 Private Declare PtrSafe Function SHGetFolderPath _
 Lib "shell32.dll" _
 Alias "SHGetFolderPathA" ( _
-  ByVal hwnd As Long, _
+  ByVal hwnd As LongPtr, _
   ByVal csidl As Long, _
-  ByVal hToken As Long, _
+  ByVal hToken As LongPtr, _
   ByVal dwFlags As Long, _
   ByVal pszPath As String) As Long
 
