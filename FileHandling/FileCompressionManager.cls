@@ -81,7 +81,7 @@ Private Const GENERIC_WRITE   As Long = &H40000000
 '''
 ''' Constants for dwShareMode
 '''
-Private Const FILE_SHARE_READ    As Long = &H1
+Private Const FILE_SHARE_READ As Long = &H1
 
 '''
 ''' Constants for dwCreationDisposition
