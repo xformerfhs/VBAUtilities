@@ -42,11 +42,12 @@ Attribute VB_Exposed = False
 '|---------------------+---------------------------------------------------
 '| Author              | Frank Schwab
 '|---------------------+---------------------------------------------------
-'| Version             | 1.0.2
+'| Version             | 1.0.3
 '|---------------------+---------------------------------------------------
 '| Changes             | 2020-07-20  Created. fhs
 '|                     | 2020-08-30  Made 64 bit compatible. fhs
 '|                     | 2024-10-08  Corrected 64 bit compatibility. fhs
+'|                     | 2024-10-09  Corrected 64 bit compatibility. fhs
 '|---------------------+---------------------------------------------------
 '
 
@@ -96,7 +97,7 @@ Private Const FILE_ATTRIBUTE_NORMAL As Long = &H80
 '''
 ''' Constant for invalid handle
 '''
-Private Const INVALID_HANDLE_VALUE As Long = -1&
+Private Const INVALID_HANDLE_VALUE As LongPtr = -1
 
 '''
 ''' Constants for ioctl
@@ -351,7 +352,7 @@ End Function
 '| Remarks          | ./.
 '+--------------------------------------------------------------------------
 '
-Private Function GetCompressionAttribute(ByRef handle As Long) As Boolean
+Private Function GetCompressionAttribute(ByVal handle As LongPtr) As Boolean
    Dim controlParameter As Integer
    Dim returnedBytesCount As Long
 
@@ -381,7 +382,7 @@ Private Function GetCompressionAttribute(ByRef handle As Long) As Boolean
    End If
 End Function
 
-Private Sub SetCompressionAttribute(ByRef handle As Long, ByVal shouldCompress As Boolean)
+Private Sub SetCompressionAttribute(ByVal handle As LongPtr, ByVal shouldCompress As Boolean)
    Dim controlParameter As Integer
    Dim returnedBytesCount As Long
 
@@ -432,7 +433,7 @@ End Sub
 '
 Private Sub OpenFileAndSetCompressionState(ByRef filePath As String, ByVal creationDisposition As Long, ByVal shouldCompress As Boolean)
    If DoesFilesystemSupportCompression(filePath) Then
-      Dim handle As Long
+      Dim handle As LongPtr
 
 '
 ' It is absolutely necessary to specify "GENERIC_READ or GENERIC_WRITE" as the
@@ -481,7 +482,7 @@ Private Function GetCompressionAttributeForFile(ByRef filePath As String) As Boo
    GetCompressionAttributeForFile = False
 
    If DoesFilesystemSupportCompression(filePath) Then
-      Dim handle As Long
+      Dim handle As LongPtr
    
       handle = CreateFile(filePath, _
                           GENERIC_READ, _
