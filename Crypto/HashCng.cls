@@ -10,11 +10,11 @@ Attribute VB_Exposed = False
 '
 '+-------------------------------------------------------------------------
 '|
-'| SPDX-FileCopyrightText: 2022-2024 Frank Schwab
+'| SPDX-FileCopyrightText: 2020-2025 Frank Schwab
 '|
 '| SPDX-License-Identifier: MIT
 '|
-'| Copyright 2022-2024, Frank Schwab
+'| Copyright 2020-2025, Frank Schwab
 '|
 '| Permission is hereby granted, free of charge, to any person obtaining a
 '| copy of this software and associated documentation files (the "Software"),
@@ -41,7 +41,7 @@ Attribute VB_Exposed = False
 '|---------------------+---------------------------------------------------
 '| Author              | Frank Schwab
 '|---------------------+---------------------------------------------------
-'| Version             | 1.2.1
+'| Version             | 1.3.0
 '|---------------------+---------------------------------------------------
 '| Changes             | 2020-07-18  Created. fhs
 '|                     | 2020-08-03  Correct array length calculation
@@ -57,6 +57,8 @@ Attribute VB_Exposed = False
 '|                     |             and file content. fhs
 '|                     | 2022-03-19  Use BinaryFileInputStream. fhs
 '|                     | 2024-08-10  Better 64 bit compatibility. fhs
+'|                     | 2025-07-14  Add SHA-3 hashes and HMACs, KMACs
+'|                     |             and IsMAC property. fhs
 '|---------------------+---------------------------------------------------
 '| Typical usage       | ' For getting a hash value
 '|                     | Dim hc As New HashCng
@@ -116,10 +118,15 @@ Private Const BCRYPT_SHA1_ALGORITHM   As String = "SHA1"
 Private Const BCRYPT_SHA256_ALGORITHM As String = "SHA256"
 Private Const BCRYPT_SHA384_ALGORITHM As String = "SHA384"
 Private Const BCRYPT_SHA512_ALGORITHM As String = "SHA512"
+Private Const BCRYPT_SHA3_256_ALGORITHM As String = "SHA3-256"
+Private Const BCRYPT_SHA3_384_ALGORITHM As String = "SHA3-384"
+Private Const BCRYPT_SHA3_512_ALGORITHM As String = "SHA3-512"
+Private Const BCRYPT_KMAC128_ALGORITHM As String = "KMAC128"
+Private Const BCRYPT_KMAC256_ALGORITHM As String = "KMAC256"
 
 ' Cryptography Primitive Property Identifiers
-Private Const BCRYPT_OBJECT_LENGTH As String = "ObjectLength"
 Private Const BCRYPT_HASH_LENGTH As String = "HashDigestLength"
+Private Const BCRYPT_CUSTOMIZATION_STRING As String = "CustomizationString"
 
 ' Algorithm flags
 Private Const BCRYPT_NO_FLAG              As Long = 0&
@@ -144,6 +151,15 @@ Private Declare PtrSafe Function BCryptGetProperty _
                  ByRef pbOutput As Any, _
                  ByVal cbOutput As Long, _
                  ByRef pcbResult As Long, _
+                 ByVal dwFlags As Long) _
+                As Long
+
+Private Declare PtrSafe Function BCryptSetProperty _
+                Lib "bcrypt.dll" _
+                (ByVal hObject As LongPtr, _
+                 ByVal pszProperty As LongPtr, _
+                 ByVal pbInput As LongPtr, _
+                 ByVal cbInput As Long, _
                  ByVal dwFlags As Long) _
                 As Long
 
@@ -188,7 +204,7 @@ Private Declare PtrSafe Function BCryptCloseAlgorithmProvider _
 '
 ' Private check constants
 '
-Private Const MINIMUM_KEY_LENGTH As Long = 20
+Private Const MINIMUM_KEY_LENGTH As Long = 16
 
 '
 ' Private file handling constants
@@ -204,6 +220,7 @@ Private m_U8C As New UTF8Converter
 Private m_AlgorithmProviderHandle As LongPtr
 Private m_HashHandle As LongPtr
 Private m_HashSize As Long
+Private m_IsMAC As Boolean
 Private m_IsHMAC As Boolean
 
 '
@@ -214,7 +231,7 @@ Private m_IsHMAC As Boolean
 '+--------------------------------------------------------------------------
 '| Method           | IsNTSuccess
 '|------------------+-------------------------------------------------------
-'| Description      | Test if an NT status code means success
+'| Description      | Test if an NT status code means success.
 '|------------------+-------------------------------------------------------
 '| Parameter        | ntStatusCode: NT status code to check
 '|------------------+-------------------------------------------------------
@@ -235,7 +252,7 @@ End Function
 '+--------------------------------------------------------------------------
 '| Method           | GetArrayLength
 '|------------------+-------------------------------------------------------
-'| Description      | Get length of a byte array
+'| Description      | Get length of a byte array.
 '|------------------+-------------------------------------------------------
 '| Parameter        | aByteArray: Byte array to get the length for
 '|------------------+-------------------------------------------------------
@@ -265,7 +282,7 @@ End Function
 '+--------------------------------------------------------------------------
 '| Method           | HandleNTAPIError
 '|------------------+-------------------------------------------------------
-'| Description      | Handle Windows NT API error
+'| Description      | Handle Windows NT API error.
 '|------------------+-------------------------------------------------------
 '| Parameter        | actionDescription: Description of the action
 '|                  | apiFunctionName  : Name of the API function
@@ -294,7 +311,7 @@ End Sub
 '+--------------------------------------------------------------------------
 '| Method           | CheckKey
 '|------------------+-------------------------------------------------------
-'| Description      | Check if key is long enough
+'| Description      | Check if key is long enough.
 '|------------------+-------------------------------------------------------
 '| Parameter        | key: Key byte array to check
 '|------------------+-------------------------------------------------------
@@ -326,7 +343,7 @@ End Function
 '+--------------------------------------------------------------------------
 '| Method           | DestroyHash
 '|------------------+-------------------------------------------------------
-'| Description      | Destroy the hash object
+'| Description      | Destroy the hash object.
 '|------------------+-------------------------------------------------------
 '| Parameter        | ./.
 '|------------------+-------------------------------------------------------
@@ -357,7 +374,7 @@ End Sub
 '+--------------------------------------------------------------------------
 '| Method           | DestroyProvider
 '|------------------+-------------------------------------------------------
-'| Description      | Destroy the provider object
+'| Description      | Destroy the provider object.
 '|------------------+-------------------------------------------------------
 '| Parameter        | ./.
 '|------------------+-------------------------------------------------------
@@ -392,7 +409,7 @@ End Sub
 '+--------------------------------------------------------------------------
 '| Method           | InitializeProvider
 '|------------------+-------------------------------------------------------
-'| Description      | Initialize the provider object
+'| Description      | Initialize the provider object.
 '|------------------+-------------------------------------------------------
 '| Parameter        | hashAlgorithm: The BCRYPT algorithm string
 '|                  | algorithmFlag: A flag to use with the OpenAlgorithm
@@ -425,7 +442,7 @@ End Sub
 '+--------------------------------------------------------------------------
 '| Method           | SetHashSize
 '|------------------+-------------------------------------------------------
-'| Description      | Set the hash size form the hash object
+'| Description      | Set the hash size form the hash object.
 '|------------------+-------------------------------------------------------
 '| Parameter        | ./.
 '|------------------+-------------------------------------------------------
@@ -459,9 +476,40 @@ End Sub
 
 '
 '+--------------------------------------------------------------------------
+'| Method           | SetCustomizationString
+'|------------------+-------------------------------------------------------
+'| Description      | Set the customization string for KMACs.
+'|------------------+-------------------------------------------------------
+'| Parameter        | customizationString: Customization byte array
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2025-07-14  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
+Private Sub SetCustomizationString(ByRef customizationString() As Byte)
+   Dim rc As Long
+
+   Dim csl As Long
+   csl = GetArrayLength(customizationString)
+   
+   If csl > 0 Then
+      rc = BCryptSetProperty(m_HashHandle, StrPtr(BCRYPT_CUSTOMIZATION_STRING), VarPtr(customizationString(LBound(customizationString))), csl, 0&)
+
+      If Not IsNTSuccess(rc) Then _
+         HandleNTAPIError "set customization string", "BCryptSetProperty", rc
+   End If
+End Sub
+
+'
+'+--------------------------------------------------------------------------
 '| Method           | InitializeHash
 '|------------------+-------------------------------------------------------
-'| Description      | Initialize the hash object for a hash
+'| Description      | Initialize the hash object for a hash.
 '|------------------+-------------------------------------------------------
 '| Parameter        | hashAlgorithm: The BCRYPT algorithm string
 '|------------------+-------------------------------------------------------
@@ -492,23 +540,32 @@ End Sub
 
 '
 '+--------------------------------------------------------------------------
-'| Method           | InitializeHMAC
+'| Method           | InitializeMAC
 '|------------------+-------------------------------------------------------
-'| Description      | Initialize the hash object for an HMAC
+'| Description      | Initialize the hash object for a MAC.
 '|------------------+-------------------------------------------------------
 '| Parameter        | hashAlgorithm: The BCRYPT algorithm string
+'|                  | key:           Key for HMAC
+'|                  | forHMAC:       True, if an HMAC is initialized
 '|------------------+-------------------------------------------------------
 '| Return values    | ./.
 '|------------------+-------------------------------------------------------
 '| Author           | Frank Schwab
 '|------------------+-------------------------------------------------------
-'| Changes          | 2020-07-18  Created. fhs
+'| Changes          | 2025-07-14  Created. fhs
 '|------------------+-------------------------------------------------------
-'| Remarks          | Initializes the provider, as well
+'| Remarks          | Initializes the provider, as well.
 '+--------------------------------------------------------------------------
 '
-Private Sub InitializeHMAC(ByRef hashAlgorithm As String, ByRef key() As Byte)
-   InitializeProvider hashAlgorithm, BCRYPT_ALG_HANDLE_HMAC_FLAG
+Private Sub InitializeMAC(ByRef hashAlgorithm As String, ByRef key() As Byte, ByVal forHMAC As Boolean)
+   Dim bcryptFlag As Long
+   If forHMAC Then
+      bcryptFlag = BCRYPT_ALG_HANDLE_HMAC_FLAG
+   Else
+      bcryptFlag = BCRYPT_NO_FLAG
+   End If
+   
+   InitializeProvider hashAlgorithm, bcryptFlag
 
    Dim keyLength As Long
 
@@ -525,17 +582,64 @@ Private Sub InitializeHMAC(ByRef hashAlgorithm As String, ByRef key() As Byte)
    If IsNTSuccess(rc) Then
       SetHashSize
    Else
-      HandleNTAPIError "create HMAC hash", "BCryptCreateHash", rc
+      HandleNTAPIError "create KMAC hash", "BCryptCreateHash", rc
    End If
 
-   m_IsHMAC = True
+   m_IsMAC = True
+   m_IsHMAC = forHMAC
+End Sub
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | InitializeHMAC
+'|------------------+-------------------------------------------------------
+'| Description      | Initialize the hash object for an HMAC.
+'|------------------+-------------------------------------------------------
+'| Parameter        | hashAlgorithm: The BCRYPT algorithm string
+'|                  | key:           Key for HMAC
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2020-07-18  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | Initializes the provider, as well
+'+--------------------------------------------------------------------------
+'
+Private Sub InitializeHMAC(ByRef hashAlgorithm As String, ByRef key() As Byte)
+   InitializeMAC hashAlgorithm, key, True
+End Sub
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | InitializeKMAC
+'|------------------+-------------------------------------------------------
+'| Description      | Initialize the hash object for a KMAC.
+'|------------------+-------------------------------------------------------
+'| Parameter        | hashAlgorithm:       The BCRYPT algorithm string
+'|                  | key:                 Key for KMAC
+'|                  | customizationString: Customization byte array
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2025-07-14  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | Initializes the provider, as well.
+'+--------------------------------------------------------------------------
+'
+Private Sub InitializeKMAC(ByRef hashAlgorithm As String, ByRef key() As Byte, ByRef customizationString() As Byte)
+   InitializeMAC hashAlgorithm, key, False
+   SetCustomizationString customizationString
 End Sub
 
 '
 '+--------------------------------------------------------------------------
 '| Method           | CheckState
 '|------------------+-------------------------------------------------------
-'| Description      | Check if hasher is in a valid state
+'| Description      | Check if hasher is in a valid state.
 '|------------------+-------------------------------------------------------
 '| Parameter        | ./.
 '|------------------+-------------------------------------------------------
@@ -563,11 +667,11 @@ End Sub
 '+--------------------------------------------------------------------------
 '| Method           | HashSize
 '|------------------+-------------------------------------------------------
-'| Description      | Get size of hash in bytes
+'| Description      | Get size of hash in bytes.
 '|------------------+-------------------------------------------------------
 '| Parameter        | ./.
 '|------------------+-------------------------------------------------------
-'| Return values    | Size of hash in bytes
+'| Return values    | Size of hash in bytes.
 '|------------------+-------------------------------------------------------
 '| Author           | Frank Schwab
 '|------------------+-------------------------------------------------------
@@ -590,7 +694,7 @@ End Property
 '|------------------+-------------------------------------------------------
 '| Parameter        | ./.
 '|------------------+-------------------------------------------------------
-'| Return values    | True, if current hash is an HMAC, false, if not
+'| Return values    | True, if current hash is an HMAC, false, if not.
 '|------------------+-------------------------------------------------------
 '| Author           | Frank Schwab
 '|------------------+-------------------------------------------------------
@@ -599,10 +703,33 @@ End Property
 '| Remarks          | Raises error if hasher has not been initialized
 '+--------------------------------------------------------------------------
 '
-Public Property Get IsHMAC() As Boolean
+Public Property Get isHMAC() As Boolean
    CheckState
 
-   IsHMAC = m_IsHMAC
+   isHMAC = m_IsHMAC
+End Property
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | IsMAC
+'|------------------+-------------------------------------------------------
+'| Description      | Is current hash a MAC?
+'|------------------+-------------------------------------------------------
+'| Parameter        | ./.
+'|------------------+-------------------------------------------------------
+'| Return values    | True, if current hash is an MAC, false, if not.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2025-07-14  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | Raises error if hasher has not been initialized
+'+--------------------------------------------------------------------------
+'
+Public Property Get IsMAC() As Boolean
+   CheckState
+
+   IsMAC = m_IsMAC
 End Property
 
 '
@@ -615,7 +742,7 @@ End Property
 '+--------------------------------------------------------------------------
 '| Method           | InitializeSHA1Hash
 '|------------------+-------------------------------------------------------
-'| Description      | Initialize hasher to use an SHA-1 hash
+'| Description      | Initialize hasher to use an SHA-1 hash.
 '|------------------+-------------------------------------------------------
 '| Parameter        | ./.
 '|------------------+-------------------------------------------------------
@@ -636,7 +763,7 @@ End Sub
 '+--------------------------------------------------------------------------
 '| Method           | InitializeSHA1HMAC
 '|------------------+-------------------------------------------------------
-'| Description      | Initialize hasher to use an SHA-1 HMAC
+'| Description      | Initialize hasher to use an SHA-1 HMAC.
 '|------------------+-------------------------------------------------------
 '| Parameter        | key: Key to use for HMAC
 '|------------------+-------------------------------------------------------
@@ -657,7 +784,7 @@ End Sub
 '+--------------------------------------------------------------------------
 '| Method           | InitializeSHA256Hash
 '|------------------+-------------------------------------------------------
-'| Description      | Initialize hasher to use an SHA-2-256 hash
+'| Description      | Initialize hasher to use an SHA-2-256 hash.
 '|------------------+-------------------------------------------------------
 '| Parameter        | ./.
 '|------------------+-------------------------------------------------------
@@ -678,7 +805,7 @@ End Sub
 '+--------------------------------------------------------------------------
 '| Method           | InitializeSHA256HMAC
 '|------------------+-------------------------------------------------------
-'| Description      | Initialize hasher to use an SHA-2-256 HMAC
+'| Description      | Initialize hasher to use an SHA-2-256 HMAC.
 '|------------------+-------------------------------------------------------
 '| Parameter        | key: Key to use for HMAC
 '|------------------+-------------------------------------------------------
@@ -699,7 +826,7 @@ End Sub
 '+--------------------------------------------------------------------------
 '| Method           | InitializeSHA384Hash
 '|------------------+-------------------------------------------------------
-'| Description      | Initialize hasher to use an SHA-2-384 hash
+'| Description      | Initialize hasher to use an SHA-2-384 hash.
 '|------------------+-------------------------------------------------------
 '| Parameter        | ./.
 '|------------------+-------------------------------------------------------
@@ -720,7 +847,7 @@ End Sub
 '+--------------------------------------------------------------------------
 '| Method           | InitializeSHA384HMAC
 '|------------------+-------------------------------------------------------
-'| Description      | Initialize hasher to use an SHA-2-384 HMAC
+'| Description      | Initialize hasher to use an SHA-2-384 HMAC.
 '|------------------+-------------------------------------------------------
 '| Parameter        | key: Key to use for HMAC
 '|------------------+-------------------------------------------------------
@@ -741,7 +868,7 @@ End Sub
 '+--------------------------------------------------------------------------
 '| Method           | InitializeSHA512Hash
 '|------------------+-------------------------------------------------------
-'| Description      | Initialize hasher to use an SHA-2-512 hash
+'| Description      | Initialize hasher to use an SHA-2-512 hash.
 '|------------------+-------------------------------------------------------
 '| Parameter        | ./.
 '|------------------+-------------------------------------------------------
@@ -762,7 +889,7 @@ End Sub
 '+--------------------------------------------------------------------------
 '| Method           | InitializeSHA512HMAC
 '|------------------+-------------------------------------------------------
-'| Description      | Initialize hasher to use an SHA-2-512 HMAC
+'| Description      | Initialize hasher to use an SHA-2-512 HMAC.
 '|------------------+-------------------------------------------------------
 '| Parameter        | key: Key to use for HMAC
 '|------------------+-------------------------------------------------------
@@ -779,13 +906,199 @@ Public Sub InitializeSHA512HMAC(ByRef key() As Byte)
    InitializeHMAC BCRYPT_SHA512_ALGORITHM, key
 End Sub
 
+'
+'+--------------------------------------------------------------------------
+'| Method           | InitializeSHA3_256Hash
+'|------------------+-------------------------------------------------------
+'| Description      | Initialize hasher to use an SHA-3-256 hash.
+'|------------------+-------------------------------------------------------
+'| Parameter        | ./.
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2025-07-14  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | Now, that Windows 11 finally supports SHA-3 9 years
+'|                  | after it has been standardized by the NIST, we are
+'|                  | able to offer it!
+'+--------------------------------------------------------------------------
+'
+Public Sub InitializeSHA3_256Hash()
+   InitializeHash BCRYPT_SHA3_256_ALGORITHM
+End Sub
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | InitializeSHA3_256HMAC
+'|------------------+-------------------------------------------------------
+'| Description      | Initialize hasher to use an SHA-3-256 HMAC.
+'|------------------+-------------------------------------------------------
+'| Parameter        | key: Key to use for HMAC
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2025-07-14  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | Now, that Windows 11 finally supports SHA-3 9 years
+'|                  | after it has been standardized by the NIST, we are
+'|                  | able to offer it!
+'+--------------------------------------------------------------------------
+'
+Public Sub InitializeSHA3_256HMAC(ByRef key() As Byte)
+   InitializeHMAC BCRYPT_SHA3_256_ALGORITHM, key
+End Sub
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | InitializeSHA3_384Hash
+'|------------------+-------------------------------------------------------
+'| Description      | Initialize hasher to use an SHA-3-384 hash.
+'|------------------+-------------------------------------------------------
+'| Parameter        | ./.
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2025-07-14  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | Now, that Windows 11 finally supports SHA-3 9 years
+'|                  | after it has been standardized by the NIST, we are
+'|                  | able to offer it!
+'+--------------------------------------------------------------------------
+'
+Public Sub InitializeSHA3_384Hash()
+   InitializeHash BCRYPT_SHA3_384_ALGORITHM
+End Sub
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | InitializeSHA3_384HMAC
+'|------------------+-------------------------------------------------------
+'| Description      | Initialize hasher to use an SHA-3-384 HMAC.
+'|------------------+-------------------------------------------------------
+'| Parameter        | key: Key to use for HMAC
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2025-07-14  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | Now, that Windows 11 finally supports SHA-3 9 years
+'|                  | after it has been standardized by the NIST, we are
+'|                  | able to offer it!
+'+--------------------------------------------------------------------------
+'
+Public Sub InitializeSHA3_384HMAC(ByRef key() As Byte)
+   InitializeHMAC BCRYPT_SHA3_384_ALGORITHM, key
+End Sub
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | InitializeSHA3_512Hash
+'|------------------+-------------------------------------------------------
+'| Description      | Initialize hasher to use an SHA-3-512 hash.
+'|------------------+-------------------------------------------------------
+'| Parameter        | ./.
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2025-07-14  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | Now, that Windows 11 finally supports SHA-3 9 years
+'|                  | after it has been standardized by the NIST, we are
+'|                  | able to offer it!
+'+--------------------------------------------------------------------------
+'
+Public Sub InitializeSHA3_512Hash()
+   InitializeHash BCRYPT_SHA3_512_ALGORITHM
+End Sub
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | InitializeSHA3_512HMAC
+'|------------------+-------------------------------------------------------
+'| Description      | Initialize hasher to use an SHA-3-512 HMAC.
+'|------------------+-------------------------------------------------------
+'| Parameter        | key: Key to use for HMAC
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2025-07-14  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | Now, that Windows 11 finally supports SHA-3 9 years
+'|                  | after it has been standardized by the NIST, we are
+'|                  | able to offer it!
+'+--------------------------------------------------------------------------
+'
+Public Sub InitializeSHA3_512HMAC(ByRef key() As Byte)
+   InitializeHMAC BCRYPT_SHA3_512_ALGORITHM, key
+End Sub
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | InitializeKMAC128
+'|------------------+-------------------------------------------------------
+'| Description      | Initialize hasher to use an KMAC128 hash.
+'|------------------+-------------------------------------------------------
+'| Parameter        | key: Key to use for KMAC
+'|                  | customizationString: Customization byte array
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2025-07-14  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | Now, that Windows 11 finally supports KMAC 9 years
+'|                  | after it has been standardized by the NIST, we are
+'|                  | able to offer it!
+'+--------------------------------------------------------------------------
+'
+Public Sub InitializeKMAC128(ByRef key() As Byte, ByRef customizationString() As Byte)
+   InitializeKMAC BCRYPT_KMAC128_ALGORITHM, key, customizationString
+End Sub
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | InitializeKMAC256
+'|------------------+-------------------------------------------------------
+'| Description      | Initialize hasher to use a KMAC256.
+'|------------------+-------------------------------------------------------
+'| Parameter        | key:                 Key to use for KMAC
+'|                  | customizationString: Customization byte array
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2025-07-14  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | Now, that Windows 11 finally supports KMAC 9 years
+'|                  | after it has been standardized by the NIST, we are
+'|                  | able to offer it!
+'+--------------------------------------------------------------------------
+'
+Public Sub InitializeKMAC256(ByRef key() As Byte, ByRef customizationString() As Byte)
+   InitializeKMAC BCRYPT_KMAC256_ALGORITHM, key, customizationString
+End Sub
+
 ' Digest methods
 
 '
 '+--------------------------------------------------------------------------
 '| Method           | DigestPartOfByteArray
 '|------------------+-------------------------------------------------------
-'| Description      | Hashes part of a byte array
+'| Description      | Hashes part of a byte array.
 '|------------------+-------------------------------------------------------
 '| Parameter        | sourceByteArray: Source bytes to hash
 '|                  | offset         : Offset in byte array
@@ -826,7 +1139,7 @@ End Sub
 '+--------------------------------------------------------------------------
 '| Method           | DigestBytes
 '|------------------+-------------------------------------------------------
-'| Description      | Hashes a byte array
+'| Description      | Hashes a byte array.
 '|------------------+-------------------------------------------------------
 '| Parameter        | sourceByteArray: Source bytes to hash
 '|------------------+-------------------------------------------------------
@@ -861,7 +1174,7 @@ End Sub
 '| Method           | DigestStringAsAnsi
 '|------------------+-------------------------------------------------------
 '| Description      | Hashes a string and uses Windows ANSI character code
-'|                  | conversion from characters to bytes
+'|                  | conversion from characters to bytes.
 '|------------------+-------------------------------------------------------
 '| Parameter        | sourceString: Source string to hash
 '|------------------+-------------------------------------------------------
@@ -888,7 +1201,7 @@ End Sub
 '| Method           | DigestStringAsUTF8
 '|------------------+-------------------------------------------------------
 '| Description      | Hashes a string and uses UTF-8 character code
-'|                  | conversion from characters to bytes
+'|                  | conversion from characters to bytes.
 '|------------------+-------------------------------------------------------
 '| Parameter        | sourceString: Source string to hash
 '|------------------+-------------------------------------------------------
@@ -914,7 +1227,7 @@ End Sub
 '+--------------------------------------------------------------------------
 '| Method           | DigestFile
 '|------------------+-------------------------------------------------------
-'| Description      | Hashes the contents of a file
+'| Description      | Hashes the contents of a file.
 '|------------------+-------------------------------------------------------
 '| Parameter        | filePath: Path of file
 '|------------------+-------------------------------------------------------
@@ -962,11 +1275,11 @@ End Sub
 '+--------------------------------------------------------------------------
 '| Method           | GetHash
 '|------------------+-------------------------------------------------------
-'| Description      | Get hash value
+'| Description      | Get hash value.
 '|------------------+-------------------------------------------------------
 '| Parameter        | ./.
 '|------------------+-------------------------------------------------------
-'| Return values    | Hash value
+'| Return values    | Hash value.
 '|------------------+-------------------------------------------------------
 '| Author           | Frank Schwab
 '|------------------+-------------------------------------------------------
