@@ -44,7 +44,15 @@ Show and clear an Access status line. The status line is automatically cleared w
 
 ### HashCng
 
-A universal hashing class. It calculates [SHA-1](https://en.wikipedia.org/wiki/SHA-1) and [SHA-2](https://en.wikipedia.org/wiki/SHA-2) hashes (with 256, 384 and 512 bits length) and also [HMAC](https://en.wikipedia.org/wiki/HMAC) values with these hashes. It uses  the Windows CNG (Crypto Next Generation) API, so all calculations are done by Windows.
+A universal hashing class.
+It calculates [SHA-1](https://en.wikipedia.org/wiki/SHA-1), [SHA-2](https://en.wikipedia.org/wiki/SHA-2) and [SHA-3](https://en.wikipedia.org/wiki/SHA-3) hashes (with 256, 384 and 512 bits length) and also [HMAC](https://en.wikipedia.org/wiki/HMAC) and [KMAC](https://en.wikipedia.org/wiki/KECCAK_Message_Authentication_Code) values with these hashes.
+It uses the Windows CNG (Crypto Next Generation) API, so all calculations are done by Windows.
+
+> [!IMPORTANT]
+> The availability of the algorithms depends on the Windows version.
+> SHA-3 and KMAC are only [available](https://learn.microsoft.com/en-us/windows/whats-new/whats-new-windows-11-version-24h2#sha-3-support) for Windows 11 24H2 and newer.
+> Using these functions on older Windows versions returns an error.
+> BTW, it took Microsoft 9 years to make these functions available in Windows.
 
 ### PBKDF2
 
