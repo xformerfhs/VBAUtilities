@@ -10,7 +10,7 @@ Attribute VB_Exposed = False
 '
 '+-------------------------------------------------------------------------
 '|
-'| SPDX-FileCopyrightText: 2020-2025 Frank Schwab
+'| SPDX-FileCopyrightText: 2020-2026 Frank Schwab
 '|
 '| SPDX-License-Identifier: MIT
 '|
@@ -41,7 +41,7 @@ Attribute VB_Exposed = False
 '|---------------------+---------------------------------------------------
 '| Author              | Frank Schwab
 '|---------------------+---------------------------------------------------
-'| Version             | 1.3.0
+'| Version             | 1.4.0
 '|---------------------+---------------------------------------------------
 '| Changes             | 2020-07-18  Created. fhs
 '|                     | 2020-08-03  Correct array length calculation
@@ -59,6 +59,8 @@ Attribute VB_Exposed = False
 '|                     | 2024-08-10  Better 64 bit compatibility. fhs
 '|                     | 2025-07-14  Add SHA-3 hashes and HMACs, KMACs
 '|                     |             and IsMAC property. fhs
+'|                     | 2026-03-01  Add function to test if SHA-3 and KMAC
+'|                     |             are available. fhs
 '|---------------------+---------------------------------------------------
 '| Typical usage       | ' For getting a hash value
 '|                     | Dim hc As New HashCng
@@ -905,6 +907,42 @@ End Sub
 Public Sub InitializeSHA512HMAC(ByRef key() As Byte)
    InitializeHMAC BCRYPT_SHA512_ALGORITHM, key
 End Sub
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | IsSHA3Available
+'|------------------+-------------------------------------------------------
+'| Description      | Test if Windows supports SHA-3 and KMAC.
+'|------------------+-------------------------------------------------------
+'| Parameter        | ./.
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2026-03-01  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | Now, that Windows 11 finally supports SHA-3 9 years
+'|                  | after it has been standardized by the NIST, we are
+'|                  | able to use it!
+'+--------------------------------------------------------------------------
+'
+Public Function IsSHA3Available() As Boolean
+   IsSHA3Available = False
+   
+   Dim algId As String
+   ' Try SHA3-256.
+   algId = "SHA3-256"
+    
+   Dim hAlg As LongPtr
+   Dim rc As Long
+   rc = BCryptOpenAlgorithmProvider(hAlg, StrPtr(algId), 0, 0)
+    
+   If IsNTSuccess(rc) Then
+      IsSHA3Available = True
+      BCryptCloseAlgorithmProvider hAlg, 0
+   End If
+End Function
 
 '
 '+--------------------------------------------------------------------------
