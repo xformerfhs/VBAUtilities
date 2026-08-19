@@ -10,11 +10,11 @@ Attribute VB_Exposed = False
 '
 '+-------------------------------------------------------------------------
 '|
-'| SPDX-FileCopyrightText: 2020 Frank Schwab
+'| SPDX-FileCopyrightText: 2020-2026 Frank Schwab
 '|
 '| SPDX-License-Identifier: MIT
 '|
-'| Copyright 2020, Frank Schwab
+'| Copyright 2020-2026, Frank Schwab
 '|
 '| Permission is hereby granted, free of charge, to any person obtaining a
 '| copy of this software and associated documentation files (the "Software"),
@@ -42,14 +42,14 @@ Attribute VB_Exposed = False
 '|---------------------+---------------------------------------------------
 '| Author              | Frank Schwab
 '|---------------------+---------------------------------------------------
-'| Version             | 1.0.1
+'| Version             | 1.0.2
 '|---------------------+---------------------------------------------------
 '| Changes             | 2020-07-20  Created. fhs
 '|                     | 2020-08-30  Made 64 bit compatible. fhs
+'|                     | 2026-08-19  Corrected typo. fhs
 '|---------------------+---------------------------------------------------
 '
 
-Option Compare Database
 Option Explicit
 
 '
@@ -75,7 +75,7 @@ Private Declare PtrSafe Function GetDriveType _
 ' Public constants
 '
 Public Enum TDriveType
-   drtÚnknown = 0
+   drtUnknown = 0
    drtNoVolumeForPath = 1
    drtRemovable = 2
    drtFixed = 3
