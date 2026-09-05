@@ -114,7 +114,8 @@ End Type
 '|------------------+-------------------------------------------------------
 '| Description      | Creates an authenticated encryption instance.
 '|------------------+-------------------------------------------------------
-'| Parameter        | et: Encryption type.
+'| Parameter        | et : Encryption type.
+'|                  | key: Key to be used with the instance.
 '|------------------+-------------------------------------------------------
 '| Return values    | An instance of AuthenticatedEncryptionCng.
 '|                  | If the encryption type is invalid an exception
@@ -127,20 +128,20 @@ End Type
 '| Remarks          | A typical usage is
 '|                  |
 '|                  | Dim encryptor As AuthenticatedEncryptionCng
-'|                  | Set encryptor = CreateAuthenticatedEncryption(aetChaCha20Poly1305)
+'|                  | Set encryptor = CreateAuthenticatedEncryption(aetChaCha20Poly1305, key)
 '|                  | Dim encrypted As TAuthenticatedEncryptionResult
-'|                  | encrypted = encryptor.Encrypt(key, nonce, data, associatedData)
+'|                  | encrypted = encryptor.Encrypt(nonce, data, associatedData)
 '|                  | ...
 '|                  | Dim decrypted As TAuthenticatedDecryptionResult
-'|                  | decrypted = encryptor.Decrypt(key, nonce, encrypted.EncryptedData, associatedData, encrypted.Tag)
+'|                  | decrypted = encryptor.Decrypt(nonce, encrypted.EncryptedData, associatedData, encrypted.Tag)
 '|                  | if decrypted.AuthenticationFailed Then
 '|                  |    ' Handle authentication failure
 '|                  | End If
 '|                  | ' Handle decrypted data
 '+--------------------------------------------------------------------------
 '
-Public Function CreateAuthenticatedEncryption(ByVal et As TAuthenticatedEncryptionType) As AuthenticatedEncryptionCng
+Public Function CreateAuthenticatedEncryption(ByVal et As TAuthenticatedEncryptionType, ByRef key() As Byte) As AuthenticatedEncryptionCng
     Dim instance As New AuthenticatedEncryptionCng
-    instance.SetEncryption et
+    instance.SetEncryption et, key
     Set CreateAuthenticatedEncryption = instance
 End Function

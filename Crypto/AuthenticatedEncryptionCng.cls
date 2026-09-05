@@ -181,6 +181,9 @@ Private Const STATUS_AUTH_TAG_MISMATCH As Long = &HC000A002
 Private m_MM As New MessageManager
 
 Private m_AlgHandle As Long
+Private m_KeyHandle As LongPtr
+Private m_KeyObject() As Byte
+Private m_TagLength As Long
 
 '
 ' ======== Private functions ========
@@ -356,7 +359,7 @@ End Sub
 
 '
 '+--------------------------------------------------------------------------
-'| Method           | BuildKeyData
+'| Method           | BuildOperationData
 '|------------------+-------------------------------------------------------
 '| Description      | Build the key data needed for encryption and decryption
 '|                  | operations.
@@ -374,12 +377,17 @@ End Sub
 '| Remarks          | ./.
 '+--------------------------------------------------------------------------
 '
-Private Sub BuildKeyData( _
+Private Sub BuildOperationData( _
       ByRef key() As Byte, _
       ByRef hKey As LongPtr, _
       ByRef keyObject() As Byte)
    '
-   ' 1. Get the length of the key object.
+   ' 1. Clear possible former key data
+   '
+   ClearKeyData
+   
+   '
+   ' 2. Get the length of the key object.
    '
    Dim rc As Long
    Dim count As Long
@@ -391,18 +399,34 @@ Private Sub BuildKeyData( _
                           count, _
                           0)
    If Not IsNTSuccess(rc) Then
-      HandleNTAPIError "AuthenticatedEncryption", "BCryptGetProperty::KeyLength", rc
+      HandleNTAPIError "BuildOperationData", "BCryptGetProperty::KeyLength", rc
    End If
 
    '
-   ' 2. Generate the key object from the key.
+   ' 3. Generate the key object from the key.
    '
    ReDim keyObject(1 To keyObjectLength)
 
    rc = BCryptGenerateSymmetricKey(m_AlgHandle, hKey, keyObject(LBound(key)), keyObjectLength, key(LBound(key)), ByteArrayLength(key), 0)
    If Not IsNTSuccess(rc) Then
-      HandleNTAPIError "AuthenticatedEncryption", "BCryptGenerateSymmetricKey", rc
+      HandleNTAPIError "BuildOperationData", "BCryptGenerateSymmetricKey", rc
    End If
+   
+   '
+   ' 4. Get tag length.
+   '
+   Dim tagLength As BCRYPT_AUTH_TAG_LENGTHS_STRUCT
+   rc = BCryptGetProperty(m_AlgHandle, _
+                          StrPtr(BCRYPT_AUTH_TAG_LENGTH), _
+                          tagLength, _
+                          LenB(tagLength), _
+                          count, _
+                          0)
+   If Not IsNTSuccess(rc) Then
+      HandleNTAPIError "BuildOperationData", "BCryptGetProperty::TagLength", rc
+   End If
+   
+   m_TagLength = tagLength.dwMaxLength
 End Sub
 
 '
@@ -433,6 +457,33 @@ Private Sub Cleanup( _
 
    ClearByteArray keyObject
    RtlZeroMemory cipherModeInfo, cipherModeInfo.cbSize
+End Sub
+
+'
+'+--------------------------------------------------------------------------
+'| Method           | ClearKeyData
+'|------------------+-------------------------------------------------------
+'| Description      | Clear the key data.
+'|------------------+-------------------------------------------------------
+'| Parameter        | ./.
+'|------------------+-------------------------------------------------------
+'| Return values    | ./.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2026-09-04  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | ./.
+'+--------------------------------------------------------------------------
+'
+Private Sub ClearKeyData()
+   If m_KeyHandle <> 0 Then
+      BCryptDestroyKey m_KeyHandle
+   End If
+   
+   If ByteArrayLength(m_KeyObject) <> 0 Then
+      ClearByteArray m_KeyObject
+   End If
 End Sub
 
 '
@@ -529,7 +580,7 @@ End Property
 '| Remarks          | ./.
 '+--------------------------------------------------------------------------
 '
-Public Sub SetEncryption(ByVal et As TAuthenticatedEncryptionType)
+Public Sub SetEncryption(ByVal et As TAuthenticatedEncryptionType, ByRef key() As Byte)
    m_AlgHandle = AuthenticatedEncryptionToAlgHandle(et)
    
    If m_AlgHandle = 0 Then
@@ -537,6 +588,8 @@ Public Sub SetEncryption(ByVal et As TAuthenticatedEncryptionType)
                 ERR_STR_CLASS_NAME, _
                 m_MM.FormatMessageWithParameters(ERR_STR_WRONG_TYPE, Format$(et))
    End If
+
+   BuildOperationData key, m_KeyHandle, m_KeyObject
 End Sub
 
 '
@@ -545,8 +598,7 @@ End Sub
 '|------------------+-------------------------------------------------------
 '| Description      | Encrypt data with authenticated encryption.
 '|------------------+-------------------------------------------------------
-'| Parameter        | key           : The key for the encryption
-'|                  | nonce         : The nonce for the encryption
+'| Parameter        | nonce         : The nonce for the encryption
 '|                  | clearData     : The clear data
 '|                  | associatedData: Associated data that are used for the
 '|                  |                 tag calculation but that are not
@@ -564,10 +616,9 @@ End Sub
 '+--------------------------------------------------------------------------
 '
 Public Function Encrypt( _
-      ByRef key() As Byte, _
-      ByRef nonce() As Byte, _
-      ByRef ClearData() As Byte, _
-      ByRef associatedData() As Byte) As TAuthenticatedEncryptionResult
+      ByRef p_Nonce() As Byte, _
+      ByRef p_ClearData() As Byte, _
+      ByRef p_AssociatedData() As Byte) As TAuthenticatedEncryptionResult
    Dim result As TAuthenticatedEncryptionResult
 
    '
@@ -580,44 +631,22 @@ Public Function Encrypt( _
    End If
 
    '
-   ' 2. Get the length of the tag and create the tag array.
+   ' 2. Build cipher mode info.
+   '
+   ReDim result.Tag(1 To m_TagLength)
+   Dim cipherModeInfo As BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO
+   SetAuthenticatedCipherModeInfo cipherModeInfo, p_Nonce, p_AssociatedData, result.Tag
+
+   '
+   ' 3. Encrypt the clear data.
    '
    Dim rc As Long
    Dim count As Long
-   Dim tagLength As BCRYPT_AUTH_TAG_LENGTHS_STRUCT
-   rc = BCryptGetProperty(m_AlgHandle, _
-                          StrPtr(BCRYPT_AUTH_TAG_LENGTH), _
-                          tagLength, _
-                          LenB(tagLength), _
-                          count, _
-                          0)
-   If Not IsNTSuccess(rc) Then
-      HandleNTAPIError "AuthenticatedEncryption", "BCryptGetProperty::TagLength", rc
-   End If
-
-   '
-   ' 3. Build the key data.
-   '
-   Dim hKey As LongPtr
-   Dim keyObject() As Byte
-   ReDim result.Tag(1 To tagLength.dwMaxLength)
-
-   BuildKeyData key, hKey, keyObject
-
-   '
-   ' 4. Build cipher mode info.
-   '
-   Dim cipherModeInfo As BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO
-   SetAuthenticatedCipherModeInfo cipherModeInfo, nonce, associatedData, result.Tag
-
-   '
-   ' 5. Finally encrypt the clear data.
-   '
-   ReDim result.EncryptedData(1 To ByteArrayLength(ClearData))
+   ReDim result.EncryptedData(1 To ByteArrayLength(p_ClearData))
    rc = BCryptEncrypt( _
-      hKey, _
-      ClearData(LBound(ClearData)), _
-      ByteArrayLength(ClearData), _
+      m_KeyHandle, _
+      p_ClearData(LBound(p_ClearData)), _
+      ByteArrayLength(p_ClearData), _
       cipherModeInfo, _
       ByVal 0, _
       0, _
@@ -626,16 +655,16 @@ Public Function Encrypt( _
       count, _
       0)
    If Not IsNTSuccess(rc) Then
-      Cleanup hKey, keyObject, cipherModeInfo
+      RtlZeroMemory cipherModeInfo, cipherModeInfo.cbSize
       HandleNTAPIError "AuthenticatedEncryption", "BCryptEncrypt", rc
    End If
 
    Encrypt = result
 
    '
-   ' 7. Clean up.
+   ' 4. Clean up.
    '
-   Cleanup hKey, keyObject, cipherModeInfo
+   RtlZeroMemory cipherModeInfo, cipherModeInfo.cbSize
 End Function
 
 '
@@ -644,8 +673,7 @@ End Function
 '|------------------+-------------------------------------------------------
 '| Description      | Decrypt data with authenticated encryption.
 '|------------------+-------------------------------------------------------
-'| Parameter        | key           : The key for the encryption
-'|                  | nonce         : The nonce for the encryption
+'| Parameter        | nonce         : The nonce for the encryption
 '|                  | encryptedData : The encrypted data
 '|                  | associatedData: Associated data that are used for the
 '|                  |                 tag calculation but that are not
@@ -664,11 +692,10 @@ End Function
 '+--------------------------------------------------------------------------
 '
 Public Function Decrypt( _
-      ByRef key() As Byte, _
-      ByRef nonce() As Byte, _
-      ByRef EncryptedData() As Byte, _
-      ByRef associatedData() As Byte, _
-      ByRef Tag() As Byte) As TAuthenticatedDecryptionResult
+      ByRef p_Nonce() As Byte, _
+      ByRef p_EncryptedData() As Byte, _
+      ByRef p_AssociatedData() As Byte, _
+      ByRef p_Tag() As Byte) As TAuthenticatedDecryptionResult
    Dim result As TAuthenticatedDecryptionResult
 
    '
@@ -681,29 +708,21 @@ Public Function Decrypt( _
    End If
 
    '
-   ' 2. Build the key data.
-   '
-   Dim hKey As LongPtr
-   Dim keyObject() As Byte
-   BuildKeyData key, hKey, keyObject
-
-   '
-   ' 5. Build the structure needed for authenticated encryption.
+   ' 2. Build the structure needed for authenticated encryption.
    '
    Dim cipherModeInfo As BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO
-
-   SetAuthenticatedCipherModeInfo cipherModeInfo, nonce, associatedData, Tag
+   SetAuthenticatedCipherModeInfo cipherModeInfo, p_Nonce, p_AssociatedData, p_Tag
 
    '
-   ' 6. Finally encrypt the clear data.
+   ' 3. Decrypt the encrypted data.
    '
    Dim rc As Long
    Dim count As Long
-   ReDim result.ClearData(1 To ByteArrayLength(EncryptedData))
+   ReDim result.ClearData(1 To ByteArrayLength(p_EncryptedData))
    rc = BCryptDecrypt( _
-      hKey, _
-      EncryptedData(LBound(EncryptedData)), _
-      ByteArrayLength(EncryptedData), _
+      m_KeyHandle, _
+      p_EncryptedData(LBound(p_EncryptedData)), _
+      ByteArrayLength(p_EncryptedData), _
       cipherModeInfo, _
       ByVal 0, _
       0, _
@@ -719,7 +738,7 @@ Public Function Decrypt( _
       If rc = STATUS_AUTH_TAG_MISMATCH Then
          result.AuthenticationFailed = True
       Else
-         Cleanup hKey, keyObject, cipherModeInfo
+         RtlZeroMemory cipherModeInfo, cipherModeInfo.cbSize
          HandleNTAPIError "AuthenticatedDecryption", "BCryptDecrypt", rc
       End If
    End If
@@ -727,7 +746,15 @@ Public Function Decrypt( _
    Decrypt = result
 
    '
-   ' 7. Clean up.
+   ' 4. Clean up.
    '
-   Cleanup hKey, keyObject, cipherModeInfo
+   RtlZeroMemory cipherModeInfo, cipherModeInfo.cbSize
 End Function
+
+'
+' Class functions
+'
+
+Private Sub Class_Terminate()
+   ClearKeyData
+End Sub
