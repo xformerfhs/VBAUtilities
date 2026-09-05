@@ -568,6 +568,7 @@ End Property
 '| Description      | Set the encryption type.
 '|------------------+-------------------------------------------------------
 '| Parameter        | encryptionType: The encryption type.
+'|                  | key           : The key of the instance.
 '|------------------+-------------------------------------------------------
 '| Return values    | The decrypted bytes. If authentication fails the
 '|                  | result is an empty array and the property
@@ -577,7 +578,8 @@ End Property
 '|------------------+-------------------------------------------------------
 '| Changes          | 2026-09-05  Created. fhs
 '|------------------+-------------------------------------------------------
-'| Remarks          | ./.
+'| Remarks          | The key can be cleared after the creation of the
+'|                  | instance.
 '+--------------------------------------------------------------------------
 '
 Public Sub SetEncryption(ByVal et As TAuthenticatedEncryptionType, ByRef key() As Byte)
@@ -598,11 +600,11 @@ End Sub
 '|------------------+-------------------------------------------------------
 '| Description      | Encrypt data with authenticated encryption.
 '|------------------+-------------------------------------------------------
-'| Parameter        | nonce         : The nonce for the encryption
-'|                  | clearData     : The clear data
-'|                  | associatedData: Associated data that are used for the
-'|                  |                 tag calculation but that are not
-'|                  |                 encrypted (may be an empty array)
+'| Parameter        | p_Nonce         : The nonce for the encryption
+'|                  | p_ClearData     : The clear data
+'|                  | p_AssociatedData: Associated data that are used for the
+'|                  |                   tag calculation but that are not
+'|                  |                   encrypted (may be an empty array)
 '|------------------+-------------------------------------------------------
 '| Return values    | A TAuthenticatedEncryptionResult with "EncryptedData"
 '|                  | containing the encrypted data and "Tag" containing
@@ -673,12 +675,12 @@ End Function
 '|------------------+-------------------------------------------------------
 '| Description      | Decrypt data with authenticated encryption.
 '|------------------+-------------------------------------------------------
-'| Parameter        | nonce         : The nonce for the encryption
-'|                  | encryptedData : The encrypted data
-'|                  | associatedData: Associated data that are used for the
-'|                  |                 tag calculation but that are not
-'|                  |                 encrypted (may be an empty array)
-'|                  | tag           : The tag
+'| Parameter        | p_Nonce         : The nonce for the encryption
+'|                  | p_EncryptedData : The encrypted data
+'|                  | p_AssociatedData: Associated data that are used for the
+'|                  |                   tag calculation but that are not
+'|                  |                   encrypted (may be an empty array)
+'|                  | p_Tag           : The tag
 '|------------------+-------------------------------------------------------
 '| Return values    | A TAuthenticatedDecryptionResult with "ClearData"
 '|                  | set to the decrypted bytes and "AuthenticationFailed"

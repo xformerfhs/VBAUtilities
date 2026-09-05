@@ -125,7 +125,10 @@ End Type
 '|------------------+-------------------------------------------------------
 '| Changes          | 2026-09-05  Created. fhs
 '|------------------+-------------------------------------------------------
-'| Remarks          | A typical usage is
+'| Remarks          | The key can be cleared after the creation of the
+'|                  | instance.
+'|------------------+-------------------------------------------------------
+'| Usage            | A typical usage is
 '|                  |
 '|                  | Dim encryptor As AuthenticatedEncryptionCng
 '|                  | Set encryptor = CreateAuthenticatedEncryption(aetChaCha20Poly1305, key)
