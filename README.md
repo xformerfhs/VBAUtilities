@@ -74,7 +74,7 @@ The associated data may be empty.
 
 ### AuthenticatedEncryptionFactory
 
-This module contains the public constants, types and a factory method for the AuthenticatedEncryptionCng class.
+This module contains the public constants, types and a factory method for the `AuthenticatedEncryptionCng` class.
 VBA classes can neither have constructors with parameters, nor public constants, so this module is needed as a replacement.
 
 The class `AuthenticatedEncryptionCng` only works when this module is present.
