@@ -54,9 +54,9 @@ If the two checksums do not match, the decryption is aborted.
 
 The supported algorithms are
 
-* ChaCha20-Poly1305
-* AES-GCM
-* AES-CCM
+* [ChaCha20-Poly1305](https://en.wikipedia.org/wiki/ChaCha20-Poly1305)
+* [AES-GCM](https://en.wikipedia.org/wiki/Galois/Counter_Mode)
+* [AES-CCM](https://en.wikipedia.org/wiki/CCM_mode)
 
 > [!NOTE]
 > Not all Windows versions support all algorithms.
@@ -65,7 +65,7 @@ The supported algorithms are
 All authenticated encryptions support "associated data".
 These are data that are not encrypted, but that are used for the calculation of the authentication tag.
 
-To successfully decrypt and authenticate the encrypted data the decryption needs the same asssociated data.
+To successfully decrypt and authenticate the encrypted data the decryption needs the same associated data.
 
 Associated data are used to supply context to the encrypted data.
 This may be a record id or a table name or whatever describes the context this encrypted data is used in.
