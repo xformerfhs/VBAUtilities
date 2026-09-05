@@ -431,36 +431,6 @@ End Sub
 
 '
 '+--------------------------------------------------------------------------
-'| Method           | Cleanup
-'|------------------+-------------------------------------------------------
-'| Description      | Clean up encryption data.
-'|------------------+-------------------------------------------------------
-'| Parameter        | hKey          : Key handle
-'|                  | keyObject     : Key object
-'|                  | cipherModeInfo: BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO
-'|                  |                 structure
-'|------------------+-------------------------------------------------------
-'| Return values    | ./.
-'|------------------+-------------------------------------------------------
-'| Author           | Frank Schwab
-'|------------------+-------------------------------------------------------
-'| Changes          | 2026-09-04  Created. fhs
-'|------------------+-------------------------------------------------------
-'| Remarks          | ./.
-'+--------------------------------------------------------------------------
-'
-Private Sub Cleanup( _
-      ByVal hKey As LongPtr, _
-      ByRef keyObject() As Byte, _
-      ByRef cipherModeInfo As BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO)
-   BCryptDestroyKey hKey
-
-   ClearByteArray keyObject
-   RtlZeroMemory cipherModeInfo, cipherModeInfo.cbSize
-End Sub
-
-'
-'+--------------------------------------------------------------------------
 '| Method           | ClearKeyData
 '|------------------+-------------------------------------------------------
 '| Description      | Clear the key data.

@@ -63,10 +63,10 @@ Option Explicit
 '+--------------------------------------------------------------------------
 '
 Public Enum TAuthenticatedEncryptionType
-    aetNotSet
-    aetChaCha20Poly1305
-    aetAesGcm
-    aetAesCcm
+   aetNotSet
+   aetChaCha20Poly1305
+   aetAesGcm
+   aetAesCcm
 End Enum
 
 '
@@ -159,7 +159,7 @@ End Type
 '+--------------------------------------------------------------------------
 '
 Public Function CreateAuthenticatedEncryption(ByVal et As TAuthenticatedEncryptionType, ByRef key() As Byte) As AuthenticatedEncryptionCng
-    Dim instance As New AuthenticatedEncryptionCng
-    instance.SetEncryption et, key
-    Set CreateAuthenticatedEncryption = instance
+   Dim instance As New AuthenticatedEncryptionCng
+   instance.SetEncryption et, key
+   Set CreateAuthenticatedEncryption = instance
 End Function
