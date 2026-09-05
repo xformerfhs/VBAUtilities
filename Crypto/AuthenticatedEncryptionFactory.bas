@@ -47,6 +47,21 @@ Option Explicit
 ' Public constants
 '
 
+'
+'+--------------------------------------------------------------------------
+'| Enum             | TAuthenticatedEncryptionType
+'|------------------+-------------------------------------------------------
+'| Description      | Authenticated encryption types.
+'|------------------+-------------------------------------------------------
+'| Author           | Frank Schwab
+'|------------------+-------------------------------------------------------
+'| Changes          | 2026-09-05  Created. fhs
+'|------------------+-------------------------------------------------------
+'| Remarks          | Use one of these when calling
+'|                  | CreateAuthenticatedEncryption or
+'|                  | AuthenticatedEncryptionCng.SetEncryption
+'+--------------------------------------------------------------------------
+'
 Public Enum TAuthenticatedEncryptionType
     aetNotSet
     aetChaCha20Poly1305
