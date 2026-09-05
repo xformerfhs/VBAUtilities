@@ -42,9 +42,47 @@ Show and clear an Access status line. The status line is automatically cleared w
 
 ## Crypto
 
+### AuthenticatedEncryptionCng
+
+A class for [authenticated encryption](https://en.wikipedia.org/wiki/Authenticated_encryption).
+
+The class enables the use of authenticated encryption.
+Authenticated encryption combines an encryption with an authentication.
+Together with the encryption a cryptographic checksum (called a "tag") is calculated to defend against manipulation of the encrypted data.
+When decrypting the checksum is calculated again.
+If the two checksums do not match, the decryption is aborted.
+
+The supported algorithms are
+
+* ChaCha20-Poly1305
+* AES-GCM
+* AES-CCM
+
+> [!NOTE]
+> Not all Windows versions support all algorithms.
+> ChaCha20-Poly1305 is supported since Windows 10 V10.0.19043, also known as Windows 10 21H1.
+
+All authenticated encryptions support "associated data".
+These are data that are not encrypted, but that are used for the calculation of the authentication tag.
+
+To successfully decrypt and authenticate the encrypted data the decryption needs the same asssociated data.
+
+Associated data are used to supply context to the encrypted data.
+This may be a record id or a table name or whatever describes the context this encrypted data is used in.
+
+The associated data may be empty.
+
+### AuthenticatedEncryptionFactory
+
+This module contains the public constants, types and a factory method for the AuthenticatedEncryptionCng class.
+VBA classes can neither have constructors with parameters, nor public constants, so this module is needed as a replacement.
+
+The class `AuthenticatedEncryptionCng` only works when this module is present.
+
 ### HashCng
 
 A universal hashing class.
+
 It calculates [SHA-1](https://en.wikipedia.org/wiki/SHA-1), [SHA-2](https://en.wikipedia.org/wiki/SHA-2) and [SHA-3](https://en.wikipedia.org/wiki/SHA-3) hashes (with 256, 384 and 512 bits length) and also [HMAC](https://en.wikipedia.org/wiki/HMAC) and [KMAC](https://en.wikipedia.org/wiki/KECCAK_Message_Authentication_Code) values with these hashes.
 It uses the Windows CNG (Crypto Next Generation) API, so all calculations are done by Windows.
 
