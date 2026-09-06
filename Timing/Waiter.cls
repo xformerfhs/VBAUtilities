@@ -112,7 +112,7 @@ Public Sub WaitFor(ByVal waitTimeInSeconds As Integer)
 
          DoEvents ' Process events so the Office application is responsive
       Next i
-          
+
       secondsAlreadyWaited = secondsAlreadyWaited + 1
    Loop
 End Sub

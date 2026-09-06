@@ -248,12 +248,12 @@ Private Sub PureQuicksortWithBoundaries(ByRef arrayToSort As Variant, ByVal idxF
             If leftSize > rightSize Then
                aStack.Push idxFrom
                aStack.Push idxLeft - 1
-            
+
                idxFrom = idxLeft + 1
             Else
                aStack.Push idxLeft + 1
                aStack.Push idxTo
-            
+
                idxTo = idxLeft - 1
             End If
          Else

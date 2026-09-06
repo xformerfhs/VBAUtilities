@@ -119,7 +119,7 @@ Private Function GetLockFilePath(ByRef dbPath As String) As String
 
    If pos = 0 Then _
       pos = Len(dbPath) + 1
-   
+
    withoutExtension = Left$(dbPath, pos - 1)
 
    result = withoutExtension & LOCK_FILE_EXTENSION_2003
@@ -213,7 +213,7 @@ Private Function ReadLockFileEntries(ByRef dbPath As String) As Dictionary
    Dim result As New Dictionary
    Dim lastComputerName As String
    Dim normalizedRecord As String
-   
+
    result.CompareMode = TextCompare
 
    fn = FreeFile
@@ -221,7 +221,7 @@ Private Function ReadLockFileEntries(ByRef dbPath As String) As Dictionary
    Open dbPath For Binary Access Read Shared As #fn
 
    isComputername = True
-   
+
    Do While Not EOF(fn)
       Get #fn, , aRecord
 
@@ -240,7 +240,7 @@ Private Function ReadLockFileEntries(ByRef dbPath As String) As Dictionary
 
       isComputername = Not isComputername
    Loop
-   
+
    Close #fn
 
    Set ReadLockFileEntries = result
@@ -327,7 +327,7 @@ Public Function ListOfOtherComputersFrom(ByRef dbPath As String) As String
    Set computerList = Me.GetLockFileEntriesFrom(dbPath)
 
    result = ""
-   
+
    For Each aComputerName In computerList.Keys
       If aComputerName <> myComputerName Then _
          result = result & ", " & aComputerName

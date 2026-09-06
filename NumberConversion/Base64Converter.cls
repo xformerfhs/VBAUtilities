@@ -276,7 +276,7 @@ Public Function Encode(inputByteArray() As Byte) As String
          outputIndex = outputIndex + 1
       Loop Until inputIndex > inputSize
    End If
-   
+
    Encode = result
 End Function
 
@@ -308,22 +308,22 @@ End Function
 '
 Public Function Decode(inputString As String) As Byte()
    Dim result() As Byte
-   
+
    Dim n1 As Byte, n2 As Byte, n3 As Byte, n4 As Byte
-   
+
    Dim inputSize As Long
 
    Dim currentPosition As Long
    Dim endPosition As Long
    Dim errorPosition As Long
-   
+
    Dim resultIndex As Long
 
    Dim hasInvalidCharacter As Boolean
    Dim inLastBlock As Boolean
 
    inputSize = Len(inputString)
-   
+
    If inputSize > 3 Then
       If (inputSize And 3) = 0 Then          ' "(inputSize And 3)" is only 0 if the length of the input string is a multiple of 4
          currentPosition = 1
@@ -346,7 +346,7 @@ Public Function Decode(inputString As String) As Byte()
          ReDim result(1 To resultIndex)   ' Allocate resulting byte array
 
          resultIndex = 0
-   
+
          errorPosition = 0
 
          hasInvalidCharacter = False
@@ -417,7 +417,7 @@ Public Function Decode(inputString As String) As Byte()
                '
                resultIndex = resultIndex + 1
                result(resultIndex) = (n1 * 4) Or (n2 \ 16)  ' 6 bits from first value and 2 bits from second value
-   
+
                '
                ' The next bytes are only converted if they are no padding bytes
                '
@@ -430,7 +430,7 @@ Public Function Decode(inputString As String) As Byte()
                      hasInvalidCharacter = True
                   End If
                End If ' n3 <> PADDING_CHARACTER_VALUE
-   
+
                If n4 <> PADDING_CHARACTER_VALUE Then
                   resultIndex = resultIndex + 1
                   result(resultIndex) = ((n3 And &H3) * 64) Or n4  ' 2 bits from third value and 6 bits from fourth value
@@ -513,13 +513,13 @@ Private Sub Class_Initialize()
    For i = LBound(m_CharacterToValue) To UBound(m_CharacterToValue)
       m_CharacterToValue(i) = INVALID_CHARACTER_VALUE
    Next i
-   
+
    For i = 0 To Len(ENCODING_CHARACTERS) - 1
       ch = Mid(ENCODING_CHARACTERS, i + 1, 1)
-      
+
       m_ValueToCharacter(i) = ch
       m_CharacterToValue(Asc(ch)) = i
    Next i
-   
+
    m_CharacterToValue(Asc(PADDING_CHARACTER)) = PADDING_CHARACTER_VALUE
 End Sub

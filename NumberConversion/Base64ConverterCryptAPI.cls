@@ -387,7 +387,7 @@ Public Function Decode(ByRef sourceB64Text As String) As Byte()
                    ERR_STR_CLASS_NAME, _
                    ERR_STR_INVALID_LENGTH
       End If
-      
+
    End If
 
    Decode = resultByteArray

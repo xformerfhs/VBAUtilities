@@ -385,7 +385,7 @@ Private Sub BuildOperationData( _
    ' 1. Clear possible former key data
    '
    ClearKeyData
-   
+
    '
    ' 2. Get the length of the key object.
    '
@@ -411,7 +411,7 @@ Private Sub BuildOperationData( _
    If Not IsNTSuccess(rc) Then
       HandleNTAPIError "BuildOperationData", "BCryptGenerateSymmetricKey", rc
    End If
-   
+
    '
    ' 4. Get tag length.
    '
@@ -425,7 +425,7 @@ Private Sub BuildOperationData( _
    If Not IsNTSuccess(rc) Then
       HandleNTAPIError "BuildOperationData", "BCryptGetProperty::TagLength", rc
    End If
-   
+
    m_TagLength = tagLength.dwMaxLength
 End Sub
 
@@ -450,7 +450,7 @@ Private Sub ClearKeyData()
    If m_KeyHandle <> 0 Then
       BCryptDestroyKey m_KeyHandle
    End If
-   
+
    If ByteArrayLength(m_KeyObject) <> 0 Then
       ClearByteArray m_KeyObject
    End If
@@ -487,7 +487,7 @@ Public Property Get EncryptionType() As TAuthenticatedEncryptionType
 
    Case BCRYPT_AES_CCM_ALG_HANDLE:
       EncryptionType = aetAesCcm
-      
+
    Case Else
       EncryptionType = aetNotSet
    End Select
@@ -521,7 +521,7 @@ Public Property Get EncryptionTypeString() As String
 
    Case BCRYPT_AES_CCM_ALG_HANDLE:
       EncryptionTypeString = "AES-CCM"
-      
+
    Case Else
       EncryptionTypeString = "*NotSet*"
    End Select
@@ -554,7 +554,7 @@ End Property
 '
 Public Sub SetEncryption(ByVal et As TAuthenticatedEncryptionType, ByRef key() As Byte)
    m_AlgHandle = AuthenticatedEncryptionToAlgHandle(et)
-   
+
    If m_AlgHandle = 0 Then
       Err.Raise ERR_NUM_WRONG_TYPE, _
                 ERR_STR_CLASS_NAME, _

@@ -122,7 +122,7 @@ Private Declare PtrSafe Function MultiByteToWideChar Lib "kernel32.dll" ( _
                          ByVal lpWideCharStr As LongPtr, _
                          ByVal cchWideChar As Long) As Long
 
-                        
+
 '
 ' API constants
 '
@@ -198,9 +198,9 @@ End Function
 '
 Private Sub HandleAPIError(ByRef apiFunctionName As String)
    Dim errorCode As Long
-   
+
    errorCode = Err.LastDllError
-      
+
    Err.Raise ERR_NUM_API, _
              ERR_STR_CLASS_NAME, _
              m_MM.FormatMessageWithParameters(ERR_STR_API, _
@@ -316,7 +316,7 @@ Public Function FromUTF8ToVB(ByRef utf8ByteArray() As Byte) As String
    Dim rc As Long
 
    utf8Size = GetArrayLength(utf8ByteArray)
-   
+
    If utf8Size > 0 Then
       '
       ' First, get size of the string to receive the UTF-16 representation

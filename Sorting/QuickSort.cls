@@ -249,7 +249,7 @@ Private Sub QuicksortWithBoundaries(ByRef arrayToSort As Variant, ByVal idxFrom 
             Do
                idxLeft = idxLeft + 1
             Loop Until arrayToSort(idxLeft) >= pivot
-      
+
             Do
                idxRight = idxRight - 1
             Loop Until arrayToSort(idxRight) <= pivot

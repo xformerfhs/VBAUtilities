@@ -99,14 +99,14 @@ End Sub
 '
 Public Function GetDriveTypeForPath(ByRef aPath As String) As TDriveType
    Dim fso As New Scripting.FileSystemObject
-   
+
    Dim rootPath As String
-   
+
    rootPath = fso.GetDriveName(aPath) & "\"
 
    Dim result As Long
    result = GetDriveType(rootPath)
-   
+
    CheckDriveType result
 
    GetDriveTypeForPath = result

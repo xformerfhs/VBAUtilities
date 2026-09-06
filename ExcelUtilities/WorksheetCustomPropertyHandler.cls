@@ -46,7 +46,7 @@ Attribute VB_Exposed = False
 '|---------------------+---------------------------------------------------
 '| Changes             | 2018-09-25  Created. fhs
 '|---------------------+---------------------------------------------------
-'| Remarks             | The MS supplied API for custom properties is 
+'| Remarks             | The MS supplied API for custom properties is
 '|                     | cumbersome and incomplete. This wrapper class
 '|                     | makes custom property handling much easier.
 '|---------------------+---------------------------------------------------
@@ -101,7 +101,7 @@ Private Const STRCOMP_EQUAL As Integer = 0
 Private Function IsEmptyOrNull(ByRef propertyValue As Variant) As Boolean
    IsEmptyOrNull = (VarType(propertyValue) <= 1)
 End Function
-   
+
 
 '
 ' Public methods

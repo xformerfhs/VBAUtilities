@@ -105,11 +105,11 @@ Public Function GetBearingForRadiants(ByVal fromLatitudeRad As Double, _
                                       ByVal toLatitudeRad As Double, _
                                       ByVal toLongitudeRad As Double) As Double
    Dim diffLongitude As Double
-   
+
    diffLongitude = toLongitudeRad - fromLongitudeRad
-   
+
    Dim result As Double
-   
+
    result = m_Trigo.ArcTan2(Cos(fromLatitudeRad) * Sin(toLatitudeRad) - Sin(fromLatitudeRad) * Cos(toLatitudeRad) * Cos(diffLongitude), _
                             Sin(diffLongitude) * Cos(toLatitudeRad))
    If result < 0# Then _

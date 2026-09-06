@@ -81,13 +81,13 @@ Public Function ArcCos(ByVal x As Double) As Double
 
       Case Is > 1
          Err.Raise vbObjectError, MODULE_NAME, ERR_TXT_INVALID_ARGUMENT
-         
+
       Case -1
          ArcCos = PI
 
       Case 1
          ArcCos = 0#
-      
+
       Case Else
          ArcCos = 2 * Atn(Sqr((1 - x) / (1 + x)))
    End Select
@@ -108,7 +108,7 @@ Public Function ArcTan2(ByVal y As Double, ByVal x As Double) As Double
       End If
    Else
       result = Atn(y / x)
-      
+
       If x < 0# Then
          If y >= 0# Then
             result = result + PI

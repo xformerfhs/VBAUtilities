@@ -151,9 +151,9 @@ End Sub
 '
 Public Function GetElapsedTime() As Double
    Dim currentCounter As Currency
-   
+
    QueryPerformanceCounter currentCounter
-   
+
    GetElapsedTime = (currentCounter - m_StartCounter) * m_TimePerTick
 End Function
 
@@ -185,6 +185,6 @@ Private Sub Class_Initialize()
    ' Query the performance counter resolution
    '
    QueryPerformanceFrequency theFrequency
-   
+
    m_TimePerTick = 1# / theFrequency
 End Sub

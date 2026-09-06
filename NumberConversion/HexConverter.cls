@@ -145,7 +145,7 @@ Public Function Decode(ByRef aHexString As String) As Byte()
    Dim textToConvert As String
 
    size = Len(aHexString)
-   
+
    If size > 0 Then
       If (size And 1) = 0 Then
          ReDim result(1 To (size \ 2))

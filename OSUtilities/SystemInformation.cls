@@ -255,7 +255,7 @@ Public Function GetNameOfComputer() As String
    result = Space$(MAX_COMPUTERNAME_LENGTH_PLUS_1)
 
    length = Len(result)
-   
+
    rc = GetComputerName(StrPtr(result), length)
 
    If rc = RETURN_ERROR Then
@@ -289,7 +289,7 @@ Public Function GetNameOfUser() As String
 
    result = Space$(MAX_USERNAME_LENGTH_PLUS_1)
    length = Len(result)
-   
+
    rc = GetUserName(StrPtr(result), length)
 
    If rc = RETURN_ERROR Then

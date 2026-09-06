@@ -192,7 +192,7 @@ Public Sub ChangeThisProcessPriority(ByVal newPriorityClassValue As TPriorityCla
 
          If rc = ERROR_FAILURE Then
             callError = Err.LastDllError
- 
+
             HandleAPIError ERROR_NUMBER_CAN_NOT_SET_PRIORITY_CLASS, _
                            ERROR_MESSAGE_FOR_API, _
                            "set", _
@@ -201,7 +201,7 @@ Public Sub ChangeThisProcessPriority(ByVal newPriorityClassValue As TPriorityCla
       End If
    Else
       callError = Err.LastDllError
-  
+
       HandleAPIError ERROR_NUMBER_CAN_NOT_SET_PRIORITY_CLASS, _
                      ERROR_MESSAGE_FOR_API, _
                      "get", _

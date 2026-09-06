@@ -228,7 +228,7 @@ End Function
 '
 Private Function CreateIndexArray(ByRef arrayToSort As Variant) As Long()
    Dim result() As Long
-   
+
    Dim i As Long
    Dim j As Long
    Dim low As Long

@@ -79,11 +79,11 @@ Private Function GetDateIndexedFileList(ByRef fileList As Scripting.Files) As Va
    result.CompareMode = BinaryCompare
 
    Dim aFile As Scripting.File
-   
+
    For Each aFile In fileList
       result.Add Key:=aFile.DateCreated, Item:=aFile
    Next
-   
+
    Set GetDateIndexedFileList = result
 End Function
 
@@ -109,29 +109,29 @@ Private Function GetDateSortedFileList(ByRef fileList As Scripting.Files) As Scr
    Dim aFile As Scripting.File
 
    Dim dateIndexedFileList As Scripting.Dictionary
-   
+
    Set dateIndexedFileList = GetDateIndexedFileList(fileList)
 
    Dim dh As New DictionaryHelper
-   
+
    Dim dateList() As Variant
-   
+
    dateList = dh.getKeysAsArray(dateIndexedFileList)
-   
+
    Dim aSorter As New Sorter
-   
+
    aSorter.insertionSort dateList
 
    Dim result() As Scripting.File
 
    ReDim result(LBound(dateList) To UBound(dateList))
-   
+
    Dim i As Integer
-   
+
    For i = LBound(dateList) To UBound(dateList)
       Set result(i) = dateIndexedFileList.Item(dateList(i))
    Next i
-   
+
    GetDateSortedFileList = result
 End Function
 
@@ -139,7 +139,7 @@ End Function
 '+--------------------------------------------------------------------------
 '| Method           | DeleteOldBackups
 '|------------------+-------------------------------------------------------
-'| Description      | Delete files in excess of the no. of files to keep, 
+'| Description      | Delete files in excess of the no. of files to keep,
 '|                  | oldest files first
 '|------------------+-------------------------------------------------------
 '| Parameter        | fso: A Scripting.FileSystemObject
@@ -159,11 +159,11 @@ Private Sub DeleteOldBackups(ByRef fso As Scripting.FileSystemObject, ByRef back
    Dim backupFolder As Scripting.Folder
 
    Set backupFolder = fso.GetFolder(backupDirectory)
-   
+
    Dim fileList As Scripting.Files
 
    Set fileList = backupFolder.Files
-   
+
    If fileList.count > noOfFilesToKeep Then
       Dim dateSortedFileList() As Scripting.File
 
@@ -185,7 +185,7 @@ End Sub
 '+--------------------------------------------------------------------------
 '| Method           | BackupDB
 '|------------------+-------------------------------------------------------
-'| Description      | Back up a database file with a maximum no. of files 
+'| Description      | Back up a database file with a maximum no. of files
 '|                  | to keep as backups
 '|------------------+-------------------------------------------------------
 '| Parameter        | dbPath: Path of the database
@@ -207,10 +207,10 @@ Public Sub BackupDB(ByRef dbPath As String, ByVal noOfFilesToKeep As Integer)
    Dim dbDirectory As String
 
    dbDirectory = fso.GetParentFolderName(dbPath)
-   
+
    Dim backupDirectory As String
    backupDirectory = fso.GetParentFolderName(dbPath) & "\Backups"
-   
+
    If Not fso.FolderExists(backupDirectory) Then _
       fso.CreateFolder backupDirectory
 
@@ -221,6 +221,6 @@ Public Sub BackupDB(ByRef dbPath As String, ByVal noOfFilesToKeep As Integer)
    fso.CopyFile dbPath, backupPath
 
    DeleteOldBackups fso, backupDirectory, noOfFilesToKeep
-   
+
    MsgBox "Database backuped to file '" & backupPath & "'", vbInformation Or vbOKOnly, "Database backuped"
 End Sub

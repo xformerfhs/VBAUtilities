@@ -236,9 +236,9 @@ End Function
 '
 Public Function BearingInRadians(ByVal startLatitude As Double, ByVal startLongitude As Double, ByVal endLatitude As Double, ByVal endLongitude As Double) As Double
    Dim diffLongitude As Double
-   
+
    diffLongitude = endLongitude - startLongitude
-   
+
    BearingInRadians = GetTrigonometrics.ArcTan2(Sin(diffLongitude) * Cos(endLatitude), Cos(startLatitude) * Sin(endLatitude) - Sin(startLatitude) * Cos(endLatitude) * Cos(diffLongitude)) + TWO_PI
 End Function
 

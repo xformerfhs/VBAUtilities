@@ -114,7 +114,7 @@ Private Declare PtrSafe Function GetModuleHandle _
    Alias "GetModuleHandleA" ( _
    ByVal lpModuleName As String _
    ) As LongPtr
-   
+
 
 '
 ' Private methods
@@ -142,7 +142,7 @@ Private Declare PtrSafe Function GetModuleHandle _
 Private Sub HandleAPIError(ByRef apiFunctionName As String)
    Dim mm As New MessageManager
    Dim rc As Long
-  
+
    rc = Err.LastDllError
    Err.Raise ERR_NUM_WINDOWS_API, _
              STR_ERROR_SOURCE, _
@@ -183,7 +183,7 @@ Private Function UnwindParamArrays(ByRef parameterList() As Variant) As Variant(
    Do While (UBound(actParamList) = 0)
       If (VarType(actParamList(0)) = (vbArray Or vbVariant)) Then
          Dim temp() As Variant
-         
+
          '
          ' VBA crashes if one uses actParamList = actParamList(0)
          '
@@ -219,9 +219,9 @@ End Function
 '
 Private Function IsNextCharNumeric(ByRef aText As String, ByVal pos As Long, ByVal textLength As Long) As Boolean
    IsNextCharNumeric = False
-   
+
    pos = pos + 1
-   
+
    If pos < textLength Then _
       IsNextCharNumeric = IsNumeric(Mid$(aText, pos, 1))
 End Function
@@ -248,10 +248,10 @@ End Function
 Public Function CheckParameterCount(ByRef formatText As String, ByVal parameterCount As Integer) As Boolean
    Dim textLength As Long
    textLength = Len(formatText)
-   
+
    Dim maxParameter As Integer
    Dim actParameter As Integer
-   
+
    Dim pos As Long
 
    pos = InStr(1, formatText, "%")
@@ -264,11 +264,11 @@ Public Function CheckParameterCount(ByRef formatText As String, ByVal parameterC
          Else
             actParameter = CInt(Mid$(formatText, pos, 1))
          End If
-         
+
          If actParameter > maxParameter Then _
             maxParameter = actParameter
       End If
-   
+
       pos = pos + 1
       If pos <= textLength Then
          pos = InStr(pos, formatText, "%")
@@ -276,7 +276,7 @@ Public Function CheckParameterCount(ByRef formatText As String, ByVal parameterC
          pos = 0
       End If
    Loop
-   
+
    CheckParameterCount = (parameterCount >= maxParameter)
 End Function
 
@@ -488,7 +488,7 @@ Public Function GetMessageForModuleErrorCode(ByVal moduleErrorCode As Long, _
                                    StrPtr(messageBuffer), _
                                    MESSAGE_BUFFER_SIZE, _
                                    0&)
-   
+
       If bufferLength > 0 Then
          ' Error code is known to the module. Return the message with the correct length.
          GetMessageForModuleErrorCode = Left$(messageBuffer, bufferLength)

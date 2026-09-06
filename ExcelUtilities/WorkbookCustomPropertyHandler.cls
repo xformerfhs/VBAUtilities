@@ -46,7 +46,7 @@ Attribute VB_Exposed = False
 '|---------------------+---------------------------------------------------
 '| Changes             | 2018-09-25  Created. fhs
 '|---------------------+---------------------------------------------------
-'| Remarks             | The MS supplied API for custom properties is 
+'| Remarks             | The MS supplied API for custom properties is
 '|                     | cumbersome and incomplete. This wrapper class
 '|                     | makes custom property handling much easier.
 '|---------------------+---------------------------------------------------
@@ -106,7 +106,7 @@ Private Const STRCOMP_EQUAL As Integer = 0
 Private Function IsEmptyOrNull(ByRef propertyValue As Variant) As Boolean
    IsEmptyOrNull = (VarType(propertyValue) <= 1)
 End Function
-   
+
 '
 '+--------------------------------------------------------------------------
 '| Method           | GetPropertyTypeFromVariantType
@@ -129,16 +129,16 @@ Private Function GetPropertyTypeFromVariantType(ByRef propertyValue As Variant) 
    Select Case VarType(propertyValue)
       Case vbInteger, vbLong, vbByte, 20
          GetPropertyTypeFromVariantType = MsoDocProperties.msoPropertyTypeNumber
-      
+
       Case vbSingle, vbDouble, vbCurrency, vbDecimal
          GetPropertyTypeFromVariantType = MsoDocProperties.msoPropertyTypeFloat
-      
+
       Case vbDate
          GetPropertyTypeFromVariantType = MsoDocProperties.msoPropertyTypeDate
-      
+
       Case vbString
          GetPropertyTypeFromVariantType = MsoDocProperties.msoPropertyTypeString
-      
+
       Case vbBoolean
          GetPropertyTypeFromVariantType = MsoDocProperties.msoPropertyTypeBoolean
 

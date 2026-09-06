@@ -191,12 +191,12 @@ Private Declare PtrSafe Function BCryptFinishHash _
                  ByVal cbOutput As Long, _
                  ByVal dwFlags As Long) _
                 As Long
-                
+
 Private Declare PtrSafe Function BCryptDestroyHash _
                 Lib "bcrypt.dll" _
                 (ByVal hHash As LongPtr) _
                 As Long
-                
+
 Private Declare PtrSafe Function BCryptCloseAlgorithmProvider _
                 Lib "bcrypt.dll" _
                 (ByVal hAlgorithm As LongPtr, _
@@ -328,7 +328,7 @@ End Sub
 '
 Private Function CheckKey(ByRef key() As Byte) As Long
    Dim arrayLength As Long
-   
+
    arrayLength = GetArrayLength(key)
 
    If arrayLength < MINIMUM_KEY_LENGTH Then _
@@ -498,7 +498,7 @@ Private Sub SetCustomizationString(ByRef customizationString() As Byte)
 
    Dim csl As Long
    csl = GetArrayLength(customizationString)
-   
+
    If csl > 0 Then
       rc = BCryptSetProperty(m_HashHandle, StrPtr(BCRYPT_CUSTOMIZATION_STRING), VarPtr(customizationString(LBound(customizationString))), csl, 0&)
 
@@ -526,7 +526,7 @@ End Sub
 '
 Private Sub InitializeHash(ByRef hashAlgorithm As String)
    InitializeProvider hashAlgorithm, BCRYPT_NO_FLAG
-   
+
    Dim rc As Long
 
    rc = BCryptCreateHash(m_AlgorithmProviderHandle, m_HashHandle, 0&, 0&, 0&, 0&, BCRYPT_HASH_REUSABLE_FLAG)
@@ -566,7 +566,7 @@ Private Sub InitializeMAC(ByRef hashAlgorithm As String, ByRef key() As Byte, By
    Else
       bcryptFlag = BCRYPT_NO_FLAG
    End If
-   
+
    InitializeProvider hashAlgorithm, bcryptFlag
 
    Dim keyLength As Long
@@ -574,9 +574,9 @@ Private Sub InitializeMAC(ByRef hashAlgorithm As String, ByRef key() As Byte, By
    keyLength = CheckKey(key)
 
    Dim keyPointer As LongPtr
-   
+
    keyPointer = VarPtr(key(LBound(key)))
-   
+
    Dim rc As Long
 
    rc = BCryptCreateHash(m_AlgorithmProviderHandle, m_HashHandle, 0&, 0&, keyPointer, keyLength, BCRYPT_HASH_REUSABLE_FLAG)
@@ -929,15 +929,15 @@ End Sub
 '
 Public Function IsSHA3Available() As Boolean
    IsSHA3Available = False
-   
+
    Dim algId As String
    ' Try SHA3-256.
    algId = "SHA3-256"
-    
+
    Dim hAlg As LongPtr
    Dim rc As Long
    rc = BCryptOpenAlgorithmProvider(hAlg, StrPtr(algId), 0, 0)
-    
+
    If IsNTSuccess(rc) Then
       IsSHA3Available = True
       BCryptCloseAlgorithmProvider hAlg, 0
@@ -1153,7 +1153,7 @@ End Sub
 '
 Public Sub DigestPartOfByteArray(ByRef sourceByteArray() As Byte, ByVal offset As Long, ByVal count As Long)
    CheckState
-   
+
    Dim startIndex As Long
    startIndex = LBound(sourceByteArray) + offset
 
@@ -1192,7 +1192,7 @@ End Sub
 '
 Public Sub DigestBytes(ByRef sourceByteArray() As Byte)
    CheckState
-   
+
    Dim arrayLength As Long
 
    arrayLength = GetArrayLength(sourceByteArray)
@@ -1280,10 +1280,10 @@ End Sub
 '
 Public Sub DigestFile(ByRef filePath As String)
    CheckState
-   
+
    Dim bfis As New BinaryFileInputStream
    bfis.ForFile filePath
-   
+
    Dim buffer(1 To BUFFER_SIZE) As Byte
 
    Dim rc As Long
@@ -1336,7 +1336,7 @@ Public Function GetHash() As Byte()
 
    Dim result() As Byte
    ReDim result(1 To m_HashSize)
-   
+
    rc = BCryptFinishHash(m_HashHandle, result(1), m_HashSize, 0&)
 
    If IsNTSuccess(rc) Then

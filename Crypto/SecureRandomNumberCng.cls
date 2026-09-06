@@ -139,7 +139,7 @@ Private m_IsBlockCounterInitialized As Boolean
 Private Sub HandleError(ByRef apiFunctionName As String, _
                         ByVal rc As Long)
    Dim mm As New MessageManager
-   
+
    Err.Raise ERR_CRYPTO_API, _
              STR_ERROR_SOURCE, _
              mm.FormatMessageWithParameters(STR_ERR_CRYPTO_API, _
@@ -216,9 +216,9 @@ Private Sub IncrementBlockCounter()
    Dim i As Long
    For i = UBound(m_BlockCounter) To LBound(m_BlockCounter) Step -1
       Dim actValue As Byte
-      
+
       actValue = m_BlockCounter(i)
-      
+
       If actValue < &HFF Then
          m_BlockCounter(i) = actValue + 1
          Exit For
@@ -252,14 +252,14 @@ End Sub
 Private Sub CopyBytes(ByRef fromArray() As Byte, ByVal fromStartIndex As Long, ByRef toArray() As Byte, ByVal toStartIndex As Long, ByVal count As Long)
    Dim toIndex As Long
    toIndex = toStartIndex
-   
+
    Dim doneCount As Long
-   
+
    Dim i As Long
    For i = fromStartIndex To UBound(fromArray)
       If doneCount < count Then
          toArray(toIndex) = fromArray(i)
-         
+
          toIndex = toIndex + 1
          doneCount = doneCount + 1
       Else
@@ -287,7 +287,7 @@ End Sub
 '
 Private Sub ClearArray(ByRef anArray() As Byte)
    Dim i As Long
-   
+
    For i = LBound(anArray) To UBound(anArray)
       anArray(i) = 0
    Next i
@@ -398,12 +398,12 @@ End Sub
 '
 Private Sub WhitenBlockCounter()
       Dim performanceArray(1 To 8) As Byte
-      
+
       QueryPerformanceCounter performanceArray(1)
 
       Dim fromIndex As Integer
       fromIndex = 1
-      
+
       Dim i As Integer
       For i = LBound(m_BlockCounter) To UBound(m_BlockCounter)
          m_BlockCounter(i) = m_BlockCounter(i) Xor performanceArray(fromIndex)
@@ -439,9 +439,9 @@ Private Sub RefreshNumberBuffer()
 
    If Not m_IsBlockCounterInitialized Then
       GetRandomData m_BlockCounter, 4
-      
+
       WhitenBlockCounter
-      
+
       m_IsBlockCounterInitialized = True
    End If
 
@@ -504,7 +504,7 @@ Private Sub PutRandomBytesInBuffer(ByRef aBuffer() As Byte, ByVal requestedNoOfB
       End If
 
       aBuffer(actDestinationIndex) = m_NumberBuffer(m_ActIndex)
-      
+
       m_ActIndex = m_ActIndex + 1
       actDestinationIndex = actDestinationIndex + 1
    Loop
@@ -594,9 +594,9 @@ End Sub
 Private Sub Class_Terminate()
    If m_AlgorithmHandle <> 0 Then _
       BCryptCloseAlgorithmProvider m_AlgorithmHandle, 0&
-   
+
    m_ActIndex = 0
-   
+
    ClearArray m_BlockCounter
    ClearArray m_NumberBuffer
 End Sub

@@ -175,8 +175,8 @@ End Property
 '| Remarks          | ./.
 '|------------------+-------------------------------------------------------
 '| Typical call     | if sb.IsEmpty then
-'|                  |    ...    
-'|                  | end if    
+'|                  |    ...
+'|                  | end if
 '+--------------------------------------------------------------------------
 '
 Public Property Get IsEmpty() As Boolean
@@ -313,7 +313,7 @@ End Property
 '+--------------------------------------------------------------------------
 'Public Function SetTo(ByVal text As String) As StringBuilder
    Me.Reset
-   
+
    Set SetTo = Me.Append(text)
 End Function
 
@@ -341,9 +341,9 @@ End Function
 '
 Public Function Append(ByVal text As String) As StringBuilder
    Dim additionalLength As Long
-   
+
    additionalLength = Len(text)
-   
+
    If additionalLength > 0 Then
       If (MAXIMUM_LENGTH - m_Length) < additionalLength Then
          Err.Raise ERR_TOO_LONG, MODULNAME, STR_ERR_TOO_LONG
@@ -352,14 +352,14 @@ Public Function Append(ByVal text As String) As StringBuilder
             If (MAXIMUM_LENGTH - m_Length) < m_BlockSize Then
                m_BlockSize = MAXIMUM_LENGTH - m_Length
             End If
-            
+
             m_Content = m_Content & Space$(m_BlockSize)
             m_Size = m_Size + m_BlockSize
          End If
       End If
-   
+
       Mid$(m_Content, m_Length + 1, additionalLength) = text
-   
+
       m_Length = m_Length + additionalLength
    End If
 
@@ -388,7 +388,7 @@ End Function
 '
 Public Function Reset() As StringBuilder
    m_Length = 0
-   
+
    Set Reset = Me
 End Function
 

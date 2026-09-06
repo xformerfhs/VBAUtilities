@@ -142,7 +142,7 @@ Public Function GetProperty(ByRef obj As Object, _
 
    On Error Resume Next
    GetProperty = propertyList(propertyName).Value
-   
+
    If Err.Number <> 0 Then _
       GetProperty = Null
 
@@ -153,7 +153,7 @@ End Function
 '+--------------------------------------------------------------------------
 '| Method           | GetPropertyWithDefault
 '|------------------+-------------------------------------------------------
-'| Description      | Get a property of a DAO object or a default if it 
+'| Description      | Get a property of a DAO object or a default if it
 '|                  | is not set.
 '|------------------+-------------------------------------------------------
 '| Parameter        | obj: The DAO object

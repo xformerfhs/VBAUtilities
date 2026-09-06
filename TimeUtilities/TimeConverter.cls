@@ -148,7 +148,7 @@ Private Declare PtrSafe Function TzSpecificLocalTimeToSystemTime Lib "kernel32" 
 Private Sub HandleError(ByRef apiFunctionName As String, _
                         ByVal rc As Long)
    Dim mm As New MessageManager
-   
+
    Err.Raise NUM_ERR_WINDOWS_API, _
              STR_ERROR_SOURCE, _
              mm.FormatMessageWithParameters(STR_ERR_WINDOWS_API, _
@@ -243,9 +243,9 @@ Public Function ConvertUTCToLocalTime(ByVal utcTime As Date) As Date
 
    Dim utcSystemTime As SYSTEMTIME
    Dim localSystemTime As SYSTEMTIME
-   
+
    Dim rc As Long
-   
+
    utcSystemTime = ConvertDateToSystemTime(utcTime)
 
    DST = GetTimeZoneInformation(TZI)
@@ -290,9 +290,9 @@ Public Function ConvertLocalTimeToUTC(ByVal localTime As Date) As Date
 
    Dim utcSystemTime As SYSTEMTIME
    Dim localSystemTime As SYSTEMTIME
-   
+
    Dim rc As Long
-   
+
    localSystemTime = ConvertDateToSystemTime(localTime)
 
    DST = GetTimeZoneInformation(TZI)

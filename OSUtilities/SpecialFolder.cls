@@ -143,9 +143,9 @@ End Sub
 '
 Private Function MakeStringFromNullTerminatedString(ByRef aNullTerminatedString As String) As String
    Dim pos As Long
-   
+
    pos = InStr(1, aNullTerminatedString, vbNullChar)
-   
+
    If pos > 0 Then
       MakeStringFromNullTerminatedString = Left$(aNullTerminatedString, pos - 1)
    Else

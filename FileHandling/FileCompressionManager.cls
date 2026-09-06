@@ -209,7 +209,7 @@ Private Sub HandleAPIError(ByRef winApiFunctionName As String, Optional ByRef ad
    Dim mm As New MessageManager
 
    Dim errorText As String
-   
+
    errorText = ERROR_TEXT_API_ERROR & _
                Format$(errorCode) & _
                " (0x" & _
@@ -217,7 +217,7 @@ Private Sub HandleAPIError(ByRef winApiFunctionName As String, Optional ByRef ad
                ") on call to '" & _
                source & _
                "'"
-   
+
    If Len(additionalInformation) <> 0 Then _
       errorText = errorText & " (" & additionalInformation & ")"
 
@@ -483,7 +483,7 @@ Private Function GetCompressionAttributeForFile(ByRef filePath As String) As Boo
 
    If DoesFilesystemSupportCompression(filePath) Then
       Dim handle As LongPtr
-   
+
       handle = CreateFile(filePath, _
                           GENERIC_READ, _
                           FILE_SHARE_READ, _

@@ -212,12 +212,12 @@ Public Function ArabicNumberToRoman(ByVal arabicNumber As Long) As String
       quotient = arabicNumber \ 100
       arabicNumber = arabicNumber - quotient * 100
       result = result & GetLowRomanDigits(quotient, "M", "D", "C")
-   
+
       ' Pull out tens.
       quotient = arabicNumber \ 10
       arabicNumber = arabicNumber - quotient * 10
       result = result & GetLowRomanDigits(quotient, "C", "L", "X")
-   
+
       ' Pull out ones.
       result = result & GetLowRomanDigits(arabicNumber, "X", "V", "I")
    Else

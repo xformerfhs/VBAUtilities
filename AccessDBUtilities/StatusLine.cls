@@ -77,7 +77,7 @@ Option Explicit
 '
 Public Sub Clear()
    SysCmd acSysCmdClearStatus
-   
+
    DoEvents	  ' This is necessary for the status area to be cleared
 End Sub
 
@@ -101,7 +101,7 @@ End Sub
 Public Sub Show(ByRef aText As String)
    If Len(aText) > 0 Then
       SysCmd acSysCmdSetStatus, aText
-   
+
       DoEvents	' This is necessary for the text to be shown
    Else
       Me.Clear

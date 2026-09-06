@@ -150,7 +150,7 @@ Public Sub ForFile(ByRef filePath As String)
    Open filePath For Binary Access Read Lock Write As #m_Fn
 
    m_FileLength = LOF(m_Fn)
-   
+
    m_LastPosition = 0
 End Sub
 
@@ -173,7 +173,7 @@ End Sub
 '
 Public Function Read(ByRef buffer() As Byte) As Long
    CheckState
-   
+
    Dim bufferSize As Long
    bufferSize = UBound(buffer) - LBound(buffer) + 1
 

@@ -112,13 +112,13 @@ End Function
 Private Function CreateRandomFileName() As String
    Dim result As String
    Dim i As Integer
-   
+
    result = Space$(8)
 
    For i = 1 To Len(result)
       Mid$(result, i, 1) = GetRandomFileNameCharacter
    Next i
-   
+
    CreateRandomFileName = result
 End Function
 
@@ -159,7 +159,7 @@ End Property
 Public Property Let FileDirectory(ByRef newDirectory As String)
    Dim normalizedDirectory As String
    Dim lastCharacter As String * 1
-   
+
    normalizedDirectory = Trim$(newDirectory)
 
    If Len(normalizedDirectory) = 0 Then

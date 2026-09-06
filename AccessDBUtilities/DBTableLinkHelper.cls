@@ -75,13 +75,13 @@ Option Explicit
 '
 Private Function GetCurrentDBPath() As String
    Dim cdb As DAO.Database
-   
+
    Set cdb = CurrentDb
-   
+
    GetCurrentDBPath = cdb.Name
-   
+
    cdb.Close
-   
+
    Set cdb = Nothing
 End Function
 
@@ -106,9 +106,9 @@ End Function
 '
 Private Function GetThisDBInstance() As DAO.Database
    Dim currentDBPath As String
-   
+
    currentDBPath = GetCurrentDBPath
-   
+
    Dim ws As DAO.Workspace
    Dim db As DAO.Database
 
@@ -143,7 +143,7 @@ Private Function GetDBPathFromTablePath(ByRef tablePath As String) As String
    Dim pos As Long
 
    pos = InStr(1, tablePath, "=")
-   
+
    If pos <> 0 Then
       GetDBPathFromTablePath = Right$(tablePath, Len(tablePath) - pos)
    Else
@@ -176,15 +176,15 @@ Public Function GetDBPath(ByRef tableName As String) As String
    Dim db As DAO.Database
 
    Set db = DBEngine.Workspaces(0).Databases(0)
-   
+
    Dim tdf As DAO.TableDef
-   
+
    Set tdf = db.TableDefs(tableName)
 
    GetDBPath = GetDBPathFromTablePath(tdf.Connect)
-   
+
    Set tdf = Nothing
-   
+
    Set db = Nothing
 End Function
 
@@ -209,7 +209,7 @@ End Function
 '
 Public Function ChangeDBPath(ByRef fromDBPath As String, ByRef toDBPath As String) As Integer
    Dim count As Integer
-   
+
    Dim db As DAO.Database
 
    Set db = GetCurrentDBPath   ' This needs to be the exact instance that is currently running. Do not use CurrentDB

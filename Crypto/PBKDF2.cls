@@ -226,7 +226,7 @@ End Function
 '
 Private Sub ClearByteArray(ByRef aByteArray() As Byte)
    Dim i As Long
-   
+
    For i = LBound(aByteArray) To UBound(aByteArray)
       aByteArray(i) = 0
    Next i
@@ -253,7 +253,7 @@ End Sub
 Private Sub HandleError(ByRef apiFunctionName As String, _
                         ByVal rc As Long)
    Dim mm As New MessageManager
-   
+
    Err.Raise ERR_CRYPTO_API, _
              STR_ERROR_SOURCE, _
              mm.FormatMessageWithParameters(STR_ERR_CRYPTO_API, _
@@ -391,9 +391,9 @@ Private Function Pbkdf2Wrapper(ByVal hashAlgorithm As String, _
    passwordBytes = GetU8C.FromVBToUTF8(password)
 
    Dim hashHandle As LongPtr
-   
+
    hashHandle = GetHandleForHash(hashAlgorithm)
-   
+
    Pbkdf2Wrapper = Pbkdf2WithHash(hashHandle, _
                                   passwordBytes, _
                                   saltBytes, _

@@ -138,7 +138,7 @@ Private Declare PtrSafe Function FileTimeToSystemTime Lib "kernel32.dll" ( _
 Private Declare PtrSafe Function FtpCreateDirectory Lib "wininet.dll" Alias "FtpCreateDirectoryA" ( _
    ByVal hConnect As LongPtr, _
    ByVal lpszDirectory As String) As Long
-  
+
 Private Declare PtrSafe Function FtpDeleteFile Lib "wininet.dll" Alias "FtpDeleteFileA" ( _
    ByVal hConnect As LongPtr, _
    ByVal lpszFileName As String) As Long
@@ -704,7 +704,7 @@ Public Function Connect(ByRef serverName As String, _
       HandleAPIError "InternetConnect", Err.LastDllError
    End If
 End Function
-   
+
 '
 '+--------------------------------------------------------------------------
 '| Method           | Disconnect
