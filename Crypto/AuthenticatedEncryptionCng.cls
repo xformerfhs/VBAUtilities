@@ -42,9 +42,11 @@ Attribute VB_Exposed = False
 '|---------------------+---------------------------------------------------
 '| Author              | Frank Schwab
 '|---------------------+---------------------------------------------------
-'| Version             | 1.0.0
+'| Version             | 1.1.0
 '|---------------------+---------------------------------------------------
 '| Changes             | 2026-09-05  Created. fhs
+'|                     | 2026-09-08  Corrected calculation of byte array
+'|                     |             length. fhs
 '|---------------------+---------------------------------------------------
 '
 
@@ -224,13 +226,15 @@ End Function
 '|------------------+-------------------------------------------------------
 '| Changes          | 2020-07-18  Created. fhs
 '|                  | 2020-08-03  Correct array check because it was a hack. fhs
+'|                  | 2026-09-08  Explicitley initialize return value. fhs
 '|------------------+-------------------------------------------------------
 '| Remarks          | ./.
 '+--------------------------------------------------------------------------
 '
 Private Function ByteArrayLength(ByRef aByteArray() As Byte) As Long
-   On Error Resume Next
+   ByteArrayLength = 0
 
+   On Error Resume Next
    ByteArrayLength = UBound(aByteArray) - LBound(aByteArray) + 1
 End Function
 
@@ -277,11 +281,13 @@ End Sub
 Private Sub HandleNTAPIError(ByRef actionText As String, ByRef apiFunctionName As String, ByRef ntStatusCode As Long)
    Err.Raise ERR_NUM_BCRYPT_API, _
              ERR_STR_CLASS_NAME, _
-             m_MM.FormatMessageWithParameters(ERR_STR_BCRYPT_API, _
-                                              actionText, _
-                                              apiFunctionName, _
-                                              Hex$(ntStatusCode), _
-                                              m_MM.GetMessageForNTStatusCode(ntStatusCode))
+             m_MM.FormatMessageWithParameters( _
+                ERR_STR_BCRYPT_API, _
+                actionText, _
+                apiFunctionName, _
+                Hex$(ntStatusCode), _
+                m_MM.GetMessageForNTStatusCode(ntStatusCode) _
+             )
 End Sub
 
 '
@@ -336,6 +342,7 @@ End Function
 '| Author           | Frank Schwab
 '|------------------+-------------------------------------------------------
 '| Changes          | 2026-09-04  Created. fhs
+'|                  | 2026-09-08  Made AD length check more efficient. fhs
 '|------------------+-------------------------------------------------------
 '| Remarks          | ./.
 '+--------------------------------------------------------------------------
@@ -349,10 +356,14 @@ Private Sub SetAuthenticatedCipherModeInfo( _
    info.dwInfoVersion = 1
    info.pbNonce = VarPtr(nonce(LBound(nonce)))
    info.cbNonce = ByteArrayLength(nonce)
-   If ByteArrayLength(associatedData) <> 0 Then
+
+   Dim adLen As Long
+   adLen = ByteArrayLength(associatedData)
+   If adLen <> 0 Then
       info.pbAuthData = VarPtr(associatedData(LBound(associatedData)))
-      info.cbAuthData = ByteArrayLength(associatedData)
+      info.cbAuthData = adLen
    End If
+
    info.pbTag = VarPtr(Tag(LBound(Tag)))
    info.cbTag = ByteArrayLength(Tag)
 End Sub
